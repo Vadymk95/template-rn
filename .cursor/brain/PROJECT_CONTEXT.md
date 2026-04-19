@@ -128,3 +128,32 @@ SDK 55, no Babel plugin needed.
 - TanStack Form or heavy form codegen as the default abstraction (template uses RHF + Zod resolvers for typical inputs)
 - Crash reporting (wire Sentry/Bugsnag per product into `logger.ts`)
 - Auth (pick Clerk/Supabase/Auth0/Firebase per product)
+
+## Full scope: strengths vs deferred tools (when to adopt)
+
+This section is the **single narrative** for “what we optimize for” vs “what stays out until the product needs it.” Per-item tiering and Adopt/Defer flags live in `DECISIONS.md` (audit backlog).
+
+### Where the scaffold is intentionally strong
+
+- **Compliance defaults** — iOS privacy manifest (required-reason APIs), least-privilege permissions (empty until a feature needs them), CI `contents: read` on workflows.
+- **Type safety** — strict TS with `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, and type-aware ESLint on `src/**`.
+- **Lint pipeline** — Oxlint pre-pass, ESLint as source of truth, FSD boundaries, `i18next/no-literal-string` on routes.
+- **React Compiler** enabled by default in `app.config.ts` (escape hatches when needed).
+- **Secrets hygiene** — auth token via `expo-secure-store` (`src/lib/secureToken.ts`), not AsyncStorage; Zustand persist only for non-sensitive fields.
+
+### What is deferred and typical adoption triggers
+
+| Area                                 | Deferred in-repo                                  | When to add                                                                                       |
+| ------------------------------------ | ------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| **MMKV / sync KV**                   | AsyncStorage + Jest mock                          | Measured slow hydration, sync read before first paint, Zustand/Query persist with strict perf SLA |
+| **Sentry / crash + source maps**     | `logger` stub + optional `EXPO_PUBLIC_SENTRY_DSN` | Production crash visibility, release health, or org requires upload in CI                         |
+| **Maestro (or Detox) E2E**           | Jest + manual smoke                               | First release candidate, regression policy on critical flows, or post–EAS Update smoke            |
+| **expo-image**                       | Plain `Image` / no image                          | Remote images, caching, placeholders, CDN                                                         |
+| **FlashList**                        | `FlatList` / short lists                          | Long virtualized lists, scroll jank                                                               |
+| **TanStack Query persist + NetInfo** | Foreground refetch only                           | Offline-first product requirement                                                                 |
+| **SHA-pinned Actions / gitleaks**    | Floating `@v4` + `permissions`                    | Org supply-chain policy, public org template                                                      |
+| **HTTP client layer**                | `fetch` + Query                                   | Auth refresh, uniform error taxonomy, interceptors                                                |
+
+### Comparison to opinionated product starters
+
+Some public starters (e.g. **Obytes**-style) ship **MMKV, Sentry, Maestro**, and more **out of the box** — faster path to a “batteries included” product, at the cost of vendor choices and extra native/CI surface. **template-rn** stays **vendor-free** by default: stricter types, compliance baselines, and Oxlint/FSD are in-repo; runtime observability and native perf stores are **fork decisions** once requirements exist. Neither approach is universally “better” — they optimize for different first steps.

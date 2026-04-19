@@ -130,7 +130,7 @@ The following were merged as **scaffold fixes** (not product features): Husky ho
 
 ## Audit backlog (P0–P2): what the template adopts vs defers
 
-Recorded so forks do not re-litigate the same list. **Ghost principle:** only items marked **Adopt** belong in-repo; the rest are README / product follow-ups.
+Recorded so forks do not re-litigate the same list. **Ghost principle:** only items marked **Adopt** belong in-repo; the rest are README / product follow-ups. For a **narrative** (strengths vs deferred tools, adoption triggers, comparison to opinionated starters), see **`PROJECT_CONTEXT.md` → “Full scope: strengths vs deferred tools”.**
 
 | Tier | Item                                       | Template decision                                                                                                                                                                                      |
 | ---- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
