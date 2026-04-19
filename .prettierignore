@@ -1,0 +1,10 @@
+node_modules
+.expo
+dist
+ios
+android
+coverage
+.bundle-check
+.atlas
+.maestro/reports
+package-lock.json

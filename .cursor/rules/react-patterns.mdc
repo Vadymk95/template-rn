@@ -1,0 +1,37 @@
+---
+description: 'React 19 + React Native + Expo Router patterns'
+globs: ['**/*.tsx', '**/hooks/**/*.ts']
+alwaysApply: false
+priority: 87
+---
+
+# React & React Native Patterns
+
+## 1. Components
+
+- Arrow components only; give **props** an `interface` / `type` and either **`FunctionComponent<Props>`** or an **explicit return** `: ReactElement` / `: ReactNode` so the tree shape is obvious in signatures.
+- **Expo Router**: route files in `src/app/**` use **`export default`** (`const Screen = (): ReactElement => …; export default Screen`). All other UI modules use **named exports**.
+- Co-locate **`useScreenName.ts`** (or `useComponentName.ts`) next to heavy screens — UI stays thin, hook holds orchestration.
+
+## 2. React Native UI
+
+- Prefer **`Pressable`** over legacy touchables unless you need a specific legacy behavior.
+- **Lists**: for large virtualized lists later, prefer **`@shopify/flash-list`** (add when needed) over naive `ScrollView` of hundreds of rows.
+- **Images**: for production lists/thumbnails, prefer **`expo-image`** over raw `Image` when you add that dependency.
+
+## 3. Accessibility (native)
+
+- Set meaningful **`accessibilityLabel`** (and `accessibilityRole` / `accessibilityState`) where visuals are icon-only or non-obvious.
+- Loading: `accessibilityState={{ busy: true }}` where applicable; errors: clear text for screen readers.
+
+## 4. Hooks
+
+- Hooks only at the top level of components or other hooks.
+- Domain hooks live under `src/hooks/<domain>/` with tests alongside when logic is non-trivial.
+
+## 5. Anti-patterns
+
+- ❌ `FC` alias — use `FunctionComponent`.
+- ❌ `import React from 'react'` — not needed with the automatic JSX runtime.
+- ❌ Business logic **> ~10 lines** inlined in JSX — extract to a hook or helper.
+- ❌ Web-only APIs (`window`, `document`, `div`) in shared mobile code.

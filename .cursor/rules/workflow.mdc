@@ -1,0 +1,43 @@
+---
+description: 'Workflow, approval law, verification commands (Expo RN)'
+globs: ['**/*']
+alwaysApply: true
+priority: 90
+---
+
+# Workflow & Approval Protocol
+
+## The Approval Law
+
+| Task size | Protocol |
+| --------- | -------- |
+| &lt; 10 lines, single file | Proceed with brief notification |
+| &gt; 10 lines **or** touches store / env / `app.config` / router `_layout` | Present plan → wait for approval → implement |
+| New cross-cutting pattern | Always present plan first |
+
+**FORBIDDEN**: Starting non-trivial implementation before approval when the table requires it.
+
+## Planning requirements
+
+A plan must list: files touched, one-line intent per file, test strategy (TDD vs hybrid), and any **SKELETONS** zones.
+
+## Post-edit verification
+
+```bash
+npm run lint
+npm run format:check
+npm run typecheck
+npm test
+```
+
+Before pushing: `npm run ci:local` (see `.cursor/brain/VERIFICATION.md`).
+
+## Git commits
+
+`type(scope): description` — English, imperative, **max 96** characters. Types: `feat` `fix` `chore` `docs` `style` `refactor` `perf` `test` `revert` `build` `ci`. No `Co-authored-by`.
+
+## Hook vs utility (mandatory split)
+
+- **Hook**: React lifecycle, subscriptions, navigation, store wiring, timers tied to UI.
+- **Utility** (`src/lib/`): pure transforms, formatting, parsing — unit-test first.
+- If a hook contains extractable pure logic → extract to a utility, keep the hook thin.

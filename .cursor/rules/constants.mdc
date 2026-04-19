@@ -1,0 +1,46 @@
+---
+description: 'Constants, magic values, and i18n keys (Expo + strict FSD)'
+globs: ['**/*.{ts,tsx}']
+alwaysApply: false
+priority: 76
+---
+
+# Constants protocol
+
+## 1. User-visible copy
+
+- **Default:** `useTranslation` / `t()` with keys defined in `src/shared/locales/<lng>/*.json`.
+- **Never** scatter English (or other) strings in `src/app/` route files except the **i18n init failure** UI — use `I18N_INIT_FALLBACK_COPY` from `initFallbackCopy.ts` (rendered in `I18nInitErrorFallback.tsx`, no `t()`).
+- Adding a namespace: create JSON → import its type in `src/shared/lib/i18n/resources.ts` → add name to `DEFAULT_NAMESPACES` in `src/shared/lib/i18n/constants.ts` → add the same namespace object under `bundledResources` in `src/shared/lib/i18n/index.ts`.
+
+## 2. Non-copy constants
+
+| Scope | Location |
+| ----- | -------- |
+| Cross-cutting (non-UI) | `src/shared/lib/constants/*.ts` or `src/lib/*.ts` when it is generic infra |
+| Feature-owned | `src/features/<name>/constants.ts` |
+| Store / domain | `src/store/<domain>/constants.ts` |
+| TanStack Query keys | Next to the query module (`queryKeys` object `as const`) |
+| i18n namespace list | `src/shared/lib/i18n/constants.ts` |
+
+## 3. Pattern
+
+```typescript
+export const ORDER_STATUS = {
+    PENDING: 'pending',
+    SHIPPED: 'shipped'
+} as const;
+
+export type OrderStatus = (typeof ORDER_STATUS)[keyof typeof ORDER_STATUS];
+```
+
+## 4. ESLint: no raw user copy in Expo Router
+
+- In **`src/app/**/*.tsx`**, **`i18next/no-literal-string`** (mode `jsx-text-only`) flags **plain text children** in JSX (e.g. raw string inside `<Text>`). Use **`t()`**, **`Trans`**, or values from **`@/shared/lib/constants/*`** (never bare English in route UI).
+- **`words.exclude`** allows whitespace-only, numeric-only, and URL-ish punctuation fragments — tune in `eslint.config.mjs` if a false positive appears.
+
+## 5. Anti-patterns
+
+- `enum` for string unions — prefer `as const` + derived type.
+- Duplicated literals across modules when one key or constant would do.
+- `HttpBackend` + remote JSON for core copy in this template — bundles are the source of truth (Metro); add OTA/locale packs later as a deliberate product step if needed.

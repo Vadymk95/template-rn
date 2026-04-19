@@ -1,0 +1,66 @@
+# Template-RN — Cursor Meta Rules
+
+This project uses structured AI rules under `.cursor/rules/*.mdc` (Cursor loads them
+when present). The following meta-rules govern how any agent (Cursor, Claude Code,
+Copilot) should operate in this repo.
+
+## Authority Order
+
+1. `.cursor/brain/` — source of truth for architecture, risks, decisions.
+2. `.cursor/rules/*.mdc` — enforceable engineering rules (pipeline, style, TDD, stack).
+3. This file — router only. If anything here conflicts with (1) or (2), they win.
+
+## Session Protocol (mandatory first steps)
+
+1. Read `.cursor/brain/PROJECT_CONTEXT.md` — purpose, stack, architecture.
+2. Read `.cursor/brain/MAP.md` — where things live.
+3. If task touches native config, store, API, router, or `_layout`:
+   also read `.cursor/brain/SKELETONS.md` before editing.
+4. If task adds or changes **imports** or **new paths** under `src/`:
+   read `.cursor/rules/fsd-layers.mdc` (eslint-plugin-boundaries is CI law).
+5. State declared scope + touched SKELETONS zones in one sentence before coding.
+
+## Ghost Principle
+
+Change ONLY what the task requires. No "while I'm here" cleanups. No helpers
+created for a one-time use. No premature abstractions. Existing libs over custom
+logic. Minimalist code.
+
+## One Style Policy (enforced via ESLint + Prettier — do NOT deviate)
+
+- 4-space indent, single quotes, no trailing comma, semicolons on.
+- Arrow functions everywhere. **No function declarations** (including route screens — use `const Screen = (): ReactElement => …; export default Screen`).
+- Components: explicit props type + either `FunctionComponent<Props>` **or** explicit `: ReactElement` return on the arrow. Never the `FC` alias.
+- Named exports. **Exception:** Expo Router screens in `src/app/**` use `export default` (still implemented as a `const` + default export).
+- Imports via `@/` alias only. **Exception:** `global.css` in `src/app/_layout.tsx` only — `../../global.css` (NativeWind entry).
+- No magic strings / numbers — use constants or i18n keys.
+- Errors via `logger.*` — never raw `console.*`.
+
+## FSD layer discipline (enforced via eslint-plugin-boundaries)
+
+```
+app  →  widgets  →  features  →  entities  →  shared
+```
+
+Imports flow only rightward. `shared/` imports nothing from other layers.
+`entities/` imports only `shared/`. And so on.
+
+See `.cursor/rules/fsd-layers.mdc` for the full contract.
+
+## Pipeline
+
+Follow `.cursor/rules/agent-pipeline.mdc` — 6 phases: Discovery → Simulation →
+TDD → Verification → Brain Sync → Confidence declaration.
+
+## Verification
+
+Match check to change — see `.cursor/brain/VERIFICATION.md`.
+Typical TS change: `npm run typecheck && npm run lint && npm run test`.
+Before a PR (same as CI minus `expo-doctor`): `npm run verify` (includes **`format:check`**).
+Pre-push: `npm run ci:local`.
+IDE: open the **project folder** so `.vscode/settings.json` applies (Prettier + ESLint on save, workspace TypeScript).
+
+## Communication
+
+- Russian for chat, English for all code, comments, commits, docs.
+- Git: `type(scope): description` — max 96 chars. No "Co-authored-by" tags.

@@ -1,0 +1,34 @@
+---
+description: 'TDD and testing standards — Jest + Testing Library (React Native)'
+globs: ['**/*.{test,spec}.{ts,tsx}', '**/store/**/*.ts', '**/hooks/**/*.ts', '**/lib/**/*.ts']
+alwaysApply: false
+priority: 85
+---
+
+# TDD protocol (Jest)
+
+## 1. When to write tests first (strict TDD)
+
+- Zustand stores (`src/store/**`)
+- Hooks with non-trivial orchestration (`src/hooks/**`)
+- Pure utilities under `src/lib/` (including Zod schemas and parsers)
+
+## 2. UI (React Native)
+
+- Prefer **integration-style** tests with `@testing-library/react-native` after the screen API stabilizes.
+- Test behavior and accessibility roles/labels users depend on — not private implementation details.
+
+## 3. Cycle
+
+1. Name cases in chat (`describe` / `it`).
+2. **Red** → **Green** → **Refactor** under green tests.
+
+## 4. Tooling conventions
+
+- Mock native modules with **`jest.mock('module', factory)`** — there is no `vi` (Vitest is not used here).
+- Keep network and native I/O out of unit tests; inject dependencies or mock at module boundaries.
+- Use the **`@/`** alias in test imports (`moduleNameMapper` is configured in `package.json` for Jest).
+
+## 5. E2E (product phase)
+
+- Add **Maestro** or **Detox** when you need full native flows (permissions, deep links, biometrics). This template intentionally ships **unit tests only** to stay generic.

@@ -1,0 +1,141 @@
+---
+description: 'Main autonomous execution engine. Orchestrates all other rules.'
+globs: ['**/*']
+alwaysApply: true
+priority: 100
+---
+
+# Agent Pipeline — Principal Autonomy Engine
+
+> Defines the **process**. Quality standards live in domain rules. The pipeline enforces them — never bypass it.
+
+---
+
+## Phase 1: Deep Discovery (mandatory)
+
+### Phase 1 Fast-Track
+
+If the task targets **only** files matching `*.test.ts`, `*.test.tsx`, `*.spec.ts`, `*.spec.tsx`, `global.css`, `tailwind.config.js`, `metro.config.js`, `babel.config.js`, or `*.md` under `.cursor/brain/` — skip Brain reads and proceed directly to Phase 3. State: `"Phase 1 skipped — test/config/docs-only task."` When in doubt → run full Phase 1.
+
+---
+
+Before any reasoning about implementation:
+
+1. **Brain scan**: Read `.cursor/brain/MAP.md` (routes, stores, data flows).
+2. **Layer contract**: If the task adds or rewires **imports** under `src/` or creates **new folders** in `src/`, read `.cursor/rules/fsd-layers.mdc` first — boundaries are CI law.
+3. **Risk detection**: Read `.cursor/brain/SKELETONS.md` if the task touches native config, Metro/Babel, env, router layouts, or persisted stores.
+4. **Context gathering**: Identify affected files. Search for existing patterns before inventing new ones.
+5. **Scope declaration**: Produce clear **In-scope / Out-of-scope** list.
+6. **Explicit declaration**: State in one message: scope + SKELETONS zones touched (or `"none"`). Do not code before this.
+
+> **Gate**: If the task touches a SKELETONS zone — flag the risk and propose mitigation before Phase 2.
+
+---
+
+## Phase 2: Architectural Simulation
+
+### Inference-Time Scaling
+
+Before simulating changes:
+
+- Activate `sequential-thinking` with `totalThoughts >= 3` for any task with more than three steps.
+- Dedicate at least one thought to **adversarial analysis**: what could break on iOS vs Android, cold start, offline, or OTA?
+
+### Architectural Critique
+
+1. **Imports**: Only `@/` path aliases — no `../../` chains.
+2. **State boundary**: Zustand for client/global UI state; TanStack Query for server/async data; local `useState` for component-only UI.
+3. **Tech debt**: Avoid magic strings, implicit cross-module coupling, and untyped external payloads.
+4. **Ghost principle**: Every line must serve the task — no drive-by refactors.
+5. **Stores**: Prefer `createSelectors` for Zustand; never persist secrets to AsyncStorage (use `expo-secure-store`).
+
+### Solver-Verifier (mental test cases)
+
+After the critique, generate **1–2 mental test cases** per non-trivial function (happy path + edge). If the trace fails — revise the plan before coding.
+
+> **Gate**: Present the critique. For tasks **> 10 lines** or touching **stores / env / router layouts / native config** — follow **The Approval Law** in `workflow.mdc`.
+
+---
+
+## Phase 3: TDD-First Execution
+
+### Business logic (stores, hooks, `src/lib/`)
+
+1. List test cases in chat.
+2. **Red** → **Green** → **Refactor** with Jest + Testing Library (`render`, `renderHook`, `act`).
+
+### UI (React Native screens)
+
+Implement with `@testing-library/react-native`; add or extend tests after the UI stabilizes unless strict TDD is explicitly required.
+
+### Iteration protocol
+
+- **Batch size**: 1–2 files per iteration; verify between batches.
+- **Ghost principle**: Re-check after each edit that scope did not creep.
+
+### Per-file checklist
+
+- [ ] Read the file before editing.
+- [ ] `@/` imports only; no raw `console.*` in app code — use `logger.*` from `@/lib/logger`.
+- [ ] No secrets in `EXPO_PUBLIC_*` env.
+- [ ] Pure computation not buried in hooks when it can live in `src/lib/`.
+
+---
+
+## Phase 4: Autonomous Verification Loop
+
+### 4.1 Automated checks
+
+```bash
+npm run lint
+npm run format:check
+npm run typecheck
+npm test
+```
+
+For pre-push parity with CI: `npm run ci:local` (see `.cursor/brain/VERIFICATION.md`).
+
+### 4.2 Failure protocol
+
+1. Do not paper over symptoms.
+2. Trace root cause (types vs runtime vs native tooling).
+3. Fix at the source; re-run the full loop.
+
+### 4.3 Manual pass
+
+- No new cycles across FSD-style boundaries if the repo enforces them.
+- Router: typed `href`s where Expo Router generates them.
+- Query: handle `isPending` / `isError` in UI for user-visible fetches.
+
+### 4.4 Diff self-review
+
+Plan alignment, ghost-principle check, regression scan on public exports.
+
+---
+
+## Phase 5: Brain Auto-Sync
+
+| Brain file        | Update when                                        |
+| ----------------- | -------------------------------------------------- |
+| `MAP.md`          | Routes, stores, or major folders change            |
+| `DECISIONS.md`    | Architectural trade-offs or intentional deviations |
+| `SKELETONS.md`    | New high-risk surfaces or mitigations              |
+| `VERIFICATION.md` | New mandatory checks or scripts                    |
+
+If nothing changed: state **`Brain sync: none needed.`**
+**FORBIDDEN**: Marking work complete without this declaration.
+
+---
+
+## Phase 6: Confidence Declaration
+
+End with: `Confidence: HIGH | MEDIUM | LOW — <one-line reason>`.
+
+---
+
+## Anti-patterns (FORBIDDEN)
+
+- Skipping Phase 1 for non-trivial code changes.
+- Editing many files without intermediate `typecheck` / `lint` / `test`.
+- Bypassing Brain sync declaration.
+- `../../` imports, raw `console.error(e)` without context, secrets in `EXPO_PUBLIC_*`.

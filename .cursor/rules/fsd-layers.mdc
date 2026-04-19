@@ -1,0 +1,43 @@
+---
+description: 'Strict FSD layer map, import law, and where agents must place code (Expo Router)'
+globs: ['src/**/*.{ts,tsx}']
+alwaysApply: false
+priority: 95
+---
+
+# FSD layers — non-negotiable contract
+
+This repo enforces layer direction with **`eslint-plugin-boundaries`** (`boundaries/dependencies` in `eslint.config.mjs`). **If ESLint fails, the change is invalid.** Do not “temporarily” disable the rule.
+
+## Layer stack (top = composition, bottom = primitives)
+
+```
+app  →  widgets  →  features  →  entities  →  shared
+```
+
+**Allowed direction:** a file may import **only from layers to its right** (same layer via public API / siblings is fine; **never** import upward).
+
+| Layer        | Path(s) in this repo                        | Responsibility                                                                                       |
+| ------------ | ------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| **app**      | `src/app/**`                                | Expo Router: layouts, route files, providers wiring. **No business logic.** No direct store imports. |
+| **widgets**  | `src/widgets/**`                            | Composite UI blocks used across routes; compose **features** only (not stores).                      |
+| **features** | `src/features/**`, `src/hooks/**`           | User scenarios: queries, mutations, feature hooks, feature UI. May use **entities** + **shared**.    |
+| **entities** | `src/store/**`                              | Domain model + client state (Zustand slices, selectors). **No** imports from features/widgets/app.   |
+| **shared**   | `src/lib/**`, `src/shared/**`, `src/env.ts` | Env, logger, utils, design tokens helpers, cross-cutting constants. **No** product-layer imports.    |
+
+## Agent placement rules
+
+1. **New screen file** → only under `src/app/` (routing contract). Screen stays thin: render **widgets** or **feature** entry components.
+2. **TanStack Query hooks** → `src/features/<name>/` (e.g. `api/useXQuery.ts`) **or** `src/hooks/<domain>/` until the slice is promoted to `src/features/` — both count as **features** for lint.
+3. **Zustand / client domain state** → `src/store/<domain>/`.
+4. **Reusable UI not tied to one feature** → `src/widgets/<name>/`.
+5. **Strings, query keys, route labels** → `.cursor/rules/constants.mdc` + `src/shared/locales/` (not scattered literals).
+
+## Imports
+
+- **Alias:** `@/…` only (`tsconfig.json` `paths`). **One exception:** root `global.css` may be imported from `src/app/_layout.tsx` as `../../global.css` (Expo / NativeWind entry). No other `../` chains.
+- **Tests:** `**/*.{test,spec}.{ts,tsx}` and `src/test/**` are ignored by boundaries — still must not weaken production architecture.
+
+## Verification
+
+After touching imports or folder placement: `npm run lint` (must include boundaries) and `npm run typecheck`.

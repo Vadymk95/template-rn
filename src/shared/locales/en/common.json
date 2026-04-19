@@ -1,0 +1,17 @@
+{
+    "button": {
+        "submit": "Submit",
+        "cancel": "Cancel",
+        "save": "Save",
+        "close": "Close",
+        "back": "Back"
+    },
+    "loading": "Loading…",
+    "error": {
+        "generic": "Something went wrong"
+    },
+    "tabs": {
+        "homeTitle": "Home",
+        "settingsTitle": "Settings"
+    }
+}

@@ -1,0 +1,28 @@
+---
+description: 'Error handling, logging, and resilience (mobile)'
+globs: ['**/*.{ts,tsx}', '**/store/**/*.ts', '**/lib/**/*.ts']
+alwaysApply: false
+priority: 92
+---
+
+# Resilience & logging
+
+## 1. Logging
+
+- **Never** raw `console.error` in application code — use **`logger.error(message, error, context)`** from `@/lib/logger`.
+- `logger.debug` / `logger.info` may use `console.log` in development only; keep messages structured and grep-friendly.
+
+## 2. Errors in UI
+
+- Route-level failures: rely on Expo Router **`ErrorBoundary`** (see `src/app/_layout.tsx`) and render a recoverable fallback.
+- TanStack Query: always consider **`isError` / `error`** in UI for user-visible queries; log unexpected failures via `logger` or `QueryClient` `meta` handlers when you add them.
+
+## 3. Catch blocks
+
+- **Silent catch is forbidden.** Either log with module context + rethrow, or map to a typed domain error the UI can show.
+- Use `unknown` in `catch` and narrow before use.
+
+## 4. Secrets & env
+
+- Never put billing-capable secrets in **`EXPO_PUBLIC_*`** variables (they ship in the JS bundle).
+- Runtime config only through validated **`src/env.ts`**.

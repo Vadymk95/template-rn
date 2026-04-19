@@ -1,0 +1,39 @@
+---
+description: 'Authoritative stack & tooling map for this Expo RN template'
+globs: ['**/*']
+alwaysApply: true
+---
+
+# Project configuration
+
+## Technology stack
+
+| Layer        | Choice |
+| ------------ | ------ |
+| Runtime      | React Native **0.83** (Expo SDK **55**) |
+| Framework    | **Expo** managed workflow |
+| Language     | TypeScript **5.9** strict + extra compiler flags in `tsconfig.json` |
+| Routing      | **Expo Router** (file-based under `src/app/`) |
+| Styling      | **NativeWind 4** + **Tailwind CSS 3** (`className`, `global.css`) |
+| Client state | **Zustand** (+ `createSelectors` helper) |
+| Server state | **TanStack Query** v5 |
+| Env          | **`@t3-oss/env-core`** + Zod — only validated `env` object, never raw `process.env` in app code |
+| Unit tests   | **Jest** + **`jest-expo`** + **Testing Library React Native** |
+| E2E (later)  | **Maestro** or **Detox** for native shells — **not** Playwright (Playwright targets browsers; use it only if you ship **Expo Web** and choose to test that surface). |
+| Lint         | **ESLint 9** flat config: `typescript-eslint` strict type-checked + **Expo** + **TanStack Query strict** + **import-x** + **React Compiler** + **Prettier**; **oxlint** fast pass on `src/` |
+| Format       | **Prettier** |
+
+## Path aliases
+
+- `@/*` → `src/*` — single definition in `tsconfig.json` (Metro reads it in SDK 55). **No** `../../` in application code.
+
+## Native & config
+
+- **`app.config.ts`** is the source of truth for bundle id, permissions, plugins, experiments — do not hand-edit generated `ios/` / `android/` except via `expo prebuild`.
+- **`babel.config.js`**: `react-native-worklets/plugin` **last** among plugins.
+- **`metro.config.js`**: NativeWind input path must match `global.css`.
+
+## Dependency hygiene
+
+- Expo-managed packages: install with **`npx expo install <pkg>`** (not raw major bumps from npm `latest`).
+- **`npm run typecheck`** uses `tsc --noEmit` (no project references build step).

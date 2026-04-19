@@ -1,0 +1,23 @@
+---
+description: 'Global engineering standards & intelligence protocol (Expo RN template)'
+globs: ['**/*']
+alwaysApply: true
+priority: 95
+---
+
+# Global Standards
+
+## Pipeline Initialization (CRITICAL)
+
+- **Any task MUST begin by initializing the protocol defined in `agent-pipeline.mdc`.**
+- The pipeline (Priority 100) orchestrates all phases: Discovery → Simulation → TDD Execution → Verification → Brain Sync → Confidence.
+- Domain standards live in their respective rules. The pipeline enforces them — never bypass it.
+
+## Intelligence & Context
+
+- **Reasoning**: Use `sequential-thinking` for multi-step logic and `context7` (or official docs) for API lookups. **Russian** for chat, **English** for code, comments, commits, and user-facing repo docs.
+- **Authority**: `.cursor/brain/` (`PROJECT_CONTEXT.md`, `MAP.md`, `SKELETONS.md`, `DECISIONS.md`, `VERIFICATION.md`) is the source of truth for this repo. Sync drifts when behavior or architecture changes.
+- **Stack**: Expo SDK 55 · React Native 0.83 · React 19 · TypeScript strict · Expo Router · NativeWind (Tailwind 3) · Zustand · TanStack Query. Prefer existing libraries over custom infrastructure.
+- **Quality**: Minimalist code. No magic strings in business logic — use constants or i18n keys when you add i18n.
+- **Hygiene**: Keep agent-oriented specs and process rules under `.cursor/`. Product README / deployment docs in root when they are part of the template contract.
+- **Git**: `type(scope): description` — English, max 96 chars. No `Co-authored-by` tags.

@@ -1,0 +1,48 @@
+name: CI
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    verify:
+        name: Typecheck, lint, test
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup Node
+              uses: actions/setup-node@v4
+              with:
+                  node-version-file: .nvmrc
+                  cache: npm
+
+            - name: Install
+              run: npm ci
+
+            - name: Typecheck (tsc — blocking)
+              run: npm run typecheck
+
+            - name: Oxlint (fast pre-pass — blocking)
+              run: npm run lint:oxlint
+
+            - name: ESLint (flat config — blocking)
+              run: npm run lint
+
+            - name: Prettier (format:check — blocking, matches IDE + .vscode)
+              run: npm run format:check
+
+            - name: Jest (coverage thresholds — blocking)
+              run: npm run test:coverage
+
+            - name: Expo doctor (SDK health — blocking)
+              run: npm run doctor
