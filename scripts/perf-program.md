@@ -4,20 +4,24 @@ Inspired by [karpathy/autoresearch](https://github.com/karpathy/autoresearch): *
 
 ## Primary metric
 
-**`hermesBundleBytes`** — size of the iOS Hermes bytecode file (`.hbc`) produced by `expo export`. **Lower is better.**
-Secondary: `exportAssetsBytes` (total bytes under `.atlas/assets/` for that export).
+**`hermesBundleBytes`** — size of the Hermes bytecode file (`.hbc`) produced by `expo export` per platform (`ios` / `android`). **Lower is better.**
+
+Secondary: `exportAssetsBytes` (total bytes under `<export-dir>/assets/` for that export).
 
 Web Vitals (LCP, INP, CLS) do not apply to native RN; this is the closest **CI-friendly** analogue to “bundle weight”.
 
+**Full mobile pass:** `npm run perf:capture:all` — exports to `.atlas/` (iOS) and `.atlas-android/` (Android), then prints a **schema v2** JSON with both platforms (both dirs are gitignored).
+
 ## Fixed procedure (do not improvise)
 
-1. From repo root: `npm run perf:capture`
+1. From repo root: `npm run perf:capture` (iOS only) or `npm run perf:capture:all` (iOS + Android)
    — runs `expo export` with `EXPO_ATLAS=1`, then writes metrics JSON via `scripts/capture-bundle-metrics.mjs`.
-2. Compare printed `hermesBundleBytes` to `scripts/perf-baseline.json`.
-3. If the change **intentionally** improves size and you accept the new baseline:
-   `npm run perf:capture -- --write-baseline` (or run the underlying script with `--write-baseline`).
+2. Compare printed `hermesBundleBytes` to `scripts/perf-baseline.json` (v1 = iOS-only legacy; v2 = both platforms).
+3. If the change **intentionally** shifts size and you accept the new baseline: `npm run perf:baseline` (writes **v2** with iOS + Android).
 
-Optional gate: `npm run perf:check` — fails if bundle exceeds baseline by more than `PERF_THRESHOLD_PCT` (default 5%). Hermes `.hbc` size can jitter by a few bytes between exports; keep the threshold > 0% or refresh the baseline after intentional dependency upgrades.
+Optional gate: `npm run perf:check` — compares **both** platforms to a **v2** baseline; fails if either `.hbc` exceeds baseline by more than `PERF_THRESHOLD_PCT` (default 5%). Hermes `.hbc` size can jitter slightly between exports; keep the threshold > 0% or refresh the baseline after intentional dependency upgrades.
+
+**Legacy:** v1 baselines still work with `perf:capture` + `--check --platform ios` via the script directly; migrate with `npm run perf:baseline`.
 
 ## What to treat as “prepare.py” (avoid casual edits)
 
@@ -31,6 +35,7 @@ Optional gate: `npm run perf:check` — fails if bundle exceeds baseline by more
 - Dependency changes (remove unused packages, replace heavy imports)
 - Lazy loading / dynamic import where Metro supports it for your entry graph
 - Icon font subsetting or switching icon strategy (large impact on **assets**, not always `.hbc`)
+- **Android assets vs iOS:** `expo-router` pulls `expo-symbols` → `@expo-google-fonts/material-symbols` (several TTF weights). That inflates **Android** `exportAssetsBytes` vs iOS; removing or replacing `expo-symbols` usage is the lever if you need a smaller asset footprint.
 
 ## What this does **not** replace
 

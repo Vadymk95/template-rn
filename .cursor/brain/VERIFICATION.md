@@ -40,6 +40,13 @@ Production iOS build via EAS (`eas build` with the production profile), manual
 device smoke (cold start, tabs, push opt-in if applicable, crash reporting once
 wired), then `eas submit` for the store pipeline.
 
+## Physical device (Expo Go)
+
+- **Web URL in terminal (`http://localhost:8081`)** — Metro may compile a **web** bundle; `react-native-web` + `react-dom` are installed so that path does not crash. The template still targets **native** only (`PROJECT_CONTEXT` non-goals); use browser preview only for quick checks, not as a product surface.
+- **LAN:** `npm start` — phone and Mac on the same Wi‑Fi; scan QR or open `exp://…` from the terminal in Expo Go.
+- **Tunnel (no same-LAN needed):** `npm run start:tunnel` — uses `@expo/ngrok` (devDependency). If you see `failed to start tunnel` / `remote gone away`, check [ngrok status](https://status.ngrok.com/), try without VPN, or retry later; then fall back to LAN or `npm run ios` (Simulator).
+- Non-interactive automation: set `CI=1` (Expo reads it instead of TTY prompts).
+
 ## Known false positives
 
 - `expo-doctor` warns about outdated `@types/react` sometimes — check if actually

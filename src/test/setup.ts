@@ -35,6 +35,30 @@ jest.mock('expo-secure-store', () => ({
     deleteItemAsync: jest.fn(() => Promise.resolve())
 }));
 
+// Gesture handler ships an official jest setup that no-ops its native module.
+require('react-native-gesture-handler/jestSetup');
+
+jest.mock('react-native-safe-area-context', () =>
+    require('react-native-safe-area-context/jest/mock')
+);
+
+jest.mock('expo-router', () => ({
+    Stack: ({ children }: { children: ReactNode }) => children,
+    Tabs: ({ children }: { children: ReactNode }) => children,
+    Link: ({ children }: { children: ReactNode }) => children,
+    useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn() }),
+    useLocalSearchParams: () => ({}),
+    useSegments: () => [],
+    usePathname: () => '/',
+    ErrorBoundary: ({ children }: { children: ReactNode }) => children
+}));
+
+jest.mock('expo-splash-screen', () => ({
+    preventAutoHideAsync: jest.fn(() => Promise.resolve(true)),
+    hideAsync: jest.fn(() => Promise.resolve(true)),
+    setOptions: jest.fn()
+}));
+
 // Silence Reanimated warnings in tests
 jest.mock('react-native-reanimated', () => require('react-native-reanimated/mock'));
 

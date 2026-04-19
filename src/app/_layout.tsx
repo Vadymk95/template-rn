@@ -1,6 +1,7 @@
 import '../../global.css';
 
 import { QueryClientProvider } from '@tanstack/react-query';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { type ReactElement, useEffect, useState } from 'react';
 import { I18nextProvider } from 'react-i18next';
@@ -16,7 +17,15 @@ import { I18nInitErrorFallback } from '@/shared/lib/i18n/I18nInitErrorFallback';
 
 import { RootStack } from './RootStack';
 
-export { ErrorBoundary } from 'expo-router';
+export { ErrorBoundary } from '@/shared/ui/ErrorBoundary/ErrorBoundary';
+
+// Keep the native splash visible until the first real frame (i18n ready or error).
+// Rejections are non-fatal — the call can race with the OS auto-hiding the splash.
+SplashScreen.preventAutoHideAsync().catch((reason: unknown) => {
+    logger.warn('[splash] preventAutoHideAsync failed', {
+        reason: reason instanceof Error ? reason.message : String(reason)
+    });
+});
 
 export const unstable_settings = {
     initialRouteName: EXPO_ROUTER.rootStackInitialRoute
@@ -50,6 +59,16 @@ const RootLayout = (): ReactElement => {
             cancelled = true;
         };
     }, []);
+
+    useEffect(() => {
+        if (isI18nReady || i18nInitError !== null) {
+            SplashScreen.hideAsync().catch((reason: unknown) => {
+                logger.warn('[splash] hideAsync failed', {
+                    reason: reason instanceof Error ? reason.message : String(reason)
+                });
+            });
+        }
+    }, [isI18nReady, i18nInitError]);
 
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>

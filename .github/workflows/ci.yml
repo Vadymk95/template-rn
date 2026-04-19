@@ -51,3 +51,19 @@ jobs:
 
             - name: Expo doctor (SDK health — blocking)
               run: npm run doctor
+
+    dependency-review:
+        name: Dependency review
+        runs-on: ubuntu-latest
+        if: github.event_name == 'pull_request'
+        timeout-minutes: 5
+        permissions:
+            contents: read
+            pull-requests: read
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Review dependency changes for vulnerabilities / license issues
+              uses: actions/dependency-review-action@v4
