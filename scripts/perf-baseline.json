@@ -1,0 +1,12 @@
+{
+    "schemaVersion": 1,
+    "capturedAt": "2026-04-19T20:17:49.066Z",
+    "gitSha": "494809f",
+    "platform": "ios",
+    "hermesBundleFile": "_expo/static/js/ios/entry-1f6123fcf1a98b9ef933cba67be64d04.hbc",
+    "metrics": {
+        "hermesBundleBytes": 4648104,
+        "exportAssetsBytes": 4099976,
+        "hermesBundleMb": 4.433
+    }
+}

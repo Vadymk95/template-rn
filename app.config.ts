@@ -3,6 +3,10 @@ import type { ExpoConfig, ConfigContext } from 'expo/config';
 const IS_DEV = process.env['APP_VARIANT'] === 'development';
 const IS_PREVIEW = process.env['APP_VARIANT'] === 'preview';
 
+/** Set by EAS Build/Update or `eas.json` env when using OTA; omit for local-only dev. */
+// eslint-disable-next-line expo/no-dynamic-env-var -- EAS injects at build; not a client bundle key
+const easProjectId = process.env['EAS_PROJECT_ID'];
+
 const getBundleId = () => {
     if (IS_DEV) return 'com.example.templatern.dev';
     if (IS_PREVIEW) return 'com.example.templatern.preview';
@@ -33,11 +37,27 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         supportsTablet: true,
         bundleIdentifier: getBundleId(),
         infoPlist: {
-            ITSAppUsesNonExemptEncryption: false,
-            NSCameraUsageDescription: 'Allow $(PRODUCT_NAME) to access the camera.',
-            NSLocationWhenInUseUsageDescription:
-                'Allow $(PRODUCT_NAME) to access your location while the app is in use.',
-            NSPhotoLibraryUsageDescription: 'Allow $(PRODUCT_NAME) to access your photo library.'
+            ITSAppUsesNonExemptEncryption: false
+        },
+        privacyManifests: {
+            NSPrivacyAccessedAPITypes: [
+                {
+                    NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryFileTimestamp',
+                    NSPrivacyAccessedAPITypeReasons: ['C617.1']
+                },
+                {
+                    NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryUserDefaults',
+                    NSPrivacyAccessedAPITypeReasons: ['CA92.1']
+                },
+                {
+                    NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategorySystemBootTime',
+                    NSPrivacyAccessedAPITypeReasons: ['35F9.1']
+                },
+                {
+                    NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryDiskSpace',
+                    NSPrivacyAccessedAPITypeReasons: ['E174.1']
+                }
+            ]
         }
     },
     android: {
@@ -46,7 +66,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
             backgroundColor: '#ffffff'
         },
         package: getBundleId(),
-        permissions: ['CAMERA', 'ACCESS_FINE_LOCATION', 'READ_MEDIA_IMAGES']
+        permissions: []
     },
     plugins: [
         'expo-router',
@@ -68,13 +88,15 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
     extra: {
         router: { origin: false },
-        eas: {
-            projectId: 'YOUR_EAS_PROJECT_ID'
-        }
+        ...(easProjectId ? { eas: { projectId: easProjectId } } : {})
     },
-    updates: {
-        url: 'https://u.expo.dev/YOUR_EAS_PROJECT_ID'
-    },
+    ...(easProjectId
+        ? {
+              updates: {
+                  url: `https://u.expo.dev/${easProjectId}`
+              }
+          }
+        : {}),
     runtimeVersion: {
         policy: 'appVersion'
     }

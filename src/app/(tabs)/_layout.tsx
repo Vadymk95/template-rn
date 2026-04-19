@@ -1,7 +1,6 @@
-import type { ReactElement } from 'react';
-
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
+import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { TAB_BAR_ACTIVE_TINT } from '@/shared/lib/constants/navigationTheme';

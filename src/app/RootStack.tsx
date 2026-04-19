@@ -1,6 +1,5 @@
-import type { ReactElement } from 'react';
-
 import { Stack } from 'expo-router';
+import type { ReactElement } from 'react';
 
 import { EXPO_ROUTER } from '@/shared/lib/constants/expoRouter';
 

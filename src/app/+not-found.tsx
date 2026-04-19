@@ -1,6 +1,5 @@
-import type { ReactElement } from 'react';
-
 import { Link, Stack } from 'expo-router';
+import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 

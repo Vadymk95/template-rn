@@ -62,11 +62,16 @@ Short record of non-obvious trade-offs. Update when reversing a decision.
   the product, implement `report.capture` and `report.breadcrumb`, call sites
   do not change.
 
-## No forms / i18n / auth libraries in the template
+## i18n + forms in the template vs vendor/auth
 
-- These are opinionated product choices. Template stays minimal so every MVP
-  picks the right library (RHF vs TanStack Form, i18next vs Lingui vs FormatJS,
-  Clerk vs Supabase vs Auth0) without fighting the scaffold.
+- **i18next + react-i18next** ship with bundled JSON, typed keys, and
+  `expo-localization` for the initial language. Remote-only catalogs (Phrase,
+  Lokalise HTTP, CMS strings) stay a product integration.
+- **react-hook-form + `@hookform/resolvers` (Zod)** ship as the default for
+  non-trivial inputs; TanStack Form or codegen-heavy stacks remain product
+  choices. Single-field UI may still use local state per engineering standards.
+- **No auth or crash-reporting SDK** in the scaffold — pick Clerk / Supabase /
+  Sentry (etc.) when the product needs them.
 
 ## `@t3-oss/env-core` + Zod
 
@@ -88,8 +93,7 @@ Short record of non-obvious trade-offs. Update when reversing a decision.
 - ESLint **10** currently trips `eslint-plugin-react` inside `eslint-config-expo`
   (`getFilename` / resolver edge cases). **ESLint 9.39.x** is the pragmatic pin
   until Expo’s flat config stack catches up.
-- Type-aware rules (`typescript-eslint` strict + stylistic) apply to **`src/**`only** so`app.config.ts` and tooling files do not require a TS project entry
-  for lint.
+- Type-aware `typescript-eslint` rules are scoped to **`src/**`** so `app.config.ts` and other root tooling stay outside the type-aware project surface.
 
 ## `react-dom` override + `react@19.2.0`
 
@@ -118,6 +122,35 @@ Short record of non-obvious trade-offs. Update when reversing a decision.
 - **Global branch coverage** is set to **10%** (statements/lines/functions stay
   **60%**). RN + logger + Query bootstrap produce many platform branches that are
   better covered by integration/E2E later than by artificial unit tests.
-- **`src/shared/lib/constants/**`, `src/shared/lib/i18n/**`, and `src/shared/locales/**`**
-are excluded from **`collectCoverageFrom`** — declarative tables / JSON / thin
-init glue; correctness is typecheck + ESLint (`i18next/no-literal-string`in`src/app`) + manual smoke. Add tests when logic grows (e.g. dynamic route builders).
+- **`src/shared/lib/constants/**`, `src/shared/lib/i18n/**`, and `src/shared/locales/**`** are excluded from **`collectCoverageFrom`** — declarative tables, JSON, and thin init glue; correctness is typecheck, ESLint (`i18next/no-literal-string`in`src/app`), and manual smoke. Add tests when logic grows (for example dynamic route builders).
+
+## Audit hygiene adopted in-repo (template maintenance)
+
+The following were merged as **scaffold fixes** (not product features): Husky hook scripts so `lint-staged` / `commitlint` / pre-push `typecheck+test` actually run; `app.config.ts` gates `extra.eas` + `updates.url` on `EAS_PROJECT_ID`; iOS `privacyManifests` for required-reason APIs; empty default `android.permissions` / minimal `infoPlist` until a feature needs sensors; `.env.example` aligned with `src/env.ts`; CI `permissions: contents: read`; `react-i18next` aligned with `i18next@26`; TanStack Query default retry skips 4xx; auth token storage in `expo-secure-store` via `src/lib/secureToken.ts` with username-only Zustand persist; `engines.node` floor matches `.nvmrc` (24). **Still defer:** custom production ErrorBoundary UI, splash hold until i18n, HTTP client module, navigation test mocks, SHA-pinned Actions beyond `permissions`, FSD `hooks/` boundary split — revisit when the first product milestone needs them.
+
+## Audit backlog (P0–P2): what the template adopts vs defers
+
+Recorded so forks do not re-litigate the same list. **Ghost principle:** only items marked **Adopt** belong in-repo; the rest are README / product follow-ups.
+
+| Tier | Item                                       | Template decision                                                                                                                                                                                      |
+| ---- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| P0   | MMKV swap for AsyncStorage                 | **Defer** — AsyncStorage + Jest mock is zero-native-cost; MMKV is a second persistence story (native module, CI, Zustand adapter). Add when perf or sync API is a real constraint.                     |
+| P0   | Sentry + source maps in CI                 | **Defer or polarize** — either wire `@sentry/react-native` + upload, or remove `EXPO_PUBLIC_SENTRY_DSN` until then; optional env key without SDK confuses authors.                                     |
+| P0   | HTTP client + interceptors in `shared/api` | **Defer** — `fetch` + TanStack Query is enough for a skeleton; axios/ky/opinionated interceptors are product-shaped (auth refresh, error taxonomy). Document “add client when first real API surface”. |
+| P0   | Maestro E2E smoke                          | **Defer** — high value for teams, but extra toolchain for a first-time RN author; add after first release candidate or when CI budget allows.                                                          |
+| P0   | TanStack Query persist + NetInfo + MMKV    | **Defer** — offline-first is a product decision; doubles persistence + cache invalidation story. Query already refetches on foreground.                                                                |
+| P1   | expo-image default wrapper                 | **Defer** — add when remote images / blurhash matter; until then `Image` or no images keeps bundle lean.                                                                                               |
+| P1   | react-hook-form + zod resolvers            | **Adopted** — deps + Zod resolvers in tree; single-field inputs may still use `useState` per `engineering-standards.mdc`.                                                                              |
+| P1   | FlashList                                  | **Defer** — add with first long list; wrapper in `shared` before need violates FSD ghost principle.                                                                                                    |
+| P1   | Bundle size budget in CI                   | **Defer as a default workflow step** — in-repo `perf:*` scripts + baseline JSON support optional numeric checks; enabling them in GHA stays a product/team choice until baselines stabilize.           |
+| P1   | actions/cache npm + Metro in GHA           | **Условно** — adopt when CI runtime hurts; trivial add, low opinion risk.                                                                                                                              |
+| P1   | EAS Update Hermes bytecode diff            | **Defer** — opt-in/beta surface; track Expo release notes, not template default.                                                                                                                       |
+| P2   | eslint-plugin-react-native-a11y            | **Defer** — useful; enable when screen set grows (noise on early stubs).                                                                                                                               |
+| P2   | keyboard-controller                        | **Defer** — add when forms hit keyboard overlap.                                                                                                                                                       |
+| P2   | expo-notifications + universal links       | **Defer** — product/domain.                                                                                                                                                                            |
+| P2   | Preview EAS on every PR                    | **Defer** — cost + secrets; document in SKELETONS for teams that want it.                                                                                                                              |
+| P2   | Storybook RN                               | **Defer** — heavy for starter; optional doc link.                                                                                                                                                      |
+| P2   | gitleaks in CI                             | **Условно** — good for org templates; public solo template often uses GitHub secret scanning only.                                                                                                     |
+| P2   | jailbreak detection                        | **Defer** — niche (finance / high-assurance).                                                                                                                                                          |
+| P2   | tailwind-variants / CVA                    | **Defer** — NativeWind + clsx already chosen; second styling abstraction needs justification.                                                                                                          |
+| P2   | Zustand persist on MMKV                    | **Defer** — same as P0 MMKV; ties store layer to native KV choice.                                                                                                                                     |

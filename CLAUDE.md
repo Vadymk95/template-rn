@@ -30,11 +30,15 @@ Expo SDK 55 · React Native 0.83 · React 19.2 · TypeScript 5.9 strict · Expo 
 
 **Env** — all runtime config via `src/env.ts` (Zod-validated). Never read `process.env.*` directly.
 
+**EAS / OTA** — `EAS_PROJECT_ID` is optional build-time metadata for `app.config.ts` (enables `updates.url` when set). Local Expo Go / forks without EAS omit it.
+
 **CNG** — `app.config.ts` is the source of truth. Do NOT hand-edit `ios/` or `android/` — regenerate via `npx expo prebuild --clean`.
 
 **Logger** — never raw `console.error`. Always `logger.error(message, error, context)`.
 
 **i18n** — user-visible strings go through `useTranslation` / `t()` and JSON under `src/shared/locales/`. Types: `src/shared/lib/i18n/resources.ts`. Init + fallback: `src/shared/lib/i18n/index.ts`, `I18nInitErrorFallback.tsx`. Only the init-fallback screen uses hardcoded English (no `t()`).
+
+**Forms** — `react-hook-form` + `zodResolver` for non-trivial forms; one-off inputs may use `useState`. See `engineering-standards.mdc` and `DECISIONS.md` (audit backlog).
 
 **Testing** — Jest + jest-expo + Testing Library in-repo. For native E2E later, add **Maestro** or **Detox**; **Playwright** is for browsers (use only if you enable Expo Web and want web E2E).
 

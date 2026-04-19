@@ -10,12 +10,26 @@ AppState.addEventListener('change', (status: AppStateStatus) => {
     }
 });
 
+const getErrorStatus = (error: unknown): number | undefined => {
+    if (error !== null && typeof error === 'object' && 'status' in error) {
+        const status = (error as { status?: unknown }).status;
+        return typeof status === 'number' ? status : undefined;
+    }
+    return undefined;
+};
+
 export const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
             staleTime: 60_000,
             gcTime: 5 * 60_000,
-            retry: 2,
+            retry: (failureCount, error) => {
+                const status = getErrorStatus(error);
+                if (status !== undefined && status >= 400 && status < 500) {
+                    return false;
+                }
+                return failureCount < 2;
+            },
             refetchOnWindowFocus: true
         }
     }

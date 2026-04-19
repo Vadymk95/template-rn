@@ -10,7 +10,7 @@
 | entities | `src/store/`                            |
 | shared   | `src/lib/`, `src/shared/`, `src/env.ts` |
 
-Imports flow **down-stack only** (app may use shared; shared must not import entities). Full rules: `.cursor/rules/fsd-layers.mdc`.
+Imports flow **down-stack only** (app may use shared; shared must not import entities). Full rules: `.cursor/rules/fsd-layers.mdc`. Layer folders above may not exist until the first slice; boundaries still define where new files belong.
 
 ## i18n
 
@@ -18,7 +18,7 @@ Imports flow **down-stack only** (app may use shared; shared must not import ent
 | ---------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | Bundled strings (per language)           | `src/shared/locales/<lng>/*.json`                                                                  |
 | Init, `i18nInitPromise`, resource wiring | `src/shared/lib/i18n/index.ts`                                                                     |
-| Typed keys (`t()` autocomplete)          | `src/shared/lib/i18n/resources.ts` + namespaces in `constants.ts`                                  |
+| Typed keys (`t()` autocomplete)          | `src/shared/lib/i18n/resources.ts` + namespaces in `src/shared/lib/i18n/constants.ts`              |
 | Init failure UI (no `t()`)               | `src/shared/lib/i18n/I18nInitErrorFallback.tsx`                                                    |
 | Initial language from device             | `expo-localization` inside `index.ts` (add more `SUPPORTED_LANGUAGES` + JSON when you add locales) |
 
@@ -54,13 +54,13 @@ Imports flow **down-stack only** (app may use shared; shared must not import ent
 
 ## State
 
-| Kind                                 | Lives in                                                       |
-| ------------------------------------ | -------------------------------------------------------------- |
-| Client state (UI, user session stub) | `src/store/<domain>/` (Zustand) — **entities**                 |
-| Server state (API data)              | `src/features/<name>/` or `src/hooks/<domain>/` — **features** |
-| Form state                           | _not wired — pick RHF or TanStack Form per product_            |
-| Persistent secrets                   | `expo-secure-store` (add a `tokenStorage` wrapper per product) |
-| Persistent non-secrets               | `AsyncStorage` (Zustand `persist` middleware)                  |
+| Kind                                 | Lives in                                                                                |
+| ------------------------------------ | --------------------------------------------------------------------------------------- |
+| Client state (UI, user session stub) | `src/store/<domain>/` (Zustand) — **entities**                                          |
+| Server state (API data)              | `src/features/<name>/` or `src/hooks/<domain>/` — **features**                          |
+| Form state                           | `react-hook-form` + `@hookform/resolvers` (Zod); TanStack Form per product if preferred |
+| Secrets that grant API access        | `src/lib/secureToken.ts` (thin `expo-secure-store` wrapper — extend keys per product)   |
+| Persistent non-secrets               | `AsyncStorage` (Zustand `persist` middleware)                                           |
 
 ## Styling
 
@@ -73,12 +73,13 @@ Imports flow **down-stack only** (app may use shared; shared must not import ent
 
 ## Infrastructure
 
-| What                          | Where                                                 |
-| ----------------------------- | ----------------------------------------------------- |
-| Native iOS permissions        | `app.config.ts` → `ios.infoPlist`                     |
-| Native Android permissions    | `app.config.ts` → `android.permissions`               |
-| Bundle IDs (dev/preview/prod) | `app.config.ts` → `APP_VARIANT` env                   |
-| EAS build profiles            | `eas.json`                                            |
-| OTA update channel            | `app.config.ts` → `updates.url` + `runtimeVersion`    |
-| CI (GitHub Actions)           | `.github/workflows/ci.yml` — same gates as `ci:local` |
-| Path alias `@/*`              | `tsconfig.json` `paths` (single source of truth)      |
+| What                          | Where                                                                                                                                                        |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Native iOS permissions        | `app.config.ts` → `ios.infoPlist`                                                                                                                            |
+| Native Android permissions    | `app.config.ts` → `android.permissions`                                                                                                                      |
+| Bundle IDs (dev/preview/prod) | `app.config.ts` → `APP_VARIANT` env                                                                                                                          |
+| EAS build profiles            | `eas.json`                                                                                                                                                   |
+| OTA update channel            | `app.config.ts` → `updates.url` + `runtimeVersion`                                                                                                           |
+| CI (GitHub Actions)           | `.github/workflows/ci.yml` — same gates as `ci:local`                                                                                                        |
+| Optional bundle metrics       | `scripts/capture-bundle-metrics.mjs`, `npm run perf:*`, `scripts/perf-program.md` — local baseline/check; wire into CI only if the team wants a numeric gate |
+| Path alias `@/*`              | `tsconfig.json` `paths` (single source of truth)                                                                                                             |

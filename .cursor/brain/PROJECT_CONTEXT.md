@@ -7,11 +7,11 @@ Production-ready React Native + Expo foundation. Mirrors the philosophy of
 adapted for mobile: file-based routing, native dependencies via config plugins,
 OTA updates, cloud builds.
 
-This is a **generic MVP template**. No vendor integrations (Sentry, Firebase,
-auth providers, forms libraries) — wire those in when the concrete product needs
-them. **i18next** ships with bundled JSON + typed keys; remote CMS / phrase
-pipelines are still product-specific. The template ships the toolchain and the
-architectural spine.
+This is a **generic MVP template**. No vendor auth, analytics, or crash
+reporting — wire those when the product needs them. **i18next** (bundled JSON +
+typed keys) and **react-hook-form** with Zod resolvers ship as defaults; remote
+translation delivery and heavier form stacks stay product-specific. The template
+ships the toolchain and the architectural spine.
 
 ## Tech Stack (April 2026)
 
@@ -27,7 +27,7 @@ architectural spine.
 | State          | Zustand + devtools + persist                                         | 5                          |
 | Server state   | TanStack Query (+ AppState focus)                                    | 5                          |
 | Env validation | @t3-oss/env-core + zod                                               | 0.13 / 4                   |
-| Animation      | react-native-reanimated (+ worklets)                                 | 4 / 0.8                    |
+| Animation      | react-native-reanimated (+ worklets)                                 | 4.2 / 0.7.4                |
 | Gestures       | react-native-gesture-handler                                         | 2.30                       |
 | Storage        | expo-secure-store (secrets) + AsyncStorage (cache)                   | —                          |
 | Observability  | stub `logger.ts` (wire Sentry/etc in product)                        | —                          |
@@ -37,18 +37,19 @@ architectural spine.
 | Git hooks      | Husky + commitlint + lint-staged                                     | —                          |
 | Compiler       | React Compiler (enabled via `experiments.reactCompiler`)             | stable                     |
 | i18n           | i18next + react-i18next + `src/shared/locales/` + expo-localization  | typed `t()` keys           |
+| Forms          | react-hook-form + @hookform/resolvers (Zod)                          | simple inputs default      |
 
 `expo-localization` supplies the initial language; catalogs live next to the app
 in JSON (see `MAP.md` → i18n).
 
 ## Architecture
 
-**Shipped under `src/` today:** `app/` (Expo Router: root layout, `RootStack`,
-tab group, home and settings tabs, not-found), `shared/locales/` + `shared/lib/i18n/`
-(bundled translations + init), `lib/` (query client with AppState focus, logger stub,
-`cn()` helper and their tests), `store/user` and `store/utils` (example Zustand +
-persist + selector helpers), `test/setup.ts` for Jest, and `env.ts` for validated
-public env.
+**Shipped under `src/` today:** `app/` (Expo Router: root layout with i18n gate,
+`RootStack`, tab group, home and settings tabs, not-found), `shared/locales/` +
+`shared/lib/i18n/` (bundled translations + init), `lib/` (query client with
+AppState focus, logger stub, `secureToken` for Keychain-backed auth token I/O, `cn()` helper and their tests), `store/user` and
+`store/utils` (example Zustand + persist + selector helpers), `test/setup.ts` for
+Jest, and `env.ts` for validated public env.
 
 **Extension points (add when the product needs them):** `components/` (shared
 UI, layout shells, primitives), `hooks/<domain>/` (feature hooks colocated with
@@ -114,6 +115,7 @@ SDK 55, no Babel plugin needed.
 - `npm run lint:oxlint` — fast pre-pass (Rust-based, `src` scope)
 - `npm run test` — Jest
 - `npm run ci:local` — typecheck → oxlint → eslint → format:check → test:coverage → expo-doctor
+- `npm run perf:*` — optional Hermes bundle export + metric capture against `scripts/perf-baseline.json` (see `scripts/perf-program.md`)
 - `npx expo prebuild --clean` — regenerate `ios/` and `android/` from config
 - `eas build` — cloud build (no Mac required for iOS)
 - `eas update` — OTA JS/asset push (no App Store review)
@@ -123,6 +125,6 @@ SDK 55, no Babel plugin needed.
 - Web support (dropped — `app.config.ts` has no web block)
 - E2E tests (wire Maestro / Detox per product)
 - Remote-only translation delivery (Phrase/Lokalise HTTP backend, etc.) without JSON in-repo
-- Forms (pick RHF or TanStack Form per product)
+- TanStack Form or heavy form codegen as the default abstraction (template uses RHF + Zod resolvers for typical inputs)
 - Crash reporting (wire Sentry/Bugsnag per product into `logger.ts`)
 - Auth (pick Clerk/Supabase/Auth0/Firebase per product)

@@ -24,14 +24,20 @@ priority: 88
 ### Components & hooks — explicit types (React Native = same as React)
 
 - **React Native does not change typing**: use the same patterns as React on the web (`react` types apply to `react-native` primitives).
-- **Named UI components** (widgets, shared UI, `RootStack`, etc.): either  
-  `const Title: FunctionComponent<Props> = (props) => { … }` **or**  
-  `const Title = (props: Props): ReactElement => { … }`  
+- **Named UI components** (widgets, shared UI, `RootStack`, etc.): either
+  `const Title: FunctionComponent<Props> = (props) => { … }` **or**
+  `const Title = (props: Props): ReactElement => { … }`
   Always give **props** a named type (`interface` / `type`) when the component accepts props; use `Record<string, never>` (or omit the generic) only for zero-prop leaves.
 - **Return type**: prefer an **explicit** `ReactElement` / `ReactNode` (or `FunctionComponent<Props>` which already fixes the return) on anything **exported** or reused — it documents what callers get and catches accidental `undefined` / wrong branches before runtime.
-- **Expo Router screens** (`src/app/**` default exports): use **arrow + `export default`**, not `function` declarations, to match the rest of the repo:  
+- **Expo Router screens** (`src/app/**` default exports): use **arrow + `export default`**, not `function` declarations, to match the rest of the repo:
   `const HomeScreen = (): ReactElement => { … }; export default HomeScreen;`
 - **Custom hooks**: annotate the **return type** when it is not obvious from a single `useQuery` call (e.g. `(): UserQueryResult =>`), or use a named `type` / `interface` for the tuple/object you return.
+
+### Forms (inputs and validation)
+
+- **Single `TextInput` + `useState`** is fine for trivial or one-off fields — no library overhead.
+- **When several fields, cross-field rules, dirty/submit state, or reusable schemas matter:** use **`react-hook-form`** with **`@hookform/resolvers/zod`** so validation stays in **Zod**, same as `src/env.ts` and API DTOs.
+- **UI wiring:** keep field components and form hooks under **`src/features/<name>/`** (or widgets that compose them); `src/app/**` only mounts the screen.
 
 ## 3. Constants & magic values
 

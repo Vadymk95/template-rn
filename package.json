@@ -4,7 +4,7 @@
     "private": true,
     "main": "expo-router/entry",
     "engines": {
-        "node": ">=22.0.0"
+        "node": ">=24.0.0"
     },
     "scripts": {
         "start": "expo start",
@@ -25,6 +25,10 @@
         "test:watch": "jest --watch",
         "test:coverage": "jest --coverage",
         "bundle:analyze": "EXPO_ATLAS=1 expo export --platform ios --output-dir .atlas",
+        "perf:capture": "node scripts/capture-bundle-metrics.mjs --export",
+        "perf:measure": "node scripts/capture-bundle-metrics.mjs",
+        "perf:baseline": "node scripts/capture-bundle-metrics.mjs --export --write-baseline",
+        "perf:check": "node scripts/capture-bundle-metrics.mjs --export --check",
         "ci:local": "npm run typecheck && npm run lint:oxlint && npm run lint && npm run format:check && npm run test:coverage && npm run doctor",
         "prepare": "husky"
     },
@@ -52,7 +56,8 @@
         "i18next": "^26.0.6",
         "nativewind": "^4.2.3",
         "react": "19.2.0",
-        "react-i18next": "^15.7.4",
+        "react-hook-form": "^7.71.1",
+        "react-i18next": "^17.0.4",
         "react-native": "0.83.4",
         "react-native-edge-to-edge": "^1.8.1",
         "react-native-gesture-handler": "~2.30.0",
@@ -69,6 +74,7 @@
         "@commitlint/cli": "^20.5.0",
         "@commitlint/config-conventional": "^20.5.0",
         "@eslint/js": "^9.39.1",
+        "@hookform/resolvers": "^5.2.2",
         "@tanstack/eslint-plugin-query": "^5.99.2",
         "@testing-library/react-native": "^13.3.3",
         "@types/jest": "^29.5.14",

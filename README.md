@@ -13,26 +13,27 @@ no vendor integrations (auth, crash reporting, forms libraries) baked in; pick t
 
 ## Stack (April 2026)
 
-| Layer          | Choice                                                                                              | Why                                                        |
-| -------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| Runtime        | React Native 0.83 + React 19.2                                                                      | Expo SDK 55 baseline                                       |
-| Framework      | Expo SDK 55                                                                                         | Stable since Jan 2026; Legacy Arch dropped                 |
-| Compiler       | React Compiler (stable)                                                                             | Auto-memoization via `experiments.reactCompiler`           |
-| Language       | TypeScript 5.9 strict + `noUncheckedIndexedAccess` + `exactOptionalPropertyTypes`                   | Zero soft-land type escape hatches                         |
-| Routing        | Expo Router v55                                                                                     | File-based, typed routes, deep links                       |
-| Styling        | NativeWind 4.2 + Tailwind 3.4                                                                       | className-first; dark mode via `.dark`                     |
-| State (client) | Zustand 5 + `createSelectors`                                                                       | Minimal, no boilerplate                                    |
-| State (server) | TanStack Query 5 + AppState focus wiring                                                            | Queries refetch on app foreground                          |
-| Env            | `@t3-oss/env-core` + Zod                                                                            | Fail fast on missing vars                                  |
-| i18n           | `i18next` + `react-i18next` + JSON bundles + `expo-localization`                                    | Typed keys; add languages under `src/shared/locales/`      |
-| Animation      | Reanimated 4 + `react-native-worklets`                                                              | UI-thread animations                                       |
-| Gestures       | `react-native-gesture-handler`                                                                      | Required by Reanimated / Router                            |
-| Storage        | `expo-secure-store` (secrets) + `@react-native-async-storage/async-storage` (cache)                 | Tokens are encrypted at rest                               |
-| Icons          | `@expo/vector-icons`                                                                                | Ships with Expo, 20+ icon sets, no extra install           |
-| Testing        | Jest + jest-expo + @testing-library/react-native (built-in matchers)                                | RN-native testing, no deprecated jest-native               |
-| Lint           | ESLint 9 flat + `eslint-config-expo` + `import-x` + Oxlint + React Compiler + TanStack Query strict | Same rules locally and in CI                               |
-| Format         | Prettier 3                                                                                          | Enforced via eslint-plugin-prettier                        |
-| Hooks          | Husky + commitlint + lint-staged                                                                    | Conventional commits, oxlint → eslint → prettier in staged |
+| Layer          | Choice                                                                                              | Why                                                                        |
+| -------------- | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Runtime        | React Native 0.83 + React 19.2                                                                      | Expo SDK 55 baseline                                                       |
+| Framework      | Expo SDK 55                                                                                         | Stable since Jan 2026; Legacy Arch dropped                                 |
+| Compiler       | React Compiler (stable)                                                                             | Auto-memoization via `experiments.reactCompiler`                           |
+| Language       | TypeScript 5.9 strict + `noUncheckedIndexedAccess` + `exactOptionalPropertyTypes`                   | Zero soft-land type escape hatches                                         |
+| Routing        | Expo Router v55                                                                                     | File-based, typed routes, deep links                                       |
+| Styling        | NativeWind 4.2 + Tailwind 3.4                                                                       | className-first; dark mode via `.dark`                                     |
+| State (client) | Zustand 5 + `createSelectors`                                                                       | Minimal, no boilerplate                                                    |
+| State (server) | TanStack Query 5 + AppState focus wiring                                                            | Queries refetch on app foreground                                          |
+| Env            | `@t3-oss/env-core` + Zod                                                                            | Fail fast on missing vars                                                  |
+| i18n           | `i18next` + `react-i18next` + JSON bundles + `expo-localization`                                    | Typed keys; add languages under `src/shared/locales/`                      |
+| Forms          | `react-hook-form` + `@hookform/resolvers/zod`                                                       | Use when multi-field / schema validation; trivial `TextInput` → `useState` |
+| Animation      | Reanimated 4 + `react-native-worklets`                                                              | UI-thread animations                                                       |
+| Gestures       | `react-native-gesture-handler`                                                                      | Required by Reanimated / Router                                            |
+| Storage        | `expo-secure-store` (secrets) + `@react-native-async-storage/async-storage` (cache)                 | Tokens are encrypted at rest                                               |
+| Icons          | `@expo/vector-icons`                                                                                | Ships with Expo, 20+ icon sets, no extra install                           |
+| Testing        | Jest + jest-expo + @testing-library/react-native (built-in matchers)                                | RN-native testing, no deprecated jest-native                               |
+| Lint           | ESLint 9 flat + `eslint-config-expo` + `import-x` + Oxlint + React Compiler + TanStack Query strict | Same rules locally and in CI                                               |
+| Format         | Prettier 3                                                                                          | Enforced via eslint-plugin-prettier                                        |
+| Hooks          | Husky + commitlint + lint-staged                                                                    | Conventional commits, oxlint → eslint → prettier in staged                 |
 
 ---
 

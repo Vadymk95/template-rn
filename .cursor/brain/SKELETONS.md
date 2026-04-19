@@ -8,6 +8,8 @@ Touch with intent; re-verify via the commands in `VERIFICATION.md`.
 - `bundleIdentifier` / `package` change = new app in stores (users lose data)
 - `scheme` change = all existing deep links break
 - `runtimeVersion.policy` change = OTA updates stop working for old clients
+- `ios.privacyManifests` — wrong or missing required-reason entries → App Store rejection; vendor SDKs may add APIs → revisit manifest.
+- `EAS_PROJECT_ID` — when unset, `updates.url` is omitted (no OTA); set via EAS Build or `eas.json` env for real OTA.
 - Removing a permission `infoPlist` key that code still uses = App Store rejection
 - New `plugins: [...]` entry requires `npx expo prebuild --clean` before build
 - `experiments.reactCompiler: true` — disabling it silently changes render behavior
@@ -31,6 +33,12 @@ Touch with intent; re-verify via the commands in `VERIFICATION.md`.
 - `AppState` listener must register at module load. Moving it into a hook =
   queries never refetch on foreground in production.
 
+## `src/lib/secureToken.ts`
+
+- Renaming the storage key without clearing or migrating the old key strands
+  tokens in SecureStore until the user reinstalls — treat key changes like a
+  storage schema bump.
+
 ## `src/store/user/userStore.ts` (and any `persist`-ed store)
 
 - `partialize` controls what lands in AsyncStorage. Accidentally persisting a
@@ -39,8 +47,10 @@ Touch with intent; re-verify via the commands in `VERIFICATION.md`.
 ## `src/app/_layout.tsx`
 
 - Provider order matters: `GestureHandlerRootView` → `SafeAreaProvider` →
-  `QueryClientProvider` → `Stack`. Swapping causes gesture handlers to fail on
-  Android only (iOS hides the bug).
+  **i18n bootstrap** (error UI, loading gate, then `I18nextProvider`) →
+  `QueryClientProvider` → `RootStack` (Expo `Stack`). Swapping the outer shell
+  breaks gestures on Android; moving `QueryClientProvider` outside
+  `I18nextProvider` risks screens querying before `t()` is available.
 - `ErrorBoundary` exported from `expo-router` — must be a named re-export at
   module top level, otherwise Expo Router cannot find it.
 
