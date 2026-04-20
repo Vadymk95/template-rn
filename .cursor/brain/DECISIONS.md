@@ -119,14 +119,24 @@ Short record of non-obvious trade-offs. Update when reversing a decision.
   smoke test is not worth the config surface for a template. **`src/env.ts`**
   is excluded from **`collectCoverageFrom`** — it is still enforced at runtime by
   Zod + `createEnv`.
-- **Global branch coverage** is set to **10%** (statements/lines/functions stay
-  **60%**). RN + logger + Query bootstrap produce many platform branches that are
-  better covered by integration/E2E later than by artificial unit tests.
+- **Coverage thresholds** are set to **statements/lines/functions 80%, branches 60%** — tuned to the current logic-layer test surface after excluding `src/app/`, `src/env.ts`, `src/shared/lib/i18n/`, `src/shared/lib/constants/`, and `src/shared/locales/**`.
 - **`src/shared/lib/constants/**`, `src/shared/lib/i18n/**`, and `src/shared/locales/**`** are excluded from **`collectCoverageFrom`** — declarative tables, JSON, and thin init glue; correctness is typecheck, ESLint (`i18next/no-literal-string`in`src/app`), and manual smoke. Add tests when logic grows (for example dynamic route builders).
 
 ## Audit hygiene adopted in-repo (template maintenance)
 
-The following were merged as **scaffold fixes** (not product features): Husky hook scripts so `lint-staged` / `commitlint` / pre-push `typecheck+test` actually run; `app.config.ts` gates `extra.eas` + `updates.url` on `EAS_PROJECT_ID`; iOS `privacyManifests` for required-reason APIs; empty default `android.permissions` / minimal `infoPlist` until a feature needs sensors; `.env.example` aligned with `src/env.ts`; CI `permissions: contents: read`; `react-i18next` aligned with `i18next@26`; TanStack Query default retry skips 4xx; auth token storage in `expo-secure-store` via `src/lib/secureToken.ts` with username-only Zustand persist; `engines.node` floor matches `.nvmrc` (24). **Still defer:** custom production ErrorBoundary UI, splash hold until i18n, HTTP client module, navigation test mocks, SHA-pinned Actions beyond `permissions`, FSD `hooks/` boundary split — revisit when the first product milestone needs them.
+The following were merged as **scaffold fixes** (not product features): Husky hook scripts so `lint-staged` / `commitlint` / pre-push `typecheck+test` actually run; `app.config.ts` gates `extra.eas` + `updates.url` on `EAS_PROJECT_ID`; iOS `privacyManifests` for required-reason APIs; empty default `android.permissions` / minimal `infoPlist` until a feature needs sensors; `.env.example` aligned with `src/env.ts`; CI `permissions: contents: read`; `react-i18next` aligned with `i18next@26`; TanStack Query default retry skips 4xx; auth token storage in `expo-secure-store` via `src/lib/secureToken.ts` with username-only Zustand persist; `engines.node` floor matches `.nvmrc` (24).
+
+**Completed since the audit was written** — no action required:
+
+- splash hold until i18n (handled by `src/app/_layout.tsx` + `src/shared/lib/i18n/I18nInitErrorFallback.tsx`)
+- custom ErrorBoundary UI (`src/shared/ui/ErrorBoundary/`)
+
+**Still deferred to product MVP** — adopt when the listed trigger hits:
+
+- HTTP client module — add when the first authenticated API surface lands
+- Navigation test mocks — add when routing assertions appear in tests
+- SHA-pinned Actions beyond `permissions` — adopt if the repo becomes a public/org template
+- FSD `hooks/` boundary split — revisit if `src/hooks/` grows past a handful of entries
 
 ## Audit backlog (P0–P2): what the template adopts vs defers
 
