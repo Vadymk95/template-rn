@@ -1,3 +1,8 @@
+// Scale note: all namespaces loaded statically (1 locale × 6 NS today).
+// When SUPPORTED_LANGUAGES grows past 2, migrate to lazy namespace
+// load via i18next.addResourceBundle on language change. See
+// PROJECT_CONTEXT.md → "Full scope: strengths vs deferred tools".
+
 import * as Localization from 'expo-localization';
 import i18next from 'i18next';
 import { initReactI18next } from 'react-i18next';
