@@ -11,6 +11,19 @@ no vendor integrations (auth, crash reporting, forms libraries) baked in; pick t
 
 ---
 
+## Strict Contract
+
+This template treats structure and quality as **enforced contract**, not team folklore.
+
+- Human-facing contract: `docs/strict-template-contract.md`
+- Agent rules: `.cursorrules` + `.cursor/rules/*.mdc`
+- Verification matrix: `.cursor/brain/VERIFICATION.md`
+- Route / widget / feature / store placement: `.cursor/brain/MAP.md` + `.cursor/rules/fsd-layers.mdc`
+
+If you fork this template, keep those files in sync with your product decisions.
+
+---
+
 ## Stack (April 2026)
 
 | Layer          | Choice                                                                                              | Why                                                                        |
@@ -54,35 +67,42 @@ you can't write one. That's the 5% case. Start Expo managed.
 
 ## Folder structure
 
-```
+```text
 src/
-  app/                    # Expo Router file-based routes
-    _layout.tsx           # Root stack — providers, ErrorBoundary
-    (tabs)/               # Route group → tab navigator
-    +not-found.tsx        # 404
-  components/
-    common/ layout/ ui/   # empty placeholders — fill per product
-  hooks/
-    theme/ <domain>/      # feature hooks with tests alongside
-  lib/
-    queryClient.ts        # TanStack Query + AppState focus
-    logger.ts             # Pluggable logger stub (wire Sentry/Datadog in product)
-    utils.ts              # cn() — clsx-based class merge
+  app/                            # Expo Router route files only
+    _layout.tsx                   # providers, splash, ErrorBoundary
+    (tabs)/
+      index.tsx                   # thin route -> mounts Todo workspace widget
+      settings.tsx
+    +not-found.tsx
+  features/
+    todo*/                        # user actions: create/edit/filter/toggle/delete
+  widgets/
+    todo-workspace/               # main screen composition for the starter slice
   store/
-    user/                 # example Zustand store with partialize persist
-    utils/                # createSelectors
+    todo/                         # local Todo domain state
+    user/                         # example persisted auth-adjacent state
+    utils/                        # createSelectors helper
+  shared/
+    ui/                           # reusable primitives: Button, Input, Dialog, ...
+    lib/
+      constants/                  # app-wide constants
+      i18n/                       # bundled localization wiring
+      theme/                      # spacing, radii, colors, control tokens
+    locales/                      # bundled copy for tabs/routes/shared text
+  lib/
+    queryClient.ts                # TanStack Query + AppState focus
+    logger.ts                     # pluggable logger stub
+    utils.ts                      # cn() helper
   test/
-    setup.ts              # Reanimated + NativeWind jest mocks
-  env.ts                  # Zod-validated EXPO_PUBLIC_* env
+    setup.ts                      # Jest/native mocks
+  env.ts                          # Zod-validated EXPO_PUBLIC_* env
 ```
 
-Component pattern:
+Template slice pattern:
 
-```
-ComponentName/
-  ComponentName.tsx       # UI only — imports hook
-  useComponentName.ts     # Logic
-  ComponentName.test.tsx
+```text
+app route -> widget -> feature -> store/shared
 ```
 
 ---
@@ -125,11 +145,17 @@ runs the same check and will fail the PR with a red **Prettier** step.
 npm run typecheck && npm run lint && npm run test
 ```
 
-Full local CI:
+Repo-wide contract gate:
+
+```bash
+npm run verify
+```
+
+Native / machine parity:
 
 ```bash
 npm run ci:local
-# = typecheck → lint:oxlint → lint → format:check → test:coverage → expo-doctor
+# = npm run verify + expo-doctor
 ```
 
 ---
@@ -141,9 +167,41 @@ nvm use                           # reads .nvmrc
 npm install
 npx expo-doctor                   # verifies deps match SDK
 npm start                         # QR code → Expo Go / Dev Client
+npm run start:clear               # same, but resets the Metro cache
+npm run start:tunnel              # QR/link over the internet (Expo Go / Dev Client)
+npm run start:tunnel:clear        # tunnel + clean Metro cache
 npm run ios                       # Mac only
 npm run android
 ```
+
+### Native tooling for local emulators
+
+- **Android Studio**: install Android Studio + Android SDK + an emulator image,
+  then set `ANDROID_HOME` and add the SDK `platform-tools` / `emulator` folders
+  to `PATH`. After that, launch an AVD and run `npm run android`.
+- **Xcode**: install Xcode from the App Store, open it once to finish setup,
+  install command line tools with `xcode-select --install`, then use the iOS
+  Simulator via `npm run ios`.
+- **Mac-only note**: iOS Simulator requires macOS + Xcode. Android emulators
+  work from Android Studio; cloud device builds still go through EAS.
+
+### QR code, deep links, and "any internet"
+
+- `npm start` / `npm run start:clear` uses your local network (same Wi-Fi).
+- `npm run start:tunnel` (or `npm run start:tunnel:clear`) exposes the dev
+  server through Expo's tunnel so Expo Go / a dev client can open the app from
+  a QR code or shared `exp://` link even when the phone is not on the same LAN.
+- This is a **development** workflow, not a production distribution channel. For
+  production "open by link" behavior you still need proper deep links,
+  Universal Links / App Links, and installed builds.
+
+### Build profiles
+
+- `development` — dev-client APK on Android and Simulator build on iOS, with a
+  separate bundle id/package for local/native debugging.
+- `preview` — internal QA/demo build distributed with EAS, same app shell style
+  as release but not for the stores.
+- `production` — release build for App Store / Play Store submission.
 
 EAS build (no Mac needed):
 

@@ -1,0 +1,49 @@
+{
+    "actions": {
+        "create": "New task",
+        "createSubmit": "Create task",
+        "saveSubmit": "Save changes",
+        "cancel": "Cancel",
+        "edit": "Edit task",
+        "delete": "Delete task",
+        "markComplete": "Mark task as complete",
+        "markActive": "Mark task as active"
+    },
+    "dialogs": {
+        "create": {
+            "title": "Create task",
+            "description": "Capture the next task you want to track locally."
+        },
+        "edit": {
+            "title": "Edit task",
+            "description": "Update the task title and keep the rest of the state intact."
+        }
+    },
+    "form": {
+        "titleLabel": "Task title",
+        "titlePlaceholder": "What needs to be done?",
+        "titleHint": "Use a short action-oriented title.",
+        "titleRequired": "Enter a task title to continue."
+    },
+    "summary": {
+        "total": "Total",
+        "active": "Active",
+        "completed": "Completed"
+    },
+    "filters": {
+        "all": "All",
+        "active": "Active",
+        "completed": "Completed"
+    },
+    "list": {
+        "sectionTitle": "Your tasks",
+        "emptyAllTitle": "No tasks yet",
+        "emptyAllDescription": "Create your first task to start shaping this local workspace.",
+        "emptyFilteredTitle": "No tasks in this filter",
+        "emptyFilteredDescription": "Try a different filter or create a new task."
+    },
+    "status": {
+        "completed": "Completed",
+        "active": "In progress"
+    }
+}

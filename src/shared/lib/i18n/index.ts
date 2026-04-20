@@ -1,14 +1,6 @@
-import './resources';
-
 import * as Localization from 'expo-localization';
 import i18next from 'i18next';
 import { initReactI18next } from 'react-i18next';
-
-import commonEn from '../../locales/en/common.json';
-import errorsEn from '../../locales/en/errors.json';
-import homeEn from '../../locales/en/home.json';
-import notFoundEn from '../../locales/en/notFound.json';
-import settingsEn from '../../locales/en/settings.json';
 
 import {
     DEFAULT_LANGUAGE,
@@ -16,7 +8,14 @@ import {
     DEFAULT_NAMESPACES,
     SUPPORTED_LANGUAGES,
     type SupportedLanguage
-} from './constants';
+} from '@/shared/lib/i18n/constants';
+import '@/shared/lib/i18n/resources';
+import commonEn from '@/shared/locales/en/common.json';
+import errorsEn from '@/shared/locales/en/errors.json';
+import homeEn from '@/shared/locales/en/home.json';
+import notFoundEn from '@/shared/locales/en/notFound.json';
+import settingsEn from '@/shared/locales/en/settings.json';
+import todoEn from '@/shared/locales/en/todo.json';
 
 const resolveInitialLanguage = (): SupportedLanguage => {
     const code = Localization.getLocales().at(0)?.languageCode;
@@ -32,7 +31,8 @@ const bundledResources = {
         errors: errorsEn,
         home: homeEn,
         settings: settingsEn,
-        notFound: notFoundEn
+        notFound: notFoundEn,
+        todo: todoEn
     }
 } as const;
 

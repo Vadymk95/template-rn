@@ -9,13 +9,14 @@ priority: 90
 
 ## The Approval Law
 
-| Task size | Protocol |
-| --------- | -------- |
-| &lt; 10 lines, single file | Proceed with brief notification |
+| Task size                                                                  | Protocol                                     |
+| -------------------------------------------------------------------------- | -------------------------------------------- |
+| &lt; 10 lines, single file                                                 | Proceed with brief notification              |
 | &gt; 10 lines **or** touches store / env / `app.config` / router `_layout` | Present plan → wait for approval → implement |
-| New cross-cutting pattern | Always present plan first |
+| New cross-cutting pattern                                                  | Always present plan first                    |
 
 **FORBIDDEN**: Starting non-trivial implementation before approval when the table requires it.
+In autonomous agent sessions, this means a written plan + explicit user approval checkpoint before implementation, not skipping straight to code.
 
 ## Planning requirements
 
@@ -23,14 +24,11 @@ A plan must list: files touched, one-line intent per file, test strategy (TDD vs
 
 ## Post-edit verification
 
-```bash
-npm run lint
-npm run format:check
-npm run typecheck
-npm test
-```
+Source of truth: `.cursor/brain/VERIFICATION.md`.
 
-Before pushing: `npm run ci:local` (see `.cursor/brain/VERIFICATION.md`).
+- Typical TS/TSX change: `npm run typecheck && npm run lint && npm run test`
+- Repo-wide gate before push / PR: `npm run verify`
+- Full native tooling parity: `npm run ci:local`
 
 ## Git commits
 

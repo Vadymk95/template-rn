@@ -9,13 +9,13 @@ import { ActivityIndicator, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { RootStack } from '@/app/RootStack';
+import { useStoreReady } from '@/hooks/useStoreReady';
 import { logger } from '@/lib/logger';
 import { queryClient } from '@/lib/queryClient';
 import { EXPO_ROUTER } from '@/shared/lib/constants/expoRouter';
 import i18n, { i18nInitPromise } from '@/shared/lib/i18n';
 import { I18nInitErrorFallback } from '@/shared/lib/i18n/I18nInitErrorFallback';
-
-import { RootStack } from './RootStack';
 
 export { ErrorBoundary } from '@/shared/ui/ErrorBoundary/ErrorBoundary';
 
@@ -34,6 +34,7 @@ export const unstable_settings = {
 const RootLayout = (): ReactElement => {
     const [isI18nReady, setIsI18nReady] = useState(i18n.isInitialized);
     const [i18nInitError, setI18nInitError] = useState<Error | null>(null);
+    const isStoreHydrated = useStoreReady();
 
     useEffect(() => {
         let cancelled = false;
@@ -49,9 +50,13 @@ const RootLayout = (): ReactElement => {
                 if (cancelled) {
                     return;
                 }
-                logger.error('[i18n] Failed to initialize i18next', {
-                    reason: error instanceof Error ? error.message : String(error)
-                });
+                logger.error(
+                    '[i18n] Failed to initialize i18next',
+                    error instanceof Error ? error : undefined,
+                    {
+                        reason: error instanceof Error ? error.message : String(error)
+                    }
+                );
                 setI18nInitError(error instanceof Error ? error : new Error(String(error)));
             });
 
@@ -61,21 +66,21 @@ const RootLayout = (): ReactElement => {
     }, []);
 
     useEffect(() => {
-        if (isI18nReady || i18nInitError !== null) {
+        if ((isI18nReady && isStoreHydrated) || i18nInitError !== null) {
             SplashScreen.hideAsync().catch((reason: unknown) => {
                 logger.warn('[splash] hideAsync failed', {
                     reason: reason instanceof Error ? reason.message : String(reason)
                 });
             });
         }
-    }, [isI18nReady, i18nInitError]);
+    }, [isI18nReady, isStoreHydrated, i18nInitError]);
 
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
             <SafeAreaProvider>
                 {i18nInitError ? (
                     <I18nInitErrorFallback />
-                ) : !isI18nReady ? (
+                ) : !isI18nReady || !isStoreHydrated ? (
                     <View className="flex-1 items-center justify-center bg-background">
                         <ActivityIndicator />
                     </View>

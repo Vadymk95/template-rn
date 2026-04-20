@@ -1,7 +1,9 @@
 # VERIFICATION — Which checks to run per change
 
 Match the check to the change. Do not run `ci:local` for every file edit —
-it takes minutes. Run the targeted subset, keep `ci:local` for pre-push.
+it takes minutes and depends on local native tooling. Run the targeted subset,
+use `verify` as the repo-wide contract gate, and keep `ci:local` for native or
+release parity.
 
 ## By change type
 
@@ -16,17 +18,22 @@ it takes minutes. Run the targeted subset, keep `ci:local` for pre-push.
 | `babel.config.js` / `metro.config.js` | Restart dev server with `--clear`                          |
 | Test file only                        | `npm run test -- <path>`                                   |
 
-## Pre-push (always)
+## Repo-wide contract gate (before push / PR)
 
-Run `npm run ci:local` — order: `typecheck` → `lint:oxlint` → `lint` →
-`format:check` → `test:coverage` → `expo-doctor`. Matches `.github/workflows/ci.yml`.
+Run `npm run verify` — order: `typecheck` → `lint:oxlint` → `lint` →
+`format:check` → `test:coverage`. This is the primary blocking quality gate for
+the template and should stay green before pushing.
 
-## Before opening a PR (faster local gate)
+## Native / machine parity
 
-Run `npm run verify` — same as CI **except** it omits `expo-doctor`. Order:
-`typecheck` → `lint:oxlint` → `lint` → `format:check` → `test:coverage`. If
-`format:check` fails, run `npm run format` and re-commit; CI treats formatting
-drift as a hard failure on purpose.
+Run `npm run ci:local` when:
+
+- touching native config, Expo / build tooling, Metro / Babel, or dependencies
+- preparing a release branch
+- validating a machine against Expo tooling
+
+`ci:local` = `npm run verify && npm run doctor`. `expo-doctor` is intentionally
+kept out of the core repo contract because it depends on local native tooling.
 
 ## Before first EAS build
 
@@ -46,6 +53,23 @@ wired), then `eas submit` for the store pipeline.
 - **LAN:** `npm start` — phone and Mac on the same Wi‑Fi; scan QR or open `exp://…` from the terminal in Expo Go.
 - **Tunnel (no same-LAN needed):** `npm run start:tunnel` — uses `@expo/ngrok` (devDependency). If you see `failed to start tunnel` / `remote gone away`, check [ngrok status](https://status.ngrok.com/), try without VPN, or retry later; then fall back to LAN or `npm run ios` (Simulator).
 - Non-interactive automation: set `CI=1` (Expo reads it instead of TTY prompts).
+
+## OTA discipline
+
+OTA (EAS Update) — safe for: JS logic, i18n strings, NativeWind styles, feature flags, minor UI changes.
+
+Native rebuild required for: any `expo-*` dep change, `app.config.ts` native fields (permissions,
+plugins, scheme), new permissions, Reanimated major bump, any change that produces a diff in
+`npx expo prebuild` output.
+
+Rule of thumb: if `git diff` touches `package.json` deps or `app.config.ts` → native rebuild +
+bump `runtimeVersion` (currently `policy: 'appVersion'`, so bump the `version` field in
+`app.config.ts`).
+
+## Auth flow readiness
+
+No auth flow exists yet. When adding authentication, use `<Stack.Protected guard={...}>` (Expo
+Router v5+) rather than the old route-group redirect pattern (`(auth)`/`(app)` + `router.replace`).
 
 ## Known false positives
 

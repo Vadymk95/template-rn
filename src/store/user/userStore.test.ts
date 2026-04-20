@@ -2,9 +2,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { act, renderHook } from '@testing-library/react-native';
 import * as SecureStore from 'expo-secure-store';
 
+import { useStoreReady } from '@/hooks/useStoreReady';
+import { USER_PERSIST_STORAGE_KEY } from '@/store/user/constants';
 import { useUserStore } from '@/store/user/userStore';
-
-import { USER_PERSIST_STORAGE_KEY } from './constants';
 
 describe('useUserStore', () => {
     beforeEach(async () => {
@@ -49,5 +49,40 @@ describe('useUserStore', () => {
         const parsed = JSON.parse(raw) as { state?: Record<string, unknown> };
         expect(parsed.state).toBeDefined();
         expect(parsed.state).not.toHaveProperty('token');
+        expect(parsed.state).not.toHaveProperty('_hasHydrated');
+    });
+
+    it('setHasHydrated drives useStoreReady for root layout gating', () => {
+        const { result } = renderHook(() => ({
+            ready: useStoreReady(),
+            hydrated: useUserStore.use._hasHydrated()
+        }));
+
+        act(() => {
+            useUserStore.getState().setHasHydrated(false);
+        });
+        expect(result.current.ready).toBe(false);
+        expect(result.current.hydrated).toBe(false);
+
+        act(() => {
+            useUserStore.getState().setHasHydrated(true);
+        });
+        expect(result.current.ready).toBe(true);
+        expect(result.current.hydrated).toBe(true);
+    });
+
+    it('logout clears username but does not reset hydration (avoids splash flash)', async () => {
+        act(() => {
+            useUserStore.getState().setHasHydrated(true);
+        });
+        const { result } = renderHook(() => useUserStore());
+        await act(async () => {
+            await result.current.setUser({ username: 'alice', token: 'tok' });
+        });
+        await act(async () => {
+            await result.current.logout();
+        });
+        expect(result.current.username).toBeNull();
+        expect(useUserStore.getState()._hasHydrated).toBe(true);
     });
 });

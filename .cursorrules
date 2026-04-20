@@ -14,11 +14,12 @@ Copilot) should operate in this repo.
 
 1. Read `.cursor/brain/PROJECT_CONTEXT.md` — purpose, stack, architecture.
 2. Read `.cursor/brain/MAP.md` — where things live.
-3. If task touches native config, store, API, router, or `_layout`:
-   also read `.cursor/brain/SKELETONS.md` before editing.
+3. Read `.cursor/brain/VERIFICATION.md` before editing code, config, or tests.
 4. If task adds or changes **imports** or **new paths** under `src/`:
    read `.cursor/rules/fsd-layers.mdc` (eslint-plugin-boundaries is CI law).
-5. State declared scope + touched SKELETONS zones in one sentence before coding.
+5. If task touches native config, persisted stores, Metro/Babel, env, router, or `_layout`:
+   also read `.cursor/brain/SKELETONS.md` before editing.
+6. State declared scope + touched SKELETONS zones in one sentence before coding.
 
 ## Ghost Principle
 
@@ -33,8 +34,9 @@ logic. Minimalist code.
 - Components: explicit props type + either `FunctionComponent<Props>` **or** explicit `: ReactElement` return on the arrow. Never the `FC` alias.
 - Named exports. **Exception:** Expo Router screens in `src/app/**` use `export default` (still implemented as a `const` + default export).
 - Imports via `@/` alias only. **Exception:** `global.css` in `src/app/_layout.tsx` only — `../../global.css` (NativeWind entry).
-- No magic strings / numbers — use constants or i18n keys.
-- Errors via `logger.*` — never raw `console.*`.
+- User-visible copy belongs in `src/shared/locales/**` and must be read through `t()`. Feature constants are for ids, keys, and derived labels — not bundled English product copy.
+- No magic strings / numbers in business logic or public UI APIs — use constants, tokens, or i18n keys.
+- Errors and warnings go through `logger.*`; no raw `console.*` in app code.
 
 ## FSD layer discipline (enforced via eslint-plugin-boundaries)
 
@@ -54,10 +56,10 @@ TDD → Verification → Brain Sync → Confidence declaration.
 
 ## Verification
 
-Match check to change — see `.cursor/brain/VERIFICATION.md`.
-Typical TS change: `npm run typecheck && npm run lint && npm run test`.
-Before a PR (same as CI minus `expo-doctor`): `npm run verify` (includes **`format:check`**).
-Pre-push: `npm run ci:local`.
+Source of truth: `.cursor/brain/VERIFICATION.md`.
+- Typical TS/TSX change: `npm run typecheck && npm run lint && npm run test`
+- Repo-wide contract before push / PR: `npm run verify`
+- Full native tooling parity: `npm run ci:local`
 IDE: open the **project folder** so `.vscode/settings.json` applies (Prettier + ESLint on save, workspace TypeScript).
 
 ## Communication

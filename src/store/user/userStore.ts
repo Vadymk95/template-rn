@@ -3,15 +3,15 @@ import { create } from 'zustand';
 import { createJSONStorage, devtools, persist } from 'zustand/middleware';
 
 import { clearAuthToken, setAuthToken } from '@/lib/secureToken';
-
-import { createSelectors } from '../utils/createSelectors';
-
-import { USER_PERSIST_STORAGE_KEY } from './constants';
+import { USER_PERSIST_STORAGE_KEY } from '@/store/user/constants';
+import { createSelectors } from '@/store/utils/createSelectors';
 
 interface UserState {
     username: string | null;
+    _hasHydrated: boolean;
     setUser: (payload: { username: string; token: string }) => Promise<void>;
     logout: () => Promise<void>;
+    setHasHydrated: (value: boolean) => void;
 }
 
 const useUserStoreBase = create<UserState>()(
@@ -19,6 +19,7 @@ const useUserStoreBase = create<UserState>()(
         persist(
             (set) => ({
                 username: null,
+                _hasHydrated: false,
                 setUser: async ({ username, token }) => {
                     await setAuthToken(token);
                     set({ username });
@@ -26,12 +27,16 @@ const useUserStoreBase = create<UserState>()(
                 logout: async () => {
                     await clearAuthToken();
                     set({ username: null });
-                }
+                },
+                setHasHydrated: (value) => set({ _hasHydrated: value })
             }),
             {
                 name: USER_PERSIST_STORAGE_KEY,
                 storage: createJSONStorage(() => AsyncStorage),
-                partialize: (state) => ({ username: state.username })
+                partialize: (state) => ({ username: state.username }),
+                onRehydrateStorage: () => (state) => {
+                    state?.setHasHydrated(true);
+                }
             }
         )
     )

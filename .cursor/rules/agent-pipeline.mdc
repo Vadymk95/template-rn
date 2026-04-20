@@ -21,12 +21,13 @@ If the task targets **only** files matching `*.test.ts`, `*.test.tsx`, `*.spec.t
 
 Before any reasoning about implementation:
 
-1. **Brain scan**: Read `.cursor/brain/MAP.md` (routes, stores, data flows).
-2. **Layer contract**: If the task adds or rewires **imports** under `src/` or creates **new folders** in `src/`, read `.cursor/rules/fsd-layers.mdc` first — boundaries are CI law.
-3. **Risk detection**: Read `.cursor/brain/SKELETONS.md` if the task touches native config, Metro/Babel, env, router layouts, or persisted stores.
-4. **Context gathering**: Identify affected files. Search for existing patterns before inventing new ones.
-5. **Scope declaration**: Produce clear **In-scope / Out-of-scope** list.
-6. **Explicit declaration**: State in one message: scope + SKELETONS zones touched (or `"none"`). Do not code before this.
+1. **Brain scan**: Read `.cursor/brain/PROJECT_CONTEXT.md` first, then `.cursor/brain/MAP.md`.
+2. **Verification contract**: Read `.cursor/brain/VERIFICATION.md` before editing code, config, or tests.
+3. **Layer contract**: If the task adds or rewires **imports** under `src/` or creates **new folders** in `src/`, read `.cursor/rules/fsd-layers.mdc` first — boundaries are CI law.
+4. **Risk detection**: Read `.cursor/brain/SKELETONS.md` if the task touches native config, Metro/Babel, env, router layouts, or persisted stores.
+5. **Context gathering**: Identify affected files. Search for existing patterns before inventing new ones.
+6. **Scope declaration**: Produce clear **In-scope / Out-of-scope** list.
+7. **Explicit declaration**: State in one message: scope + SKELETONS zones touched (or `"none"`). Do not code before this.
 
 > **Gate**: If the task touches a SKELETONS zone — flag the risk and propose mitigation before Phase 2.
 
@@ -40,6 +41,7 @@ Before simulating changes:
 
 - Activate `sequential-thinking` with `totalThoughts >= 3` for any task with more than three steps.
 - Dedicate at least one thought to **adversarial analysis**: what could break on iOS vs Android, cold start, offline, or OTA?
+- If `context7` is unavailable, fall back to official docs or repo-local documentation explicitly.
 
 ### Architectural Critique
 
@@ -86,14 +88,11 @@ Implement with `@testing-library/react-native`; add or extend tests after the UI
 
 ### 4.1 Automated checks
 
-```bash
-npm run lint
-npm run format:check
-npm run typecheck
-npm test
-```
+Default source of truth: `.cursor/brain/VERIFICATION.md`.
 
-For pre-push parity with CI: `npm run ci:local` (see `.cursor/brain/VERIFICATION.md`).
+- Typical code-edit loop: `npm run typecheck && npm run lint && npm run test`
+- Repo-wide contract gate: `npm run verify`
+- Native toolchain / release parity: `npm run ci:local`
 
 ### 4.2 Failure protocol
 

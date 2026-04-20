@@ -36,6 +36,7 @@ Optional gate: `npm run perf:check` — compares **both** platforms to a **v2** 
 - Lazy loading / dynamic import where Metro supports it for your entry graph
 - Icon font subsetting or switching icon strategy (large impact on **assets**, not always `.hbc`)
 - **Android assets vs iOS:** `expo-router` pulls `expo-symbols` → `@expo-google-fonts/material-symbols` (several TTF weights). That inflates **Android** `exportAssetsBytes` vs iOS; removing or replacing `expo-symbols` usage is the lever if you need a smaller asset footprint.
+- **Current repo workaround:** `metro.config.js` resolves Android Material Symbols font requests as `empty` because this template does not use `expo-symbols` directly. Keep validating with `npm run perf:capture:all` after Expo / Router upgrades until upstream makes the dependency optional or lazy.
 
 ## What this does **not** replace
 

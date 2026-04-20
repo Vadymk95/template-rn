@@ -15,9 +15,9 @@ priority: 95
 
 ## Intelligence & Context
 
-- **Reasoning**: Use `sequential-thinking` for multi-step logic and `context7` (or official docs) for API lookups. **Russian** for chat, **English** for code, comments, commits, and user-facing repo docs.
+- **Reasoning**: Use `sequential-thinking` for multi-step logic and `context7` for API lookups when available; otherwise use official docs. **Russian** for chat, **English** for code, comments, commits, and user-facing repo docs.
 - **Authority**: `.cursor/brain/` (`PROJECT_CONTEXT.md`, `MAP.md`, `SKELETONS.md`, `DECISIONS.md`, `VERIFICATION.md`) is the source of truth for this repo. Sync drifts when behavior or architecture changes.
 - **Stack**: Expo SDK 55 · React Native 0.83 · React 19 · TypeScript strict · Expo Router · NativeWind (Tailwind 3) · Zustand · TanStack Query. Prefer existing libraries over custom infrastructure.
-- **Quality**: Minimalist code. No magic strings in business logic — use constants or i18n keys when you add i18n.
+- **Quality**: Minimalist code. User-visible copy belongs in `src/shared/locales/**`; business logic and public UI APIs use constants, tokens, or typed keys instead of unexplained literals.
 - **Hygiene**: Keep agent-oriented specs and process rules under `.cursor/`. Product README / deployment docs in root when they are part of the template contract.
 - **Git**: `type(scope): description` — English, max 96 chars. No `Co-authored-by` tags.

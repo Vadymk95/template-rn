@@ -17,6 +17,7 @@ priority: 85
 
 - Prefer **integration-style** tests with `@testing-library/react-native` after the screen API stabilizes.
 - Test behavior and accessibility roles/labels users depend on — not private implementation details.
+- UI refactors that move copy, routing, or validation boundaries must leave at least one behavior-level integration test proving the visible contract still holds.
 
 ## 3. Cycle
 

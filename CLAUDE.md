@@ -5,6 +5,7 @@
 Always read `.cursor/brain/PROJECT_CONTEXT.md` before any task.
 Architecture map: `.cursor/brain/MAP.md`
 Verification (what to run per change): `.cursor/brain/VERIFICATION.md`
+Human-facing strict contract: `docs/strict-template-contract.md`
 
 ## Stack
 
@@ -50,7 +51,13 @@ Pick checks by task — `.cursor/brain/VERIFICATION.md`. Typical change:
 npm run typecheck && npm run lint && npm run test
 ```
 
-Full local CI (same as GitHub Actions):
+Repo-wide contract gate:
+
+```bash
+npm run verify
+```
+
+Full local CI / native tooling parity:
 
 ```bash
 npm run ci:local

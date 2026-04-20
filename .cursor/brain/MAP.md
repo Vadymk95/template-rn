@@ -22,6 +22,16 @@ Imports flow **down-stack only** (app may use shared; shared must not import ent
 | Init failure UI (no `t()`)               | `src/shared/lib/i18n/I18nInitErrorFallback.tsx`                                                    |
 | Initial language from device             | `expo-localization` inside `index.ts` (add more `SUPPORTED_LANGUAGES` + JSON when you add locales) |
 
+## Todo vertical slice (reference implementation)
+
+| Concern                 | Where                                                   |
+| ----------------------- | ------------------------------------------------------- |
+| Screen orchestration    | `src/widgets/todo-workspace/TodoWorkspaceScreen.tsx`    |
+| Feature actions/dialogs | `src/features/todo-*/` + `src/features/todo/`           |
+| Client state            | `src/store/todo/todoStore.ts` + helpers in `store/todo` |
+| Derived workspace logic | `src/features/todo/useTodoWorkspace.ts`                 |
+| Copy namespace          | `src/shared/locales/en/todo.json`                       |
+
 ## Navigation & theme (no literals in layouts)
 
 | Need                         | Where                                          |
@@ -64,12 +74,14 @@ Imports flow **down-stack only** (app may use shared; shared must not import ent
 
 ## Styling
 
-| Need              | Where                                         |
-| ----------------- | --------------------------------------------- |
-| Tailwind config   | `tailwind.config.js`                          |
-| Global CSS tokens | `global.css` (imported once in `_layout.tsx`) |
-| Dark mode         | `useColorScheme` + `.dark` class at root      |
-| Class merging     | `cn()` in `src/lib/utils.ts` (clsx-only)      |
+| Need                   | Where                                                                 |
+| ---------------------- | --------------------------------------------------------------------- |
+| Tailwind config        | `tailwind.config.js`                                                  |
+| Global CSS tokens      | `global.css` (imported once in `_layout.tsx`)                         |
+| Dark mode              | `useColorScheme` + `.dark` class at root                              |
+| Class merging          | `cn()` in `src/lib/utils.ts` (clsx-only)                              |
+| Theme token source     | `src/shared/lib/theme/` (`colors`, `spacing`, `typography`, `tokens`) |
+| Reusable UI primitives | `src/shared/ui/` (`Button`, `Input`, `Dialog`, `Screen`, etc.)        |
 
 ## Infrastructure
 

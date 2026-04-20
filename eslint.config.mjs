@@ -8,6 +8,7 @@ import jestPlugin from 'eslint-plugin-jest';
 import prettierConfig from 'eslint-config-prettier';
 import prettierPlugin from 'eslint-plugin-prettier';
 import reactCompiler from 'eslint-plugin-react-compiler';
+import templatePlugin from './tooling/eslint-plugin-template/index.mjs';
 import tseslint from 'typescript-eslint';
 
 const boundariesElements = [
@@ -119,12 +120,31 @@ export default tseslint.config(
             'import-x': importX,
             boundaries,
             prettier: prettierPlugin,
-            'react-compiler': reactCompiler
+            'react-compiler': reactCompiler,
+            template: templatePlugin
         },
         rules: {
             ...prettierConfig.rules,
             'prettier/prettier': 'error',
-            'no-console': ['warn', { allow: ['warn', 'error'] }],
+            'no-console': 'error',
+            'no-restricted-imports': [
+                'error',
+                {
+                    patterns: [
+                        {
+                            group: [
+                                './*',
+                                '../*',
+                                '../../*',
+                                '../../../*',
+                                '../../../../*',
+                                '../../../../../*'
+                            ],
+                            message: 'Use the `@/` alias for imports inside `src/**`.'
+                        }
+                    ]
+                }
+            ],
             '@typescript-eslint/consistent-type-imports': [
                 'error',
                 { prefer: 'type-imports', fixStyle: 'inline-type-imports' }
@@ -169,10 +189,43 @@ export default tseslint.config(
         }
     },
     {
-        files: ['src/app/**/*.{ts,tsx}'],
+        files: ['src/**/*.{ts,tsx}'],
+        ignores: ['src/env.ts', 'src/lib/logger.ts', '**/*.{test,spec}.{ts,tsx}', 'src/test/**'],
         plugins: {
-            i18next: i18nextPlugin
+            template: templatePlugin
         },
+        rules: {
+            'template/no-process-env-outside-env': 'error'
+        }
+    },
+    {
+        files: [
+            'src/app/**/*.{ts,tsx}',
+            'src/widgets/**/*.{ts,tsx}',
+            'src/features/**/*.{ts,tsx}',
+            'src/shared/ui/**/*.{ts,tsx}'
+        ],
+        ignores: ['**/*.{test,spec}.{ts,tsx}'],
+        plugins: {
+            i18next: i18nextPlugin,
+            template: templatePlugin
+        },
+        rules: {
+            'i18next/no-literal-string': [
+                'error',
+                {
+                    framework: 'react',
+                    mode: 'jsx-text-only',
+                    words: {
+                        exclude: ['^\\s*$', '^[0-9]+$', '^[/.:?#=&_-]+$']
+                    }
+                }
+            ],
+            'template/no-user-copy-literals': 'error'
+        }
+    },
+    {
+        files: ['src/app/**/*.{ts,tsx}'],
         rules: {
             'import-x/no-default-export': 'off',
             '@typescript-eslint/explicit-function-return-type': [
@@ -183,17 +236,13 @@ export default tseslint.config(
                     allowHigherOrderFunctions: true,
                     allowDirectConstAssertionInArrowFunctions: true
                 }
-            ],
-            'i18next/no-literal-string': [
-                'error',
-                {
-                    framework: 'react',
-                    mode: 'jsx-text-only',
-                    words: {
-                        exclude: ['^\\s*$', '^[0-9]+$', '^[/.:?#=&_-]+$']
-                    }
-                }
             ]
+        }
+    },
+    {
+        files: ['src/app/_layout.tsx'],
+        rules: {
+            'no-restricted-imports': 'off'
         }
     },
     {
@@ -208,7 +257,8 @@ export default tseslint.config(
             '@typescript-eslint/no-unsafe-argument': 'off',
             '@typescript-eslint/unbound-method': 'off',
             '@typescript-eslint/no-require-imports': 'off',
-            '@typescript-eslint/no-unsafe-return': 'off'
+            '@typescript-eslint/no-unsafe-return': 'off',
+            'no-console': 'off'
         }
     },
     {

@@ -44,16 +44,18 @@ in JSON (see `MAP.md` → i18n).
 
 ## Architecture
 
-**Shipped under `src/` today:** `app/` (Expo Router: root layout with i18n gate,
-`RootStack`, tab group, home and settings tabs, not-found), `shared/locales/` +
-`shared/lib/i18n/` (bundled translations + init), `lib/` (query client with
-AppState focus, logger stub, `secureToken` for Keychain-backed auth token I/O, `cn()` helper and their tests), `store/user` and
-`store/utils` (example Zustand + persist + selector helpers), `test/setup.ts` for
-Jest, and `env.ts` for validated public env.
+**Shipped under `src/` today:** `app/` (Expo Router root layout with i18n + store
+hydration gate, `RootStack`, tabs, not-found), `widgets/todo-workspace` (home
+screen composition), `features/todo-*` and `features/todo` (workspace actions,
+dialogs, filtering, and derived logic), `store/todo` + `store/user` + `store/utils`
+(Zustand slices and selector helpers), `shared/ui/` (cross-app UI primitives),
+`shared/lib/theme/` (tokenized spacing/color/typography), `shared/locales/` +
+`shared/lib/i18n/` (bundled translations + init), `lib/` (query client with AppState
+focus, logger stub, `secureToken`, utility helpers), `test/setup.ts`, and `env.ts`.
 
-**Extension points (add when the product needs them):** `components/` (shared
-UI, layout shells, primitives), `hooks/<domain>/` (feature hooks colocated with
-tests), theme hooks if you introduce a design-system-level theme provider.
+**Extension points (add when the product needs them):** API clients per feature,
+offline query persistence (`NetInfo` + `persistQueryClient`), product auth provider,
+and vendor observability adapter behind `logger.ts`.
 
 ### Expo Router (file-based)
 
@@ -76,11 +78,26 @@ fine-grained subscriptions. Tokens belong in `expo-secure-store`, not in
 Zustand `persist` / AsyncStorage; the sample user store uses `partialize` for
 non-sensitive fields only.
 
-### TanStack Query: AppState focus
+### TanStack Query: AppState focus + extension points
 
-Native apps do not emit `window focus`. `src/lib/queryClient.ts` wires
-`AppState` to the query focus manager so refetch behavior matches returning to
-the foreground.
+**Currently wired:** `src/lib/queryClient.ts` wires `AppState` → `focusManager`
+so queries refetch on foreground return (native apps do not emit `window focus`).
+Default `staleTime: 60s`, `gcTime: 5min`, retry skips 4xx errors. The
+`QueryClientProvider` is mounted in `src/app/_layout.tsx`.
+
+**Not yet wired (add when the product has real API calls):**
+
+| What                                                                                  | Why                                                                                                                 | Where                                   |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| `networkMode: 'offlineFirst'` + `onlineManager` via `@react-native-community/netinfo` | Default `'online'` mode on mobile with spotty signal looks like a broken app                                        | `src/lib/queryClient.ts` defaultOptions |
+| Query key factory per feature                                                         | Prefix-based invalidation; `queryOptions()` gives type-safe `getQueryData` without generics                         | `src/features/<name>/api/<name>Keys.ts` |
+| `persistQueryClient` with `shouldDehydrateQuery` whitelist                            | Offline reads between sessions; whitelist only "important" queries (profile, settings), never search/infinite lists | new `src/lib/queryPersist.ts`           |
+
+**Hard rule:** server state goes in TanStack Query, client/UI state goes in
+Zustand. Never copy API response data into a Zustand store — that creates a
+second source of truth and invalidation bugs.
+
+See `src/lib/queryClient.ts` for inline code snippets of each extension point.
 
 ### Env: fail fast
 
@@ -123,7 +140,7 @@ SDK 55, no Babel plugin needed.
 ## Non-goals for template
 
 - Web support (dropped — `app.config.ts` has no web block)
-- E2E tests (wire Maestro / Detox per product)
+- Full E2E stack in CI (a local Maestro smoke skeleton may exist, but CI-grade E2E remains product-specific)
 - Remote-only translation delivery (Phrase/Lokalise HTTP backend, etc.) without JSON in-repo
 - TanStack Form or heavy form codegen as the default abstraction (template uses RHF + Zod resolvers for typical inputs)
 - Crash reporting (wire Sentry/Bugsnag per product into `logger.ts`)

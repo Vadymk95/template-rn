@@ -1,0 +1,14 @@
+# Smoke flow: launch → home screen visible → toggle a todo → assert item persists.
+# Run locally: maestro test .maestro/smoke.yaml
+# Requires MAESTRO_APP_ID env var (bundle ID, e.g. com.example.templatern.dev).
+# Install Maestro CLI: curl -Ls "https://get.maestro.mobile.dev" | bash
+# testID selectors use the mock todo IDs seeded in src/store/todo/mockTodos.ts.
+
+appId: ${MAESTRO_APP_ID}
+---
+- launchApp
+- assertVisible: 'Task workspace'
+- assertVisible: 'Review onboarding copy'
+- tapOn:
+      id: 'todo-toggle-todo-1713596400000'
+- assertVisible: 'Review onboarding copy'

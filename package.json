@@ -10,6 +10,7 @@
         "start": "expo start",
         "start:clear": "expo start --clear",
         "start:tunnel": "expo start --tunnel",
+        "start:tunnel:clear": "expo start --tunnel --clear",
         "ios": "expo start --ios",
         "android": "expo start --android",
         "prebuild": "expo prebuild --clean",
@@ -22,6 +23,7 @@
         "format": "prettier --write .",
         "format:check": "prettier --check .",
         "verify": "npm run typecheck && npm run lint:oxlint && npm run lint && npm run format:check && npm run test:coverage",
+        "verify:native": "npm run verify && npm run doctor",
         "test": "jest",
         "test:watch": "jest --watch",
         "test:coverage": "jest --coverage",
@@ -32,7 +34,7 @@
         "perf:measure": "node scripts/capture-bundle-metrics.mjs",
         "perf:baseline": "node scripts/capture-bundle-metrics.mjs --export --platform all --write-baseline",
         "perf:check": "node scripts/capture-bundle-metrics.mjs --export --platform all --check",
-        "ci:local": "npm run typecheck && npm run lint:oxlint && npm run lint && npm run format:check && npm run test:coverage && npm run doctor",
+        "ci:local": "npm run verify:native",
         "prepare": "husky"
     },
     "dependencies": {
@@ -45,6 +47,7 @@
         "expo": "~55.0.0",
         "expo-application": "~55.0.14",
         "expo-constants": "~55.0.14",
+        "expo-dev-client": "~55.0.27",
         "expo-device": "~55.0.15",
         "expo-font": "~55.0.6",
         "expo-linking": "~55.0.13",
@@ -142,10 +145,10 @@
         ],
         "coverageThreshold": {
             "global": {
-                "statements": 60,
-                "branches": 10,
-                "functions": 60,
-                "lines": 60
+                "statements": 80,
+                "branches": 60,
+                "functions": 80,
+                "lines": 80
             }
         },
         "transformIgnorePatterns": [
