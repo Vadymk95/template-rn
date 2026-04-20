@@ -3,8 +3,9 @@ import { Text } from 'react-native';
 
 import { Dialog } from '@/shared/ui/Dialog/Dialog';
 
-jest.mock('@expo/vector-icons', () => ({
-    Ionicons: () => null
+jest.mock('@expo/vector-icons/Ionicons', () => ({
+    __esModule: true,
+    default: () => null
 }));
 
 describe('Dialog', () => {

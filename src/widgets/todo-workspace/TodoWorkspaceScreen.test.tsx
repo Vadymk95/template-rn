@@ -6,8 +6,9 @@ import { mockTodos } from '@/store/todo/mockTodos';
 import { useTodoStore } from '@/store/todo/todoStore';
 import { TodoWorkspaceScreen } from '@/widgets/todo-workspace/TodoWorkspaceScreen';
 
-jest.mock('@expo/vector-icons', () => ({
-    Ionicons: () => null
+jest.mock('@expo/vector-icons/Ionicons', () => ({
+    __esModule: true,
+    default: () => null
 }));
 
 jest.mock('react-native-safe-area-context', () => ({
