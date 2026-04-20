@@ -33,3 +33,47 @@ When the new product stops looking like the Todo example, review these files tog
 - `.cursorrules` and `.cursor/rules/*.mdc` — what future agents will treat as hard guidance
 - `eslint.config.mjs` and any repo-owned lint rules — what the tooling forbids mechanically
 - `src/shared/locales/**` — route, tab, and product copy that ships in the bundle
+
+## Placeholder replacement checklist
+
+Every fork must update these values before shipping. `file:line` refs are valid as of this commit; re-grep if files drift.
+
+### Bundle identifiers (iOS + Android)
+
+- [ ] `app.config.ts:11` — replace `com.example.templatern.dev`
+- [ ] `app.config.ts:12` — replace `com.example.templatern.preview`
+- [ ] `app.config.ts:13` — replace `com.example.templatern`
+
+### App display names
+
+- [ ] `app.config.ts:17` — replace `Template RN (Dev)`
+- [ ] `app.config.ts:18` — replace `Template RN (Preview)`
+- [ ] `app.config.ts:19` — replace `Template RN`
+
+### Slug and deep link scheme
+
+- [ ] `app.config.ts:25` — replace slug `template-rn`
+- [ ] `app.config.ts:29` — replace scheme `templatern` (lowercase, no spaces; forms `yourapp://` URLs)
+- [ ] `package.json:2` — align `name` with the new slug
+
+### Assets (replace the 70-byte placeholder PNGs)
+
+- [ ] `assets/icon.png` — 1024×1024 app icon; referenced at `app.config.ts:28`
+- [ ] `assets/splash.png` — splash image; referenced at `app.config.ts:32` and `app.config.ts:79`
+- [ ] `assets/adaptive-icon.png` — Android foreground; referenced at `app.config.ts:65`, paired with `backgroundColor` at line 66
+
+### EAS (only if using EAS Build / Update)
+
+- [ ] Run `eas project:create`, capture the project ID
+- [ ] Set `EAS_PROJECT_ID` in CI secrets and local `.env` for OTA; `app.config.ts` gates `extra.eas` and `updates.url` on its presence (lines 89–99)
+- [ ] Update `eas.json` profiles if the slug or per-profile env changed
+
+### Legal
+
+- [ ] Replace the copyright holder if forking under a different author
+
+### Example / demo content to strip
+
+- [ ] `src/shared/locales/en/todo.json` — delete if removing the Todo slice, then mirror the deletion in `src/shared/lib/i18n/constants.ts:14`, `src/shared/lib/i18n/index.ts`, `src/shared/lib/i18n/resources.ts`
+- [ ] `.maestro/smoke.yaml`, `.maestro/create-task.yaml` — hardcoded Todo copy and `testID`s; rewrite or delete with the slice
+- [ ] `scripts/perf-baseline.json` — regenerate via `npm run perf:baseline` once the product bundle shape stabilizes
