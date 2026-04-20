@@ -47,6 +47,11 @@ describe('TodoWorkspaceScreen', () => {
         const { getByText } = render(<TodoWorkspaceScreen />);
 
         expect(getByText('home:title')).toBeTruthy();
+    });
+
+    it('renders the home subtitle when the translation is non-empty', () => {
+        const { getByText } = render(<TodoWorkspaceScreen />);
+
         expect(getByText('home:subtitle')).toBeTruthy();
     });
 

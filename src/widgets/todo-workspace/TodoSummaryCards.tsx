@@ -44,7 +44,6 @@ export const TodoSummaryCards = ({
                 <Card
                     key={item.label}
                     className="flex-1"
-                    muted
                     style={{
                         minWidth: 96,
                         gap: SPACING_TOKENS.xs

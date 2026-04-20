@@ -48,7 +48,7 @@ Touch with intent; re-verify via the commands in `VERIFICATION.md`.
 
 - Provider order matters: `GestureHandlerRootView` → `SafeAreaProvider` →
   **i18n bootstrap** (error UI, loading gate, then `I18nextProvider`) →
-  `QueryClientProvider` → `RootStack` (Expo `Stack`). Swapping the outer shell
+  `QueryClientProvider` → `_RootStack` (`src/app/_RootStack.tsx`, Expo `Stack`). Swapping the outer shell
   breaks gestures on Android; moving `QueryClientProvider` outside
   `I18nextProvider` risks screens querying before `t()` is available.
 - `ErrorBoundary` exported from `expo-router` — must be a named re-export at

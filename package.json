@@ -7,12 +7,16 @@
         "node": ">=24.0.0"
     },
     "scripts": {
-        "start": "expo start",
-        "start:clear": "expo start --clear",
-        "start:tunnel": "expo start --tunnel",
-        "start:tunnel:clear": "expo start --tunnel --clear",
-        "ios": "expo start --ios",
-        "android": "expo start --android",
+        "start": "expo start --go",
+        "start:clear": "expo start --clear --go",
+        "start:tunnel": "expo start --tunnel --go",
+        "start:tunnel:clear": "expo start --tunnel --clear --go",
+        "start:devclient": "expo start",
+        "start:devclient:clear": "expo start --clear",
+        "ios": "expo start --ios --go",
+        "android": "expo start --android --go",
+        "ios:dev": "expo start --ios",
+        "android:dev": "expo start --android",
         "prebuild": "expo prebuild --clean",
         "prebuild:preview": "APP_VARIANT=preview expo prebuild --clean",
         "doctor": "expo-doctor",
@@ -35,6 +39,7 @@
         "perf:baseline": "node scripts/capture-bundle-metrics.mjs --export --platform all --write-baseline",
         "perf:check": "node scripts/capture-bundle-metrics.mjs --export --platform all --check",
         "ci:local": "npm run verify:native",
+        "maestro": "maestro test .maestro",
         "prepare": "husky"
     },
     "dependencies": {

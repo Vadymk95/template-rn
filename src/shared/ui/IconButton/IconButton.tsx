@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from 'nativewind';
 import type { ComponentProps, ReactElement } from 'react';
-import { Pressable, type PressableProps } from 'react-native';
+import { Pressable, View, type PressableProps } from 'react-native';
 
 import { cn } from '@/lib/utils';
 import {
@@ -59,15 +59,8 @@ export const IconButton = ({
             }}
             disabled={isDisabled}
             hitSlop={8}
-            className={cn(
-                'items-center justify-center',
-                ICON_BUTTON_CLASS_NAMES[variant],
-                className
-            )}
+            {...(className ? { className } : {})}
             style={({ pressed }) => ({
-                width: controlSize.height,
-                height: controlSize.height,
-                borderRadius: RADII_TOKENS.pill,
                 opacity: isDisabled
                     ? INTERACTION_STATE_TOKENS.disabledOpacity
                     : pressed
@@ -76,11 +69,20 @@ export const IconButton = ({
             })}
             {...pressableProps}
         >
-            <Ionicons
-                name={icon}
-                size={controlSize.icon}
-                color={getThemeColorValue(colorScheme, ICON_COLOR_ROLE[variant])}
-            />
+            <View
+                className={cn('items-center justify-center', ICON_BUTTON_CLASS_NAMES[variant])}
+                style={{
+                    width: controlSize.height,
+                    height: controlSize.height,
+                    borderRadius: RADII_TOKENS.pill
+                }}
+            >
+                <Ionicons
+                    name={icon}
+                    size={controlSize.icon}
+                    color={getThemeColorValue(colorScheme, ICON_COLOR_ROLE[variant])}
+                />
+            </View>
         </Pressable>
     );
 };

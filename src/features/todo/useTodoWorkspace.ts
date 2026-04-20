@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 
 import { filterTodos } from '@/store/todo/filterTodos';
 import { useTodoStore } from '@/store/todo/todoStore';
@@ -23,13 +24,18 @@ interface TodoWorkspaceState {
 }
 
 export const useTodoWorkspace = (): TodoWorkspaceState => {
-    const todos = useTodoStore.use.todos();
-    const filter = useTodoStore.use.filter();
-    const createTodo = useTodoStore.use.createTodo();
-    const updateTodo = useTodoStore.use.updateTodo();
-    const toggleTodo = useTodoStore.use.toggleTodo();
-    const deleteTodo = useTodoStore.use.deleteTodo();
-    const setFilter = useTodoStore.use.setFilter();
+    const { todos, filter, createTodo, updateTodo, toggleTodo, deleteTodo, setFilter } =
+        useTodoStore(
+            useShallow((state) => ({
+                todos: state.todos,
+                filter: state.filter,
+                createTodo: state.createTodo,
+                updateTodo: state.updateTodo,
+                toggleTodo: state.toggleTodo,
+                deleteTodo: state.deleteTodo,
+                setFilter: state.setFilter
+            }))
+        );
 
     const visibleTodos = useMemo(() => filterTodos(todos, filter), [filter, todos]);
     const summary = useMemo<TodoSummary>(() => {

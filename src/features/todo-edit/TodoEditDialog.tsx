@@ -29,6 +29,8 @@ export const TodoEditDialog = ({
             <TodoForm
                 initialTitle={todo?.title ?? ''}
                 submitLabel={t(TODO_COPY_KEYS.actions.saveSubmit)}
+                titleInputTestID="todo-edit-form-title"
+                submitTestID="todo-edit-form-submit"
                 onCancel={onClose}
                 onSubmit={(title) => {
                     if (!todo) {

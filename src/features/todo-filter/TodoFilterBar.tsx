@@ -28,6 +28,7 @@ export const TodoFilterBar = ({
             {TODO_FILTER_OPTIONS.map((option) => (
                 <FilterChip
                     key={option.id}
+                    testID={`todo-filter-${option.id}`}
                     label={t(option.labelKey)}
                     selected={option.id === selectedFilter}
                     onPress={() => {

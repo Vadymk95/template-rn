@@ -45,7 +45,7 @@ in JSON (see `MAP.md` → i18n).
 ## Architecture
 
 **Shipped under `src/` today:** `app/` (Expo Router root layout with i18n + store
-hydration gate, `RootStack`, tabs, not-found), `widgets/todo-workspace` (home
+hydration gate, `_RootStack` for stack/modal composition, tabs, not-found), `widgets/todo-workspace` (home
 screen composition), `features/todo-*` and `features/todo` (workspace actions,
 dialogs, filtering, and derived logic), `store/todo` + `store/user` + `store/utils`
 (Zustand slices and selector helpers), `shared/ui/` (cross-app UI primitives),

@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 
 import { TODO_COPY_KEYS, TODO_NAMESPACE } from '@/features/todo/constants';
 import { SPACING_TOKENS } from '@/shared/lib/theme/tokens';
@@ -12,13 +12,18 @@ interface TodoFormProps {
     submitLabel: string;
     onSubmit: (title: string) => void;
     onCancel: () => void;
+    /** Stable id for Maestro / E2E (create vs edit screens). */
+    titleInputTestID?: string;
+    submitTestID?: string;
 }
 
 export const TodoForm = ({
     initialTitle,
     submitLabel,
     onSubmit,
-    onCancel
+    onCancel,
+    titleInputTestID = 'todo-form-title',
+    submitTestID = 'todo-form-submit'
 }: TodoFormProps): ReactElement => {
     const { t } = useTranslation(TODO_NAMESPACE);
     const [title, setTitle] = useState(initialTitle);
@@ -45,10 +50,18 @@ export const TodoForm = ({
         <View style={{ gap: SPACING_TOKENS.lg }}>
             <Input
                 autoFocus
+                testID={titleInputTestID}
                 label={t(TODO_COPY_KEYS.form.titleLabel)}
                 hint={t(TODO_COPY_KEYS.form.titleHint)}
                 value={title}
                 placeholder={t(TODO_COPY_KEYS.form.titlePlaceholder)}
+                keyboardType="default"
+                autoCapitalize="sentences"
+                autoCorrect
+                autoComplete="off"
+                {...(Platform.OS === 'ios'
+                    ? { textContentType: 'none' as const }
+                    : { importantForAutofill: 'no' as const })}
                 {...(error ? { error } : {})}
                 onChangeText={(nextTitle) => {
                     setTitle(nextTitle);
@@ -70,7 +83,7 @@ export const TodoForm = ({
                     variant="secondary"
                     onPress={onCancel}
                 />
-                <Button label={submitLabel} onPress={handleSubmit} />
+                <Button label={submitLabel} testID={submitTestID} onPress={handleSubmit} />
             </View>
         </View>
     );

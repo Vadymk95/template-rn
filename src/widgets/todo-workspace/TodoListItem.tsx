@@ -83,7 +83,7 @@ export const TodoListItem = ({
             >
                 <Button
                     label={t(TODO_COPY_KEYS.actions.edit)}
-                    variant="ghost"
+                    variant="secondary"
                     size="sm"
                     accessibilityLabel={getTodoActionLabel(
                         todo.title,

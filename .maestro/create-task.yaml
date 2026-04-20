@@ -1,0 +1,16 @@
+# Flow: create a new task from the header action and assert it appears in the list.
+# Run: maestro test .maestro/create-task.yaml
+# Requires MAESTRO_APP_ID and the same app build as smoke.yaml.
+
+appId: ${MAESTRO_APP_ID}
+---
+- launchApp
+- assertVisible: 'Overview'
+- tapOn: 'New task'
+- assertVisible: 'Create task'
+- tapOn:
+      id: 'todo-form-title'
+- inputText: 'Maestro E2E task'
+- tapOn:
+      id: 'todo-form-submit'
+- assertVisible: 'Maestro E2E task'

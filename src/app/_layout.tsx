@@ -9,7 +9,7 @@ import { ActivityIndicator, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { RootStack } from '@/app/RootStack';
+import { RootStack } from '@/app/_RootStack';
 import { useStoreReady } from '@/hooks/useStoreReady';
 import { logger } from '@/lib/logger';
 import { queryClient } from '@/lib/queryClient';

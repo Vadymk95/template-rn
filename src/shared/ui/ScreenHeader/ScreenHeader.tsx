@@ -18,7 +18,7 @@ export const ScreenHeader = ({
     onActionPress
 }: ScreenHeaderProps): ReactElement => (
     <View
-        className="flex-row items-start justify-between"
+        className="flex-row items-center justify-between"
         style={{
             gap: SPACING_TOKENS.md
         }}

@@ -48,6 +48,7 @@ Imports flow **down-stack only** (app may use shared; shared must not import ent
 | -------------------------------------- | ----------------------------------------------- |
 | App entry                              | `expo-router/entry` (via `package.json` `main`) |
 | Root layout (providers, ErrorBoundary) | `src/app/_layout.tsx`                           |
+| Root stack & modal presentation        | `src/app/_RootStack.tsx`                        |
 | First visible screen                   | `src/app/(tabs)/index.tsx`                      |
 | Expo runtime config                    | `app.config.ts` (dynamic, env-driven)           |
 | Env validation                         | `src/env.ts`                                    |
@@ -93,5 +94,6 @@ Imports flow **down-stack only** (app may use shared; shared must not import ent
 | EAS build profiles            | `eas.json`                                                                                                                                                   |
 | OTA update channel            | `app.config.ts` → `updates.url` + `runtimeVersion`                                                                                                           |
 | CI (GitHub Actions)           | `.github/workflows/ci.yml` — same gates as `ci:local`                                                                                                        |
+| Local E2E smoke (Maestro)     | `.maestro/*.yaml` — not part of default CI; run when adopting flows                                                                                          |
 | Optional bundle metrics       | `scripts/capture-bundle-metrics.mjs`, `npm run perf:*`, `scripts/perf-program.md` — local baseline/check; wire into CI only if the team wants a numeric gate |
 | Path alias `@/*`              | `tsconfig.json` `paths` (single source of truth)                                                                                                             |

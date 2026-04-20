@@ -107,15 +107,8 @@ export const Button = ({
             disabled={isDisabled}
             {...pressableProps}
             onPress={isDisabled ? undefined : onPress}
-            className={cn(
-                'items-center justify-center',
-                BUTTON_CONTAINER_CLASS_NAMES[variant],
-                fullWidth ? 'w-full' : 'self-start'
-            )}
+            className={cn(fullWidth ? 'w-full' : 'self-start')}
             style={({ pressed }) => ({
-                minHeight: controlSize.height,
-                paddingHorizontal: controlSize.paddingHorizontal,
-                borderRadius: RADII_TOKENS.lg,
                 opacity: isDisabled
                     ? INTERACTION_STATE_TOKENS.disabledOpacity
                     : pressed
@@ -123,21 +116,34 @@ export const Button = ({
                       : 1
             })}
         >
-            {loading ? (
-                <ActivityIndicator
-                    color={getThemeColorValue(colorScheme, BUTTON_SPINNER_COLOR_ROLE[variant])}
-                    size="small"
-                />
-            ) : (
-                <View
-                    className="flex-row items-center justify-center"
-                    style={{
-                        gap: SPACING_TOKENS.sm
-                    }}
-                >
-                    {content}
-                </View>
-            )}
+            <View
+                className={cn(
+                    'flex-row items-center justify-center',
+                    BUTTON_CONTAINER_CLASS_NAMES[variant],
+                    fullWidth ? 'w-full' : undefined
+                )}
+                style={{
+                    minHeight: controlSize.height,
+                    paddingHorizontal: controlSize.paddingHorizontal,
+                    borderRadius: RADII_TOKENS.lg
+                }}
+            >
+                {loading ? (
+                    <ActivityIndicator
+                        color={getThemeColorValue(colorScheme, BUTTON_SPINNER_COLOR_ROLE[variant])}
+                        size="small"
+                    />
+                ) : (
+                    <View
+                        className="flex-row items-center justify-center"
+                        style={{
+                            gap: SPACING_TOKENS.sm
+                        }}
+                    >
+                        {content}
+                    </View>
+                )}
+            </View>
         </Pressable>
     );
 };

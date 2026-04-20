@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react';
-import { Pressable, Text, type PressableProps } from 'react-native';
+import { Pressable, Text, View, type PressableProps } from 'react-native';
 
 import { cn } from '@/lib/utils';
 import {
@@ -34,15 +34,8 @@ export const FilterChip = ({
                 selected
             }}
             disabled={isDisabled}
-            className={cn(
-                'items-center justify-center border',
-                selected ? 'border-primary bg-primary' : 'border-border bg-muted',
-                className
-            )}
+            {...(className ? { className } : {})}
             style={({ pressed }) => ({
-                minHeight: controlSize.height,
-                borderRadius: RADII_TOKENS.pill,
-                paddingHorizontal: SPACING_TOKENS.md,
                 opacity: isDisabled
                     ? INTERACTION_STATE_TOKENS.disabledOpacity
                     : pressed
@@ -51,14 +44,27 @@ export const FilterChip = ({
             })}
             {...pressableProps}
         >
-            <Text
+            <View
                 className={cn(
-                    TYPOGRAPHY_TOKENS.button,
-                    selected ? 'text-primary-foreground' : 'text-foreground'
+                    'flex-row items-center justify-center border',
+                    selected ? 'border-primary bg-primary' : 'border-border bg-background'
                 )}
+                style={{
+                    minHeight: controlSize.height,
+                    borderRadius: RADII_TOKENS.pill,
+                    paddingHorizontal: SPACING_TOKENS.md,
+                    paddingVertical: SPACING_TOKENS.xs
+                }}
             >
-                {label}
-            </Text>
+                <Text
+                    className={cn(
+                        TYPOGRAPHY_TOKENS.button,
+                        selected ? 'text-primary-foreground' : 'text-foreground'
+                    )}
+                >
+                    {label}
+                </Text>
+            </View>
         </Pressable>
     );
 };
