@@ -1,4 +1,4 @@
-> **Status:** Historical. Design realized in commit `c9fcba6`. Kept as a reference for the UI primitive + feature-slice split pattern.
+> **Pattern reference — UI primitive + feature-slice split.** Realized in commit `c9fcba6`; kept as a worked example of how `shared/ui/*` primitives and `features/*` slices divide responsibilities for a new domain.
 
 # Showcase Todo Template Design
 

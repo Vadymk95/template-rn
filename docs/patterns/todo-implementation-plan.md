@@ -1,4 +1,4 @@
-> **Status:** Historical. Implementation completed in commit `c9fcba6`. This plan is kept as a reference pattern for future vertical slices — unchecked boxes reflect the original plan, not pending work.
+> **Pattern reference — vertical slice implementation plan.** Realized in commit `c9fcba6`; kept as a worked example for future slices. Unchecked boxes reflect the original plan structure, not pending work — copy the shape, not the state.
 
 # Showcase Todo Template Implementation Plan
 
