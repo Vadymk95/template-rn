@@ -30,6 +30,13 @@ Short record of non-obvious trade-offs. Update when reversing a decision.
 - v4.2 ships the Reanimated v4 compatibility patch.
 - Revisit when v5 goes stable.
 
+## Design tokens are vocabulary, not call sites
+
+- `TYPOGRAPHY_TOKENS` and `SPACING_TOKENS` (`src/shared/lib/theme/**`) define the template's typography scale and spacing ladder. They are an **API surface for future slices**, not application code with usage counts.
+- Do **not** trim tokens by the «no external references» criterion — in a template, zero references means «not used _yet_», not «dead».
+- Extend the scale when a new slice needs a coherent step; remove only when a token is _semantically wrong_ (ambiguous name, contradicts the ladder, or a duplicate).
+- The same rule applies to `src/shared/lib/constants/**` declarative tables, route maps, and any other vocabulary exposed to features/widgets.
+
 ## Icons: `@expo/vector-icons`, not `lucide-react-native`
 
 - `@expo/vector-icons` ships in Expo with zero extra install and covers 20+
@@ -113,7 +120,7 @@ Short record of non-obvious trade-offs. Update when reversing a decision.
 - `jest-expo` invokes Babel using the app `babel.config.js`; **`babel-preset-expo`**
   must be resolvable from the project root for **`npm test`** to run.
 
-## Jest coverage: `src/env.ts` excluded, branch threshold 10%
+## Jest coverage thresholds and exclusions
 
 - **`@t3-oss/env-core` ships as ESM**; transforming it inside Jest for a tiny env
   smoke test is not worth the config surface for a template. **`src/env.ts`**
