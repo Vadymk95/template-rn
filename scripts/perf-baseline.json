@@ -1,22 +1,22 @@
 {
     "schemaVersion": 2,
-    "capturedAt": "2026-04-20T08:31:35.634Z",
-    "gitSha": "913a3eb",
+    "capturedAt": "2026-04-20T14:31:44.426Z",
+    "gitSha": "cc4cdab",
     "platforms": {
         "ios": {
-            "hermesBundleFile": "_expo/static/js/ios/entry-dd866fbb8751beb4d1bb42b64f0e1bc3.hbc",
+            "hermesBundleFile": "_expo/static/js/ios/entry-4c2acde5e8b75c26746f102e83997579.hbc",
             "metrics": {
-                "hermesBundleBytes": 4675741,
+                "hermesBundleBytes": 4795811,
                 "exportAssetsBytes": 4099976,
-                "hermesBundleMb": 4.459
+                "hermesBundleMb": 4.574
             }
         },
         "android": {
-            "hermesBundleFile": "_expo/static/js/android/entry-817709e9dd94290bebbc805d1c78f2a9.hbc",
+            "hermesBundleFile": "_expo/static/js/android/entry-096102ee6c9db415d132b81c1f5e78ea.hbc",
             "metrics": {
-                "hermesBundleBytes": 4748578,
+                "hermesBundleBytes": 4868506,
                 "exportAssetsBytes": 4098971,
-                "hermesBundleMb": 4.529
+                "hermesBundleMb": 4.643
             }
         }
     }

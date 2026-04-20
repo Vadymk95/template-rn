@@ -4,7 +4,7 @@ import type { ReactElement, ReactNode } from 'react';
 import RootLayout from '@/app/_layout';
 import { I18N_INIT_FALLBACK_COPY } from '@/shared/lib/constants/initFallbackCopy';
 
-jest.mock('../../global.css', () => ({}));
+jest.mock('../../../global.css', () => ({}));
 
 jest.mock('react-native-safe-area-context', () => ({
     SafeAreaProvider: ({ children }: { children: ReactNode }) => children,
