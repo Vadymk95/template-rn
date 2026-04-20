@@ -1,3 +1,5 @@
+> **Status:** Historical. Design realized in commit `c9fcba6`. Kept as a reference for the UI primitive + feature-slice split pattern.
+
 # Showcase Todo Template Design
 
 ## Goal

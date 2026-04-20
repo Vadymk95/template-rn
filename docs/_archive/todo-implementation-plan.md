@@ -1,3 +1,5 @@
+> **Status:** Historical. Implementation completed in commit `c9fcba6`. This plan is kept as a reference pattern for future vertical slices — unchecked boxes reflect the original plan, not pending work.
+
 # Showcase Todo Template Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
