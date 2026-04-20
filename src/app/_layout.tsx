@@ -12,7 +12,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { RootStack } from '@/app/_RootStack';
 import { useStoreReady } from '@/hooks/useStoreReady';
 import { logger } from '@/lib/logger';
-import { queryClient } from '@/lib/queryClient';
+import { queryClient, QueryClientAppStateBridge } from '@/lib/queryClient';
 import { EXPO_ROUTER } from '@/shared/lib/constants/expoRouter';
 import i18n, { i18nInitPromise } from '@/shared/lib/i18n';
 import { I18nInitErrorFallback } from '@/shared/lib/i18n/I18nInitErrorFallback';
@@ -88,6 +88,7 @@ const RootLayout = (): ReactElement => {
                     <I18nextProvider i18n={i18n}>
                         <QueryClientProvider client={queryClient}>
                             <StatusBar style="auto" />
+                            <QueryClientAppStateBridge />
                             <RootStack />
                         </QueryClientProvider>
                     </I18nextProvider>

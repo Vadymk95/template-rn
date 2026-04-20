@@ -1,14 +1,12 @@
 import { focusManager, QueryClient } from '@tanstack/react-query';
+import { type ReactElement, useEffect } from 'react';
 import type { AppStateStatus } from 'react-native';
 import { AppState, Platform } from 'react-native';
 
 // Wire React Native AppState into TanStack Query — native apps do not emit
 // `window focus` events. Without this, queries never refetch after foregrounding.
-AppState.addEventListener('change', (status: AppStateStatus) => {
-    if (Platform.OS !== 'web') {
-        focusManager.setFocused(status === 'active');
-    }
-});
+// The subscription lives in QueryClientAppStateBridge (mounted from the app shell)
+// so the listener is not registered at module import time and cleans up on unmount.
 
 // ─── When you add real server calls, extend this file with: ───────────────────
 //
@@ -47,6 +45,20 @@ const getErrorStatus = (error: unknown): number | undefined => {
         return typeof status === 'number' ? status : undefined;
     }
     return undefined;
+};
+
+export const QueryClientAppStateBridge = (): ReactElement | null => {
+    useEffect(() => {
+        const sub = AppState.addEventListener('change', (status: AppStateStatus) => {
+            if (Platform.OS !== 'web') {
+                focusManager.setFocused(status === 'active');
+            }
+        });
+        return () => {
+            sub.remove();
+        };
+    }, []);
+    return null;
 };
 
 export const queryClient = new QueryClient({
