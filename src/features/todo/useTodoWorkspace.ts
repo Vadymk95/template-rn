@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import { filterTodos } from '@/store/todo/filterTodos';
@@ -23,6 +22,14 @@ interface TodoWorkspaceState {
     setFilter: TodoState['setFilter'];
 }
 
+// React Compiler 1.0 (enabled via `experiments.reactCompiler: true` in
+// `app.config.ts`) auto-memoises pure derivations on each render, so the
+// previous manual `useMemo` wrappers around `filterTodos(todos, filter)` and
+// the summary object were redundant. Per CLAUDE.md: "Skip manual useMemo /
+// useCallback / React.memo unless you hit a specific regression. Opt a file
+// out with `'use no memo'` at the top." No regression observed; manual
+// memoisation removed. `useShallow` from zustand still drives store-level
+// reference stability for the destructured slice.
 export const useTodoWorkspace = (): TodoWorkspaceState => {
     const { todos, filter, createTodo, updateTodo, toggleTodo, deleteTodo, setFilter } =
         useTodoStore(
@@ -37,15 +44,13 @@ export const useTodoWorkspace = (): TodoWorkspaceState => {
             }))
         );
 
-    const visibleTodos = useMemo(() => filterTodos(todos, filter), [filter, todos]);
-    const summary = useMemo<TodoSummary>(() => {
-        const completed = todos.filter((todo) => todo.completed).length;
-        return {
-            total: todos.length,
-            active: todos.length - completed,
-            completed
-        };
-    }, [todos]);
+    const visibleTodos = filterTodos(todos, filter);
+    const completed = todos.filter((todo) => todo.completed).length;
+    const summary: TodoSummary = {
+        total: todos.length,
+        active: todos.length - completed,
+        completed
+    };
 
     return {
         todos,

@@ -93,9 +93,9 @@ describe('TodoWorkspaceScreen', () => {
     it('exposes unique row action labels for each todo', () => {
         const { getByLabelText, queryAllByLabelText } = render(<TodoWorkspaceScreen />);
 
-        expect(getByLabelText('todo:actions.markComplete for Review onboarding copy')).toBeTruthy();
-        expect(getByLabelText('todo:actions.delete for Review onboarding copy')).toBeTruthy();
-        expect(getByLabelText('todo:actions.edit for Review onboarding copy')).toBeTruthy();
+        expect(getByLabelText('todo:actions.markComplete: Review onboarding copy')).toBeTruthy();
+        expect(getByLabelText('todo:actions.delete: Review onboarding copy')).toBeTruthy();
+        expect(getByLabelText('todo:actions.edit: Review onboarding copy')).toBeTruthy();
         expect(queryAllByLabelText('todo:actions.markComplete')).toHaveLength(0);
         expect(queryAllByLabelText('todo:actions.delete')).toHaveLength(0);
     });
@@ -108,7 +108,7 @@ describe('TodoWorkspaceScreen', () => {
         expect(queryByText('Review onboarding copy')).toBeTruthy();
         expect(queryByText('Book design review')).toBeTruthy();
 
-        fireEvent.press(getByLabelText('todo:actions.markComplete for Review onboarding copy'));
+        fireEvent.press(getByLabelText('todo:actions.markComplete: Review onboarding copy'));
         fireEvent.press(getByRole('button', { name: 'todo:filters.completed' }));
 
         expect(getByText('Review onboarding copy')).toBeTruthy();

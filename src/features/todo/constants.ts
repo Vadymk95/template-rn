@@ -49,8 +49,16 @@ export const TODO_COPY_KEYS = {
     }
 } as const;
 
+/**
+ * Compose an accessibility label as "{action}: {object}" — a locale-neutral
+ * separator parsed naturally by screen readers (NVDA, VoiceOver, TalkBack).
+ * Earlier `${action} for ${todo}` baked the English word "for" into every
+ * locale's a11y output. The colon avoids that drift while keeping the helper
+ * cheap (no `t` injection, no namespace lookup) — both arguments are
+ * already-translated strings the caller provides via its own `useTranslation`.
+ */
 const formatTodoActionLabel = (actionLabel: string, todoTitle: string): string =>
-    `${actionLabel} for ${todoTitle}`;
+    `${actionLabel}: ${todoTitle}`;
 
 export const getTodoActionLabel = (todoTitle: string, actionLabel: string): string =>
     formatTodoActionLabel(actionLabel, todoTitle);
