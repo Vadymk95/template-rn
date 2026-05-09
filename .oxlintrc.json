@@ -14,6 +14,7 @@
         "react/style-prop-object": "off",
         "no-debugger": "error",
         "no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
+        "no-underscore-dangle": ["error", { "allow": ["_hasHydrated"] }],
         "no-var": "error",
         "prefer-const": "error",
         "eqeqeq": ["error", "always"],
