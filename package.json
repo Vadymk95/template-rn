@@ -147,7 +147,8 @@
             "!src/shared/lib/constants/**",
             "!src/shared/lib/i18n/**",
             "!src/shared/locales/**",
-            "!src/**/*.stories.{ts,tsx}"
+            "!src/**/*.stories.{ts,tsx}",
+            "!src/lib/api/_example*"
         ],
         "coverageThreshold": {
             "global": {

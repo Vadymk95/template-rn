@@ -266,3 +266,29 @@ Then `Sentry.wrap()` the root layout. EAS Build source-map upload via `@sentry/r
 **Deferred until**: dedicated session with budget for migration walkthrough — (1) `"types": ["jest"]` add to tsconfig OR `@types/jest` realignment, (2) `app.config.ts` splash field migration to `expo-splash-screen` plugin config, (3) `(tabs)/_layout.tsx` TabIconProps type widening or import `ColorValue` from `react-native`, (4) RN 0.85 index-signature audit (add `[key: string]: unknown` or explicit prop typing per offending component), (5) NativeWind className typing reconciliation.
 
 **Revisit when**: time budget ≥2h available for surgical migration + verification pass.
+
+## [2026-05] Boundary validation via Zod safeFetch wrapper (mobile-aware)
+
+**Decision**: validate ALL API responses at boundary using Zod schemas via `src/lib/api/safeFetch.ts`. Reference example: `src/lib/api/_exampleSafeQuery.ts` (template seed). Pattern adopted as template seed because mobile distribution lag amplifies BE-drift impact (see Why).
+
+**Why (mobile-specific)**:
+
+- Cannot push hotfix instantly — App Store review delays days-to-weeks. Play Store faster but still hours.
+- EAS Update OTA improves this but only for JS bundle changes (not native).
+- BE schema drift in production = bug in user hands BEFORE patch reaches them.
+- `safeFetch` parses on every read → graceful degradation surface (catch SchemaValidationError → show "data unavailable" instead of NaN/blank UI).
+
+**Scope**:
+
+- TanStack Query `queryFn` → `safeFetchQueryFn(url, schema)` (re-throws AbortError unchanged → TQ treats as cancellation, not error)
+- Direct fetch → `safeFetch(url, schema)`
+- AsyncStorage reads → `Schema.safeParse(JSON.parse(raw))` (similar drift risk on app upgrade cycle)
+- expo-secure-store reads → same pattern
+
+**Pairs with**: `src/lib/logger.ts` — wire SchemaValidationError handler to log.error('[api] schema drift') so Sentry RN captures it (per Sentry RN integration ADR).
+
+**Trade-offs**: +0 KB bundle (Zod in deps), ~50-200μs parse per response (negligible vs network latency).
+
+**When NOT to use**: tRPC end-to-end codegen, throwaway prototypes, internal in-app function calls.
+
+**Revisit trigger**: if consumer fork drops safeFetch from 3+ endpoints OR adds tRPC codegen → drop from template seed.
