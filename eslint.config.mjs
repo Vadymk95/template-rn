@@ -8,6 +8,7 @@ import jestPlugin from 'eslint-plugin-jest';
 import prettierConfig from 'eslint-config-prettier';
 import prettierPlugin from 'eslint-plugin-prettier';
 import reactCompiler from 'eslint-plugin-react-compiler';
+import reactHooks from 'eslint-plugin-react-hooks';
 import templatePlugin from './tooling/eslint-plugin-template/index.mjs';
 import tseslint from 'typescript-eslint';
 
@@ -77,6 +78,12 @@ export default tseslint.config(
     },
     js.configs.recommended,
     ...expoConfig,
+    // Explicitly wire eslint-plugin-react-hooks `recommended-latest` to ensure
+    // React Compiler correctness rules fire (per DECISIONS Phase 5 contract).
+    // v7 of the plugin folds Compiler-correctness rules into recommended-latest;
+    // wiring explicit (not relying on transitive eslint-config-expo) so the
+    // contract holds across Expo config drops in the future.
+    reactHooks.configs['recommended-latest'],
     {
         rules: {
             'import/no-unresolved': 'off',

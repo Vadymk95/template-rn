@@ -171,3 +171,96 @@ Recorded so forks do not re-litigate the same list. **Ghost principle:** only it
 | P2   | jailbreak detection                        | **Defer** — niche (finance / high-assurance).                                                                                                                                                          |
 | P2   | tailwind-variants / CVA                    | **Defer** — NativeWind + clsx already chosen; second styling abstraction needs justification.                                                                                                          |
 | P2   | Zustand persist on MMKV                    | **Defer** — same as P0 MMKV; ties store layer to native KV choice.                                                                                                                                     |
+
+## React Compiler silent-bailout awareness (2026-05-23)
+
+**Decision**: keep `experiments.reactCompiler: true` AND `eslint-plugin-react-compiler@^19.1.0-rc.2` AND `eslint-plugin-react-hooks@^7.1.1` wired explicitly via `reactHooks.configs['recommended-latest']` in `eslint.config.mjs` (NOT relying on transitive `eslint-config-expo` provision). Add `npm run verify:rc` (`react-compiler-healthcheck src`) as opt-in audit (NOT folded into `verify` or `ci:local`).
+
+**Known silent-bailout bugs as of 2026-05-23** (`Status: Unconfirmed`, no assignees):
+
+- [facebook/react#35105](https://github.com/facebook/react/issues/35105) (Nov 11, 2025) — `eslint-disable` incorrectly suppresses incompatible-library warning, causing silent memoization skip.
+- [facebook/react#35644](https://github.com/facebook/react/issues/35644) (Jan 27, 2026) — `eslint-plugin-react-hooks` silent bailout when try/catch/finally block in the same component body.
+
+**Independent N=1 real-world signal** (Nadia Makarevich, [developerway.com Dec 4, 2024](https://www.developerway.com/posts/how-react-compiler-performs-on-real-code)) — mixed-positive: theme toggle TBT 280→0ms, checkbox 130→90ms, but Compiler fixed only 1-2 of 8-10 noticeable re-renders. Manual memoization still needed for fine-tuning.
+
+**Escape hatch**: file-level `"use no memo"` directive at top of file. Use when Compiler bailout causes observable regression.
+
+**Revisit trigger (quarterly, starting 2026-08-23)**: check both bugs' `state` via `gh api` — if `closed`, drop awareness section.
+
+**Why NOT enabled in web siblings**: /consilium 2026-05-23 vetoed Items 2/3/4 (Compiler enable in template-1, template-next-seo, template-spa-pwa) on unanswerable Adversarial killer Q ("Name one Compiler-enabled production app at >100K MAU where #35105 or #35644 reproducers have been ruled out as of 2026-05-23") + Vite team Mar 2026 blog warning that adding `babel-loader` eliminates most Oxc gains. template-rn keeps Compiler because RN ships no Oxc-vs-Babel ADR conflict.
+
+## Sentry RN integration pattern (post-Shopify perf deprecation 2026-05-23)
+
+**Decision**: document `@sentry/react-native` as the recommended (NOT bundled) replacement for the deprecated `@shopify/react-native-performance`. Consumers wire SDK in their product fork; template stays SDK-free per "No observability vendor in the template" ADR.
+
+**Context**: [Shopify/react-native-performance](https://github.com/Shopify/react-native-performance) archived 2025-11-26 — README verbatim "no longer maintained...deprecated" + **no successor named upstream**. Community 2026 playbooks ([RapidNative 2026](https://www.rapidnative.com/blogs/react-native-performance-optimization-2026-playbook)) converge on Sentry RN + Firebase Performance Monitoring + Hermes sampling profiler. `@sentry/react-native` 1.9M weekly DLs = RN telemetry leader. **Sentry doesn't self-claim successor** — successor framing is third-party.
+
+**Integration recipe** (for consumer fork, not for template):
+
+```ts
+// src/lib/sentry.ts — consumer adds this, NOT shipped in template
+import * as Sentry from '@sentry/react-native';
+import Constants from 'expo-constants';
+
+const dsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
+
+if (dsn) {
+    Sentry.init({
+        dsn,
+        tracesSampleRate: 1.0,
+        profilesSampleRate: 1.0,
+        integrations: [Sentry.hermesProfilingIntegration({ platformProfilers: true })],
+        environment: Constants.expoConfig?.extra?.appVariant ?? 'development',
+        enableNative: true
+    });
+}
+
+export const ErrorBoundary = Sentry.ErrorBoundary;
+export const captureException = Sentry.captureException;
+export const wrap = Sentry.wrap;
+```
+
+Then `Sentry.wrap()` the root layout. EAS Build source-map upload via `@sentry/react-native/expo` config plugin.
+
+**Env**: `.env.example` already has `EXPO_PUBLIC_SENTRY_DSN=` empty default. **Forks should either wire SDK + DSN or remove the env key entirely** (P0 audit backlog "Defer or polarize" stance).
+
+**Privacy note**: Sentry RN can capture PII. Forks shipping mortgage/payment/health data must configure `beforeSend` PII scrubbing + opt out of replays.
+
+**Revisit trigger (60-day, 2026-07-23)**: if Datadog RN or Embrace mainstream share crosses Sentry's 1.9M DLs, re-evaluate default.
+
+## REJECT list — explicit non-adoption (2026-05-23 /consilium)
+
+**Decision**: explicit DO-NOT-ADOPT register so future agents + forks don't re-litigate. Per /consilium 2026-05-23 APPLY Item 14.
+
+### memlab (Meta heap-snapshot leak detector)
+
+**Status**: skip by default. **Why**: 158K weekly DLs (May 2026), **ZERO published GitHub releases** ([facebook/memlab/releases](https://github.com/facebook/memlab/releases) verbatim "There aren't any releases here"), 0 of 8 React Doctor leaderboard flagship repos use in CI. Adopt only if memory-leak class bug observed.
+**Revisit (90-day, 2026-08-23)**: memlab v2.0+ formal releases + ≥1 named React app >10K MAU memlab-CI case study.
+
+### why-did-you-render (WDYR)
+
+**Status**: skip in template-rn (React Compiler enabled here). **Why**: WDYR README declares itself "completely incompatible with React Compiler" ([welldone-software/why-did-you-render](https://github.com/welldone-software/why-did-you-render)). Replacement = React DevTools Profiler "Memo ✨" badge + React 19.2 Performance Tracks API.
+**Revisit (no trigger)**: WDYR + Compiler-on structurally incompatible.
+
+### react-native-flipper
+
+**Status**: sunset. **Why**: deprecated RN 0.73 + removed from boilerplate RN 0.74 ([Flipper OSS blog 2024-10-24](https://fbflipper.com/blog/2024/10/24/changes-to-oss-flipper/)). React Native DevTools is official replacement.
+**Revisit (no trigger)**: permanent.
+
+### `@shopify/react-native-performance`
+
+**Status**: deprecated upstream 2025-11-26. See `## Sentry RN integration pattern` for community-named replacement.
+**Revisit (no trigger)**: deprecation final.
+
+### Zstd compression plugin (RN context)
+
+**Status**: not applicable (Metro/Hermes shipping path, not HTTP origin). Web-template note: Brotli universal in 2026; Safari Zstd landed 26.3 Feb 11, 2026 ([WebKit blog](https://webkit.org/blog/17798/webkit-features-for-safari-26-3/)), caniuse global 45/100 — Brotli still mandatory.
+**Revisit (no trigger)**: RN doesn't ship HTTP-encoded JS.
+
+## Deferred: SDK 56 migration
+
+**Status**: attempted 2026-05-23, REVERTED to SDK 55 due to surfacing **360 TypeScript errors** during typecheck — root causes include `expo/tsconfig.base` SDK 56 no longer auto-injecting Jest globals (`expect`/`describe`/`it` lost), `ExpoConfig.splash` field migration, Expo Router v56 stricter `TabIconProps` typing (ColorValue vs string), and React Native 0.85 strict index signatures on accessibility/className props. Migration ran cleanly per `expo install --fix` + `expo-doctor` 18/18, but tsc strict-typecheck broke at scale. Not a 5-min fix.
+
+**Deferred until**: dedicated session with budget for migration walkthrough — (1) `"types": ["jest"]` add to tsconfig OR `@types/jest` realignment, (2) `app.config.ts` splash field migration to `expo-splash-screen` plugin config, (3) `(tabs)/_layout.tsx` TabIconProps type widening or import `ColorValue` from `react-native`, (4) RN 0.85 index-signature audit (add `[key: string]: unknown` or explicit prop typing per offending component), (5) NativeWind className typing reconciliation.
+
+**Revisit when**: time budget ≥2h available for surgical migration + verification pass.
