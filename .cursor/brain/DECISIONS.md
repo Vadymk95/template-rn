@@ -292,3 +292,20 @@ Then `Sentry.wrap()` the root layout. EAS Build source-map upload via `@sentry/r
 **When NOT to use**: tRPC end-to-end codegen, throwaway prototypes, internal in-app function calls.
 
 **Revisit trigger**: if consumer fork drops safeFetch from 3+ endpoints OR adds tRPC codegen → drop from template seed.
+
+## [2026-05] Magic strings → constants (Zustand keys + Query factory + secure-store keys)
+
+**Decision**: extract magic strings used in 2+ places OR carrying external contract to named constants. Apply selectively per scope rules. NOT blanket extraction.
+
+**Extraction sites added this commit**:
+
+- `src/lib/storageKeys.ts` — `STORAGE_KEYS` (Zustand persist names, AsyncStorage external contract) + `SECURE_STORAGE_KEYS` (expo-secure-store keys, separate object for security boundary clarity). Mobile context: renaming a key without migration = silent loss of user data on app update. `src/store/user/constants.ts` was retired into this file (single export `USER_PERSIST_STORAGE_KEY` → `STORAGE_KEYS.userPersist`).
+- TanStack Query key factory **NOT centralized** — `src/lib/api/_exampleSafeQuery.ts` already demonstrates the per-feature factory pattern (`exampleKeys`), and `src/lib/queryClient.ts` JSDoc + `PROJECT_CONTEXT.md` Query-extension table both mandate `src/features/<name>/api/<name>Keys.ts` as the convention. A central `src/lib/queryKeys.ts` would contradict the existing ADR — re-evaluate if cross-feature key collisions appear.
+
+**Pattern**: `as const` objects, NOT `enum`. Type via `typeof OBJ[keyof typeof OBJ]`. Vocabulary tokens in `src/shared/lib/constants/**` + `src/shared/lib/theme/**` are SEPARATE (vocabulary, NOT call-site-counted, per existing "Design tokens are vocabulary" ADR).
+
+**Mobile-specific rationale**: cannot push hotfix instantly. Storage key rename without migration code = silent data loss for existing users (their AsyncStorage / SecureStore values become orphaned). Constants = single-source rename + grep-able audit. The Secure vs Async split mirrors the threat model: plaintext on disk vs Keychain/EncryptedSharedPreferences.
+
+**When NOT to extract**: single-use, logger tags, i18n keys, vocabulary tokens (`TYPOGRAPHY_TOKENS` / `SPACING_TOKENS` / declarative tables stay), testIDs, prototype scope. `TODO_FILTERS` (`src/store/todo/constants.ts`) stays co-located with its entity — domain enum, not external contract.
+
+**Revisit trigger**: if consumer fork adds >3 stores or >5 query keys without using factories within 60 days, drop pattern from template seed.

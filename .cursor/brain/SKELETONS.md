@@ -37,12 +37,24 @@ Touch with intent; re-verify via the commands in `VERIFICATION.md`.
 
 - Renaming the storage key without clearing or migrating the old key strands
   tokens in SecureStore until the user reinstalls — treat key changes like a
-  storage schema bump.
+  storage schema bump. The key string itself lives in
+  `src/lib/storageKeys.ts` (`SECURE_STORAGE_KEYS.authToken`). Renaming there
+  has the same effect — silent token loss on update.
+
+## `src/lib/storageKeys.ts`
+
+- Single source of truth for AsyncStorage + expo-secure-store key strings.
+  Renaming a key without writing a migration step orphans existing user data
+  on the next app launch (AsyncStorage / Keychain reads return null) — treat
+  every edit as a storage schema bump.
 
 ## `src/store/user/userStore.ts` (and any `persist`-ed store)
 
 - `partialize` controls what lands in AsyncStorage. Accidentally persisting a
   token = plaintext leak. Tokens belong in `expo-secure-store`.
+- The `name:` field comes from `STORAGE_KEYS.userPersist`
+  (`src/lib/storageKeys.ts`). Renaming = same storage-schema-bump risk as
+  the SecureStore keys.
 
 ## `src/app/_layout.tsx`
 

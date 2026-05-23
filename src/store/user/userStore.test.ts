@@ -3,7 +3,7 @@ import { act, renderHook } from '@testing-library/react-native';
 import * as SecureStore from 'expo-secure-store';
 
 import { useStoreReady } from '@/hooks/useStoreReady';
-import { USER_PERSIST_STORAGE_KEY } from '@/store/user/constants';
+import { SECURE_STORAGE_KEYS, STORAGE_KEYS } from '@/lib/storageKeys';
 import { useUserStore } from '@/store/user/userStore';
 
 describe('useUserStore', () => {
@@ -20,7 +20,7 @@ describe('useUserStore', () => {
             await result.current.setUser({ username: 'alice', token: 'tok' });
         });
         expect(result.current.username).toBe('alice');
-        expect(SecureStore.setItemAsync).toHaveBeenCalledWith('auth_token', 'tok');
+        expect(SecureStore.setItemAsync).toHaveBeenCalledWith(SECURE_STORAGE_KEYS.authToken, 'tok');
     });
 
     it('logout clears username and secure token', async () => {
@@ -32,7 +32,7 @@ describe('useUserStore', () => {
             await result.current.logout();
         });
         expect(result.current.username).toBeNull();
-        expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith('auth_token');
+        expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith(SECURE_STORAGE_KEYS.authToken);
     });
 
     it('persisted AsyncStorage payload never includes the auth token (partialize)', async () => {
@@ -40,7 +40,7 @@ describe('useUserStore', () => {
         await act(async () => {
             await result.current.setUser({ username: 'bob', token: 'super-secret' });
         });
-        const raw = await AsyncStorage.getItem(USER_PERSIST_STORAGE_KEY);
+        const raw = await AsyncStorage.getItem(STORAGE_KEYS.userPersist);
         expect(raw).toBeTruthy();
         expect(raw).not.toContain('super-secret');
         if (!raw) {

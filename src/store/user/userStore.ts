@@ -3,7 +3,7 @@ import { create } from 'zustand';
 import { createJSONStorage, devtools, persist } from 'zustand/middleware';
 
 import { clearAuthToken, setAuthToken } from '@/lib/secureToken';
-import { USER_PERSIST_STORAGE_KEY } from '@/store/user/constants';
+import { STORAGE_KEYS } from '@/lib/storageKeys';
 import { createSelectors } from '@/store/utils/createSelectors';
 
 interface UserState {
@@ -31,7 +31,7 @@ const useUserStoreBase = create<UserState>()(
                 setHasHydrated: (value) => set({ _hasHydrated: value })
             }),
             {
-                name: USER_PERSIST_STORAGE_KEY,
+                name: STORAGE_KEYS.userPersist,
                 storage: createJSONStorage(() => AsyncStorage),
                 partialize: (state) => ({ username: state.username }),
                 onRehydrateStorage: () => (state) => {
