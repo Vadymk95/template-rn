@@ -174,7 +174,9 @@ Recorded so forks do not re-litigate the same list. **Ghost principle:** only it
 
 ## React Compiler silent-bailout awareness (2026-05-23)
 
-**Decision**: keep `experiments.reactCompiler: true` AND `eslint-plugin-react-compiler@^19.1.0-rc.2` AND `eslint-plugin-react-hooks@^7.1.1` wired explicitly via `reactHooks.configs['recommended-latest']` in `eslint.config.mjs` (NOT relying on transitive `eslint-config-expo` provision). Add `npm run verify:rc` (`react-compiler-healthcheck src`) as opt-in audit (NOT folded into `verify` or `ci:local`).
+**Decision**: keep `experiments.reactCompiler: true` AND `eslint-plugin-react-compiler@^19.1.0-rc.2` AND `eslint-plugin-react-hooks@^7.1.1` (devDep). React hooks rules wired via `eslint-config-expo` (at `recommended` tier — provides `rules-of-hooks` + `exhaustive-deps`). Add `npm run verify:rc` (`react-compiler-healthcheck src`) as opt-in audit (NOT folded into `verify` or `ci:local`).
+
+**`recommended-latest` deferred**: attempted to wire `reactHooks.configs['recommended-latest']` in `eslint.config.mjs` (would add Compiler-correctness rules like `static-components`, `component-hook-factories`), but failed under flat-config — `eslint-config-expo` bundles an older `react-hooks` v5 internally; the v7-specific rules don't resolve against expo's plugin instance. Tracked: re-attempt when `eslint-config-expo@^57` bundles react-hooks v7+ OR when `eslint-plugin-react-hooks` ships a `configs.flat[*]` export shape that lets us override the plugin instance via flat-config.
 
 **Known silent-bailout bugs as of 2026-05-23** (`Status: Unconfirmed`, no assignees):
 
