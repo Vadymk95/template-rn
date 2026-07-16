@@ -17,12 +17,18 @@ Short record of non-obvious trade-offs. Update when reversing a decision.
 - Typed routes, deep links, and URL handling are free.
 - Bundle cost is acceptable for MVP.
 
-## Expo SDK 55 baseline
+## Expo SDK 57 baseline (upgraded 2026-07-16; was SDK 55)
 
-- SDK 55 released Jan 2026 as stable, with React Native 0.83 + React 19.2.
+- SDK 57 with React Native 0.86 + React 19.2; upgrade path 55→57 executed via
+  `npx expo install expo@^57 --fix` (see "Deferred: SDK 56 migration" below for
+  the resolved blockers).
 - Legacy Architecture was **dropped** in SDK 55 — New Arch is the only option,
   so `newArchEnabled: true` is no longer a meaningful flag.
 - React Compiler is stable, wired via `experiments.reactCompiler: true`.
+- SDK 56 breaking changes absorbed in passing: expo-router decoupled from
+  react-navigation (no direct imports existed), `expo/fetch` as global default
+  (no manual imports existed), top-level `splash` config key removed (plugin
+  config was already present).
 
 ## NativeWind 4.2, not v5
 
@@ -261,7 +267,9 @@ Then `Sentry.wrap()` the root layout. EAS Build source-map upload via `@sentry/r
 
 ## Deferred: SDK 56 migration
 
-**Status**: attempted 2026-05-23, REVERTED to SDK 55 due to surfacing **360 TypeScript errors** during typecheck — root causes include `expo/tsconfig.base` SDK 56 no longer auto-injecting Jest globals (`expect`/`describe`/`it` lost), `ExpoConfig.splash` field migration, Expo Router v56 stricter `TabIconProps` typing (ColorValue vs string), and React Native 0.85 strict index signatures on accessibility/className props. Migration ran cleanly per `expo install --fix` + `expo-doctor` 18/18, but tsc strict-typecheck broke at scale. Not a 5-min fix.
+**Status**: RESOLVED 2026-07-16 — migrated straight to SDK 57. Every root cause below was addressed exactly as predicted: (1) `"types": ["jest", "node"]` added to tsconfig (jest globals restored), (2) top-level `splash` removed in favour of the existing `expo-splash-screen` plugin config, (3) `TabIconProps.color` widened to `ColorValue`, (4) RNTL 14 async API migration (render/fireEvent/act/unmount awaited) + index-signature bracket access in tests. Full gate green (verify + expo-doctor 20/20). Historical record below kept as-is.
+
+**Original status**: attempted 2026-05-23, REVERTED to SDK 55 due to surfacing **360 TypeScript errors** during typecheck — root causes include `expo/tsconfig.base` SDK 56 no longer auto-injecting Jest globals (`expect`/`describe`/`it` lost), `ExpoConfig.splash` field migration, Expo Router v56 stricter `TabIconProps` typing (ColorValue vs string), and React Native 0.85 strict index signatures on accessibility/className props. Migration ran cleanly per `expo install --fix` + `expo-doctor` 18/18, but tsc strict-typecheck broke at scale. Not a 5-min fix.
 
 **Deferred until**: dedicated session with budget for migration walkthrough — (1) `"types": ["jest"]` add to tsconfig OR `@types/jest` realignment, (2) `app.config.ts` splash field migration to `expo-splash-screen` plugin config, (3) `(tabs)/_layout.tsx` TabIconProps type widening or import `ColorValue` from `react-native`, (4) RN 0.85 index-signature audit (add `[key: string]: unknown` or explicit prop typing per offending component), (5) NativeWind className typing reconciliation.
 

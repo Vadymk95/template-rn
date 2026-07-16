@@ -65,5 +65,7 @@
         "**/node_modules": true,
         "**/ios/Pods": true,
         "**/android/.gradle": true
-    }
+    },
+    "i18next.i18nPaths": "src/shared/locales,src/shared/lib/i18n",
+    "js/ts.tsdk.path": "node_modules/typescript/lib"
 }

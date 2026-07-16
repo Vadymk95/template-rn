@@ -19,10 +19,10 @@ describe('useTodoWorkspace', () => {
         });
     });
 
-    it('returns visible todos, summary counts, and store actions from the todo store', () => {
+    it('returns visible todos, summary counts, and store actions from the todo store', async () => {
         const todos = cloneTodos();
         const completed = todos.filter((todo) => todo.completed).length;
-        const { result } = renderHook(() => useTodoWorkspace());
+        const { result } = await renderHook(() => useTodoWorkspace());
 
         expect(result.current.visibleTodos).toEqual(filterTodos(todos, TODO_FILTERS.all));
         expect(result.current.summary).toEqual({
@@ -35,12 +35,12 @@ describe('useTodoWorkspace', () => {
         expect(typeof result.current.setFilter).toBe('function');
     });
 
-    it('updates visibleTodos when the filter changes', () => {
-        const { result } = renderHook(() => useTodoWorkspace());
+    it('updates visibleTodos when the filter changes', async () => {
+        const { result } = await renderHook(() => useTodoWorkspace());
 
         expect(result.current.visibleTodos).toEqual(filterTodos(cloneTodos(), TODO_FILTERS.all));
 
-        act(() => {
+        await act(() => {
             result.current.setFilter(TODO_FILTERS.completed);
         });
 

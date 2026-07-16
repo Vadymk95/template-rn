@@ -32,8 +32,9 @@ Run `npm run ci:local` when:
 - preparing a release branch
 - validating a machine against Expo tooling
 
-`ci:local` = `npm run verify && npm run doctor`. `expo-doctor` is intentionally
-kept out of the core repo contract because it depends on local native tooling.
+`ci:local` = `npm run verify:native` (= `verify` + `doctor`). `expo-doctor` is
+intentionally kept out of the core repo contract because it depends on local
+native tooling.
 
 ## Before first EAS build
 

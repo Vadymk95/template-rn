@@ -8,27 +8,27 @@ jest.mock('@expo/vector-icons/Ionicons', () => ({
 }));
 
 describe('TodoEmptyState', () => {
-    it('renders the all-empty copy and invokes create on action press', () => {
+    it('renders the all-empty copy and invokes create on action press', async () => {
         const onCreateTodo = jest.fn();
-        const { getByText, getByRole } = render(
+        const { getByText, getByRole } = await render(
             <TodoEmptyState isFiltered={false} onCreateTodo={onCreateTodo} />
         );
 
         expect(getByText('todo:list.emptyAllTitle')).toBeTruthy();
         expect(getByText('todo:list.emptyAllDescription')).toBeTruthy();
-        fireEvent.press(getByRole('button', { name: 'todo:actions.create' }));
+        await fireEvent.press(getByRole('button', { name: 'todo:actions.create' }));
         expect(onCreateTodo).toHaveBeenCalledTimes(1);
     });
 
-    it('renders the filtered-empty copy when isFiltered is true', () => {
+    it('renders the filtered-empty copy when isFiltered is true', async () => {
         const onCreateTodo = jest.fn();
-        const { getByText, getByRole } = render(
+        const { getByText, getByRole } = await render(
             <TodoEmptyState isFiltered onCreateTodo={onCreateTodo} />
         );
 
         expect(getByText('todo:list.emptyFilteredTitle')).toBeTruthy();
         expect(getByText('todo:list.emptyFilteredDescription')).toBeTruthy();
-        fireEvent.press(getByRole('button', { name: 'todo:actions.create' }));
+        await fireEvent.press(getByRole('button', { name: 'todo:actions.create' }));
         expect(onCreateTodo).toHaveBeenCalledTimes(1);
     });
 });

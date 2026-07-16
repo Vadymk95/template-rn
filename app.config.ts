@@ -28,11 +28,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     icon: './assets/icon.png',
     scheme: 'templatern',
     userInterfaceStyle: 'automatic',
-    splash: {
-        image: './assets/splash.png',
-        resizeMode: 'contain',
-        backgroundColor: '#ffffff'
-    },
     ios: {
         supportsTablet: true,
         bundleIdentifier: getBundleId(),

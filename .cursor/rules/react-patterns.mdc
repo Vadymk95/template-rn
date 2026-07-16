@@ -15,7 +15,8 @@ priority: 87
 
 ## 2. React Native UI
 
-- Prefer **`Pressable`** over legacy touchables unless you need a specific legacy behavior.
+- **Styling is NativeWind `className` — only.** NEW/touched code: express **all** static styling with `className`; **never** `StyleSheet.create()`. `hover:` variants are a **no-op on native** — use `active:` / `pressed:` for press feedback (e.g. `active:opacity-80`, as in `ErrorBoundary`). **Narrow carve-out:** inline `style={{ … }}` is allowed ONLY for dynamic values NativeWind cannot express as a class (e.g. `gap: SPACING_TOKENS.lg`, `flex: 1`) — never to rebuild a static stylesheet. Existing inline styles: leave as-is, do not migrate.
+- **`Pressable`**, never legacy touchables, for NEW interactive elements (`TouchableOpacity` / `TouchableHighlight` only when a specific legacy behavior demands it).
 - **Lists**: for large virtualized lists later, prefer **`@shopify/flash-list`** (add when needed) over naive `ScrollView` of hundreds of rows.
 - **Images**: for production lists/thumbnails, prefer **`expo-image`** over raw `Image` when you add that dependency.
 
@@ -33,5 +34,20 @@ priority: 87
 
 - ❌ `FC` alias — use `FunctionComponent`.
 - ❌ `import React from 'react'` — not needed with the automatic JSX runtime.
+- ❌ Manual `useMemo` / `useCallback` / `React.memo` — **React Compiler is ON** (`experiments.reactCompiler: true`) and auto-memoises pure derivations on each render (see `src/features/todo/useTodoWorkspace.ts`). NEW/touched code: do **NOT** hand-memoise. Add it back ONLY for a specific, confirmed regression; opt a single file out with `'use no memo'` at the top — **never** disable the compiler globally.
+- ❌ `StyleSheet.create()` or `hover:` classes in new code — see §2.
 - ❌ Business logic **> ~10 lines** inlined in JSX — extract to a hook or helper.
 - ❌ Web-only APIs (`window`, `document`, `div`) in shared mobile code.
+
+## 6. Visual quality — avoid the "AI aesthetic"
+
+AI-generated UI has recognizable tells; for any UI work reject the default in favour of the design system / tokens.
+
+- **Use the semantic NativeWind tokens**, never arbitrary colors: `bg-background` / `text-foreground`, `bg-primary` / `text-primary-foreground`, `bg-muted` / `text-muted-foreground`, `border-border`, `bg-destructive`. ❌ `bg-[#7c3aed]` / raw hex / the AI-default indigo-purple.
+- **Palette lives in one place** — HSL vars in `global.css` + `colors` in `tailwind.config.js`. Extend there; don't hardcode per-screen. `darkMode` is `class`, so keep `:root` **and** `.dark:root` in sync and check contrast in both.
+- **Gradients aren't in the token set** — skip decorative `expo-linear-gradient` washes; use flat token fills unless the design explicitly calls for one.
+- **Radius by hierarchy** — stick to the Tailwind scale (`rounded-md`, `rounded-lg`, `rounded-full` for pills) and vary it; don't slap `rounded-3xl` on every card and button.
+- **Depth is native and subtle** — Android `elevation` / iOS shadow props via `shadow-*`; prefer `border-border` separation over heavy stacked shadows. No web-style multi-layer box-shadows (they don't translate cleanly to native anyway).
+- **Spacing from the scale** — `p-2`…`p-6`, `gap-*` applied with intent; not uniform oversized `p-8` padding on everything.
+- **Realistic copy via i18n** — every user-visible string through `t()` / `src/shared/locales/` JSON, never lorem-ipsum or hardcoded English (real strings reveal true wrapping / overflow / length).
+- **Content-first layout** — priority-driven, not the generic hero + uniform stock-card grid. Use real lists (`@shopify/flash-list`) and real thumbnails (`expo-image`), not decorative placeholder rows.

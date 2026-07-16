@@ -9,11 +9,11 @@ priority: 90
 
 ## The Approval Law
 
-| Task size                                                                  | Protocol                                     |
-| -------------------------------------------------------------------------- | -------------------------------------------- |
-| &lt; 10 lines, single file                                                 | Proceed with brief notification              |
-| &gt; 10 lines **or** touches store / env / `app.config` / router `_layout` | Present plan → wait for approval → implement |
-| New cross-cutting pattern                                                  | Always present plan first                    |
+| Risk surface                                                                                                            | Protocol                                     |
+| ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| Trivial leaf edit — no danger zone, no contract change                                                                  | Proceed with brief notification              |
+| Danger-zone / SKELETONS surface, store / domain-state change, env, `app.config`, router `_layout`, or contract / public-export change | Present plan → wait for approval → implement |
+| New cross-cutting pattern                                                                                               | Always present plan first                    |
 
 **FORBIDDEN**: Starting non-trivial implementation before approval when the table requires it.
 In autonomous agent sessions, this means a written plan + explicit user approval checkpoint before implementation, not skipping straight to code.

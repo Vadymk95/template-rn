@@ -8,24 +8,24 @@ jest.mock('@expo/vector-icons/Ionicons', () => ({
 }));
 
 describe('EmptyState', () => {
-    it('renders title and description for the default icon path', () => {
-        const { getByText } = render(<EmptyState title="Title A" description="Body B" />);
+    it('renders title and description for the default icon path', async () => {
+        const { getByText } = await render(<EmptyState title="Title A" description="Body B" />);
 
         expect(getByText('Title A')).toBeTruthy();
         expect(getByText('Body B')).toBeTruthy();
     });
 
-    it('renders when a custom icon name is provided', () => {
-        const { getByText } = render(
+    it('renders when a custom icon name is provided', async () => {
+        const { getByText } = await render(
             <EmptyState title="T" description="D" icon="filter-outline" />
         );
 
         expect(getByText('T')).toBeTruthy();
     });
 
-    it('renders the action and calls onActionPress when both are provided', () => {
+    it('renders the action and calls onActionPress when both are provided', async () => {
         const onActionPress = jest.fn();
-        const { getByRole } = render(
+        const { getByRole } = await render(
             <EmptyState
                 title="T"
                 description="D"
@@ -34,13 +34,13 @@ describe('EmptyState', () => {
             />
         );
 
-        fireEvent.press(getByRole('button', { name: 'Retry' }));
+        await fireEvent.press(getByRole('button', { name: 'Retry' }));
         expect(onActionPress).toHaveBeenCalledTimes(1);
     });
 
-    it('omits the action button when actionLabel is absent', () => {
+    it('omits the action button when actionLabel is absent', async () => {
         const onActionPress = jest.fn();
-        const { queryByRole, getByText } = render(
+        const { queryByRole, getByText } = await render(
             <EmptyState title="T" description="D" onActionPress={onActionPress} />
         );
 

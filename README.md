@@ -28,11 +28,11 @@ If you fork this template, keep those files in sync with your product decisions.
 
 | Layer          | Choice                                                                                              | Why                                                                        |
 | -------------- | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Runtime        | React Native 0.83 + React 19.2                                                                      | Expo SDK 55 baseline                                                       |
-| Framework      | Expo SDK 55                                                                                         | Stable since Jan 2026; Legacy Arch dropped                                 |
+| Runtime        | React Native 0.86 + React 19.2                                                                      | Expo SDK 57 baseline                                                       |
+| Framework      | Expo SDK 57                                                                                         | New Arch only (Legacy dropped in SDK 55)                                   |
 | Compiler       | React Compiler (stable)                                                                             | Auto-memoization via `experiments.reactCompiler`                           |
-| Language       | TypeScript 5.9 strict + `noUncheckedIndexedAccess` + `exactOptionalPropertyTypes`                   | Zero soft-land type escape hatches                                         |
-| Routing        | Expo Router v55                                                                                     | File-based, typed routes, deep links                                       |
+| Language       | TypeScript 6.0 strict + `noUncheckedIndexedAccess` + `exactOptionalPropertyTypes`                   | Zero soft-land type escape hatches                                         |
+| Routing        | Expo Router v57                                                                                     | File-based, typed routes, deep links                                       |
 | Styling        | NativeWind 4.2 + Tailwind 3.4                                                                       | className-first; dark mode via `.dark`                                     |
 | State (client) | Zustand 5 + `createSelectors`                                                                       | Minimal, no boilerplate                                                    |
 | State (server) | TanStack Query 5 + AppState focus wiring                                                            | Queries refetch on app foreground                                          |

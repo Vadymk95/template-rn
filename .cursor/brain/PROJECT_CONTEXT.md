@@ -13,31 +13,31 @@ typed keys) and **react-hook-form** with Zod resolvers ship as defaults; remote
 translation delivery and heavier form stacks stay product-specific. The template
 ships the toolchain and the architectural spine.
 
-## Tech Stack (April 2026)
+## Tech Stack (July 2026)
 
-| Layer          | Choice                                                               | Version                    |
-| -------------- | -------------------------------------------------------------------- | -------------------------- |
-| Runtime        | React Native                                                         | 0.83 (Expo SDK 55)         |
-| Framework      | Expo                                                                 | 55 (stable since Jan 2026) |
-| Language       | TypeScript                                                           | 5.9 strict                 |
-| Bundler        | Metro                                                                | bundled with Expo          |
-| Routing        | Expo Router                                                          | v55                        |
-| Styling        | NativeWind + Tailwind                                                | 4.2 + 3.4                  |
-| Icons          | @expo/vector-icons                                                   | ships with Expo            |
-| State          | Zustand + devtools + persist                                         | 5                          |
-| Server state   | TanStack Query (+ AppState focus)                                    | 5                          |
-| Env validation | @t3-oss/env-core + zod                                               | 0.13 / 4                   |
-| Animation      | react-native-reanimated (+ worklets)                                 | 4.2 / 0.7.4                |
-| Gestures       | react-native-gesture-handler                                         | 2.30                       |
-| Storage        | expo-secure-store (secrets) + AsyncStorage (cache)                   | —                          |
-| Observability  | stub `logger.ts` (wire Sentry/etc in product)                        | —                          |
-| Testing        | Jest + jest-expo + @testing-library/react-native (built-in matchers) | —                          |
-| Linting        | ESLint 9 flat + eslint-config-expo + import-x + oxlint pre-pass      | —                          |
-| Formatting     | Prettier                                                             | 3                          |
-| Git hooks      | Husky + commitlint + lint-staged                                     | —                          |
-| Compiler       | React Compiler (enabled via `experiments.reactCompiler`)             | stable                     |
-| i18n           | i18next + react-i18next + `src/shared/locales/` + expo-localization  | typed `t()` keys           |
-| Forms          | react-hook-form + @hookform/resolvers (Zod)                          | simple inputs default      |
+| Layer          | Choice                                                               | Version               |
+| -------------- | -------------------------------------------------------------------- | --------------------- |
+| Runtime        | React Native                                                         | 0.86 (Expo SDK 57)    |
+| Framework      | Expo                                                                 | 57                    |
+| Language       | TypeScript                                                           | 6.0 strict            |
+| Bundler        | Metro                                                                | bundled with Expo     |
+| Routing        | Expo Router                                                          | v57                   |
+| Styling        | NativeWind + Tailwind                                                | 4.2 + 3.4             |
+| Icons          | @expo/vector-icons                                                   | ships with Expo       |
+| State          | Zustand + devtools + persist                                         | 5                     |
+| Server state   | TanStack Query (+ AppState focus)                                    | 5                     |
+| Env validation | @t3-oss/env-core + zod                                               | 0.13 / 4              |
+| Animation      | react-native-reanimated (+ worklets)                                 | 4.2 / 0.7.4           |
+| Gestures       | react-native-gesture-handler                                         | 2.30                  |
+| Storage        | expo-secure-store (secrets) + AsyncStorage (cache)                   | —                     |
+| Observability  | stub `logger.ts` (wire Sentry/etc in product)                        | —                     |
+| Testing        | Jest + jest-expo + @testing-library/react-native (built-in matchers) | —                     |
+| Linting        | ESLint 9 flat + eslint-config-expo + import-x + oxlint pre-pass      | —                     |
+| Formatting     | Prettier                                                             | 3                     |
+| Git hooks      | Husky + commitlint + lint-staged                                     | —                     |
+| Compiler       | React Compiler (enabled via `experiments.reactCompiler`)             | stable                |
+| i18n           | i18next + react-i18next + `src/shared/locales/` + expo-localization  | typed `t()` keys      |
+| Forms          | react-hook-form + @hookform/resolvers (Zod)                          | simple inputs default |
 
 `expo-localization` supplies the initial language; catalogs live next to the app
 in JSON (see `MAP.md` → i18n).
@@ -120,8 +120,8 @@ release notes.
 
 ### Path alias `@/*`
 
-Single source of truth: `tsconfig.json` `paths`. Metro reads this directly in
-SDK 55, no Babel plugin needed.
+Single source of truth: `tsconfig.json` `paths`. Metro reads this directly
+(SDK 55+), no Babel plugin needed.
 
 ## Dev Tooling
 
@@ -160,16 +160,16 @@ This section is the **single narrative** for “what we optimize for” vs “wh
 
 ### What is deferred and typical adoption triggers
 
-| Area                                 | Deferred in-repo                                  | When to add                                                                                       |
-| ------------------------------------ | ------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| **MMKV / sync KV**                   | AsyncStorage + Jest mock                          | Measured slow hydration, sync read before first paint, Zustand/Query persist with strict perf SLA |
-| **Sentry / crash + source maps**     | `logger` stub + optional `EXPO_PUBLIC_SENTRY_DSN` | Production crash visibility, release health, or org requires upload in CI                         |
-| **Maestro (or Detox) E2E**           | Jest + manual smoke                               | First release candidate, regression policy on critical flows, or post–EAS Update smoke            |
-| **expo-image**                       | Plain `Image` / no image                          | Remote images, caching, placeholders, CDN                                                         |
-| **FlashList**                        | `FlatList` / short lists                          | Long virtualized lists, scroll jank                                                               |
-| **TanStack Query persist + NetInfo** | Foreground refetch only                           | Offline-first product requirement                                                                 |
-| **SHA-pinned Actions / gitleaks**    | Floating `@v4` + `permissions`                    | Org supply-chain policy, public org template                                                      |
-| **HTTP client layer**                | `fetch` + Query                                   | Auth refresh, uniform error taxonomy, interceptors                                                |
+| Area                                 | Deferred in-repo                                                                | When to add                                                                                       |
+| ------------------------------------ | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| **MMKV / sync KV**                   | AsyncStorage + Jest mock                                                        | Measured slow hydration, sync read before first paint, Zustand/Query persist with strict perf SLA |
+| **Sentry / crash + source maps**     | `logger` stub + optional `EXPO_PUBLIC_SENTRY_DSN`                               | Production crash visibility, release health, or org requires upload in CI                         |
+| **Maestro (or Detox) E2E in CI**     | Local Maestro smoke flows in `.maestro/` (`npm run maestro`), not wired into CI | Regression policy on critical flows, first release candidate, or post–EAS Update smoke            |
+| **expo-image**                       | Plain `Image` / no image                                                        | Remote images, caching, placeholders, CDN                                                         |
+| **FlashList**                        | `FlatList` / short lists                                                        | Long virtualized lists, scroll jank                                                               |
+| **TanStack Query persist + NetInfo** | Foreground refetch only                                                         | Offline-first product requirement                                                                 |
+| **SHA-pinned Actions / gitleaks**    | Floating `@v4` + `permissions`                                                  | Org supply-chain policy, public org template                                                      |
+| **HTTP client layer**                | `fetch` + Query                                                                 | Auth refresh, uniform error taxonomy, interceptors                                                |
 
 ### Comparison to opinionated product starters
 

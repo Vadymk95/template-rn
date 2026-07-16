@@ -153,6 +153,26 @@ export default tseslint.config(
                 'error',
                 { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }
             ],
+            // ─── Explicit in/out contracts ───────────────────────────────────
+            // Every named function declares its output: either a variable type
+            // annotation (const X: FunctionComponent<Props> = () => …) or an
+            // explicit return type (const Screen = (): ReactElement => …).
+            // Inline callbacks passed as arguments/JSX props stay free
+            // (allowExpressions). Inputs are covered by TS strict itself:
+            // noImplicitAny forces every props/param type to be declared.
+            '@typescript-eslint/explicit-function-return-type': [
+                'error',
+                {
+                    allowExpressions: true,
+                    allowTypedFunctionExpressions: true,
+                    allowHigherOrderFunctions: true,
+                    allowIIFEs: true
+                }
+            ],
+            // Property-style signatures (`onSelect: (id: string) => void`) get
+            // strict contravariant parameter checks; method style (`onSelect(id)`)
+            // is checked bivariantly — looser, can hide unsound narrowing.
+            '@typescript-eslint/method-signature-style': ['error', 'property'],
             '@typescript-eslint/no-explicit-any': 'error',
             '@typescript-eslint/no-import-type-side-effects': 'error',
             '@typescript-eslint/switch-exhaustiveness-check': 'error',
@@ -245,12 +265,24 @@ export default tseslint.config(
             'no-restricted-imports': 'off'
         }
     },
+    // ─── TanStack Query option factories — inference is the API design ───────
+    // queryOptions() derives queryKey/queryFn types from the options object;
+    // spelling out its return type would be brittle noise. The options object
+    // itself is the declared contract.
+    {
+        files: ['src/lib/api/**/*Query.ts', 'src/lib/api/**/*.queries.ts'],
+        rules: {
+            '@typescript-eslint/explicit-function-return-type': 'off'
+        }
+    },
     {
         files: ['**/*.{test,spec}.{ts,tsx}', 'src/test/**/*.ts'],
         ...tseslint.configs.disableTypeChecked,
         ...jestPlugin.configs['flat/recommended'],
         rules: {
             ...jestPlugin.configs['flat/recommended'].rules,
+            // Test helpers/fixtures don't need declared return contracts.
+            '@typescript-eslint/explicit-function-return-type': 'off',
             '@typescript-eslint/no-unsafe-assignment': 'off',
             '@typescript-eslint/no-unsafe-member-access': 'off',
             '@typescript-eslint/no-unsafe-call': 'off',
@@ -277,7 +309,8 @@ export default tseslint.config(
             ...prettierConfig.rules,
             'prettier/prettier': 'error',
             'import-x/no-default-export': 'off',
-            '@typescript-eslint/no-require-imports': 'off'
+            '@typescript-eslint/no-require-imports': 'off',
+            '@typescript-eslint/explicit-function-return-type': 'off'
         }
     }
 );

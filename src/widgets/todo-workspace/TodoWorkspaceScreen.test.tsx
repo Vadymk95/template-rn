@@ -44,54 +44,57 @@ describe('TodoWorkspaceScreen', () => {
         });
     });
 
-    it('reads the visible workspace heading from the home locale namespace', () => {
-        const { getByText } = render(<TodoWorkspaceScreen />);
+    it('reads the visible workspace heading from the home locale namespace', async () => {
+        const { getByText } = await render(<TodoWorkspaceScreen />);
 
         expect(getByText('home:title')).toBeTruthy();
     });
 
-    it('renders the home subtitle when the translation is non-empty', () => {
-        const { getByText } = render(<TodoWorkspaceScreen />);
+    it('renders the home subtitle when the translation is non-empty', async () => {
+        const { getByText } = await render(<TodoWorkspaceScreen />);
 
         expect(getByText('home:subtitle')).toBeTruthy();
     });
 
-    it('creates a task from the center dialog', () => {
-        const { getByPlaceholderText, getByRole, getByText, queryByText } = render(
+    it('creates a task from the center dialog', async () => {
+        const { getByPlaceholderText, getByRole, getByText, queryByText } = await render(
             <TodoWorkspaceScreen />
         );
 
         expect(queryByText('Plan MVP analytics')).toBeNull();
 
-        fireEvent.press(getByText('todo:actions.create'));
-        fireEvent.changeText(
+        await fireEvent.press(getByText('todo:actions.create'));
+        await fireEvent.changeText(
             getByPlaceholderText('todo:form.titlePlaceholder'),
             'Plan MVP analytics'
         );
-        fireEvent.press(getByRole('button', { name: 'todo:actions.createSubmit' }));
+        await fireEvent.press(getByRole('button', { name: 'todo:actions.createSubmit' }));
 
         expect(getByText('Plan MVP analytics')).toBeTruthy();
     });
 
-    it('resets the create dialog draft and validation when reopened', () => {
+    it('resets the create dialog draft and validation when reopened', async () => {
         const { getByPlaceholderText, getByRole, getByText, queryByDisplayValue, queryByText } =
-            render(<TodoWorkspaceScreen />);
+            await render(<TodoWorkspaceScreen />);
 
-        fireEvent.press(getByText('todo:actions.create'));
-        fireEvent.press(getByRole('button', { name: 'todo:actions.createSubmit' }));
+        await fireEvent.press(getByText('todo:actions.create'));
+        await fireEvent.press(getByRole('button', { name: 'todo:actions.createSubmit' }));
         expect(getByText('todo:form.titleRequired')).toBeTruthy();
 
-        fireEvent.changeText(getByPlaceholderText('todo:form.titlePlaceholder'), 'Draft task');
-        fireEvent.press(getByRole('button', { name: 'todo:actions.cancel' }));
-        fireEvent.press(getByText('todo:actions.create'));
+        await fireEvent.changeText(
+            getByPlaceholderText('todo:form.titlePlaceholder'),
+            'Draft task'
+        );
+        await fireEvent.press(getByRole('button', { name: 'todo:actions.cancel' }));
+        await fireEvent.press(getByText('todo:actions.create'));
 
         expect(queryByText('todo:form.titleRequired')).toBeNull();
         expect(queryByDisplayValue('Draft task')).toBeNull();
-        expect(getByPlaceholderText('todo:form.titlePlaceholder').props.value).toBe('');
+        expect(getByPlaceholderText('todo:form.titlePlaceholder').props['value']).toBe('');
     });
 
-    it('exposes unique row action labels for each todo', () => {
-        const { getByLabelText, queryAllByLabelText } = render(<TodoWorkspaceScreen />);
+    it('exposes unique row action labels for each todo', async () => {
+        const { getByLabelText, queryAllByLabelText } = await render(<TodoWorkspaceScreen />);
 
         expect(getByLabelText('todo:actions.markComplete: Review onboarding copy')).toBeTruthy();
         expect(getByLabelText('todo:actions.delete: Review onboarding copy')).toBeTruthy();
@@ -100,16 +103,16 @@ describe('TodoWorkspaceScreen', () => {
         expect(queryAllByLabelText('todo:actions.delete')).toHaveLength(0);
     });
 
-    it('shows toggled tasks in the completed filter', () => {
-        const { getByLabelText, getByRole, getByText, queryByText } = render(
+    it('shows toggled tasks in the completed filter', async () => {
+        const { getByLabelText, getByRole, getByText, queryByText } = await render(
             <TodoWorkspaceScreen />
         );
 
         expect(queryByText('Review onboarding copy')).toBeTruthy();
         expect(queryByText('Book design review')).toBeTruthy();
 
-        fireEvent.press(getByLabelText('todo:actions.markComplete: Review onboarding copy'));
-        fireEvent.press(getByRole('button', { name: 'todo:filters.completed' }));
+        await fireEvent.press(getByLabelText('todo:actions.markComplete: Review onboarding copy'));
+        await fireEvent.press(getByRole('button', { name: 'todo:filters.completed' }));
 
         expect(getByText('Review onboarding copy')).toBeTruthy();
         expect(getByText('Send sprint summary')).toBeTruthy();

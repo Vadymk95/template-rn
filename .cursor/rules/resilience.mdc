@@ -24,5 +24,7 @@ priority: 92
 
 ## 4. Secrets & env
 
-- Never put billing-capable secrets in **`EXPO_PUBLIC_*`** variables (they ship in the JS bundle).
-- Runtime config only through validated **`src/env.ts`**.
+- **Never** read `process.env.*` directly in app code — runtime config **always** flows through the Zod-validated **`src/env.ts`** object.
+- **Never** put billing-capable secrets or API keys in **`EXPO_PUBLIC_*`** variables — they are inlined into the JS bundle at build time and are **not** secret.
+- Adding a var = edit `.env.example` **and** the `src/env.ts` Zod schema, then **restart Metro** (env is read once at build).
+- Tokens belong in **`expo-secure-store`**, **never** AsyncStorage and **never** in a Zustand `persist` `partialize` — a leaked token there is a plaintext leak (see `.cursor/brain/SKELETONS.md`).

@@ -43,6 +43,7 @@ export const Dialog = ({
                 }}
             >
                 <Pressable
+                    testID="dialog-backdrop"
                     className="absolute inset-0"
                     accessible={false}
                     importantForAccessibility="no"

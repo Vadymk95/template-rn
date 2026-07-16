@@ -56,3 +56,8 @@ CLAUDE.local.md
 
 expo-env.d.ts
 # @end expo-cli
+
+# .cursor/ is tracked in this template (personal repo) — override the global
+# ghost-mode ignore (~/.gitignore_global) so plain `git add` works for agents.
+!.cursor/
+!.cursor/**

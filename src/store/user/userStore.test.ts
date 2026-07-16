@@ -15,7 +15,7 @@ describe('useUserStore', () => {
     });
 
     it('setUser persists username and stores token in secure storage', async () => {
-        const { result } = renderHook(() => useUserStore());
+        const { result } = await renderHook(() => useUserStore());
         await act(async () => {
             await result.current.setUser({ username: 'alice', token: 'tok' });
         });
@@ -24,7 +24,7 @@ describe('useUserStore', () => {
     });
 
     it('logout clears username and secure token', async () => {
-        const { result } = renderHook(() => useUserStore());
+        const { result } = await renderHook(() => useUserStore());
         await act(async () => {
             await result.current.setUser({ username: 'alice', token: 'tok' });
         });
@@ -36,7 +36,7 @@ describe('useUserStore', () => {
     });
 
     it('persisted AsyncStorage payload never includes the auth token (partialize)', async () => {
-        const { result } = renderHook(() => useUserStore());
+        const { result } = await renderHook(() => useUserStore());
         await act(async () => {
             await result.current.setUser({ username: 'bob', token: 'super-secret' });
         });
@@ -52,19 +52,19 @@ describe('useUserStore', () => {
         expect(parsed.state).not.toHaveProperty('_hasHydrated');
     });
 
-    it('setHasHydrated drives useStoreReady for root layout gating', () => {
-        const { result } = renderHook(() => ({
+    it('setHasHydrated drives useStoreReady for root layout gating', async () => {
+        const { result } = await renderHook(() => ({
             ready: useStoreReady(),
             hydrated: useUserStore.use._hasHydrated()
         }));
 
-        act(() => {
+        await act(() => {
             useUserStore.getState().setHasHydrated(false);
         });
         expect(result.current.ready).toBe(false);
         expect(result.current.hydrated).toBe(false);
 
-        act(() => {
+        await act(() => {
             useUserStore.getState().setHasHydrated(true);
         });
         expect(result.current.ready).toBe(true);
@@ -72,10 +72,10 @@ describe('useUserStore', () => {
     });
 
     it('logout clears username but does not reset hydration (avoids splash flash)', async () => {
-        act(() => {
+        await act(() => {
             useUserStore.getState().setHasHydrated(true);
         });
-        const { result } = renderHook(() => useUserStore());
+        const { result } = await renderHook(() => useUserStore());
         await act(async () => {
             await result.current.setUser({ username: 'alice', token: 'tok' });
         });

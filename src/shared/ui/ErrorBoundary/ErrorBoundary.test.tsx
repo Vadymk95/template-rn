@@ -13,19 +13,19 @@ describe('ErrorBoundary', () => {
         consoleErrorSpy.mockRestore();
     });
 
-    it('renders fallback UI and logs the error', () => {
-        render(<ErrorBoundary error={new Error('boom')} retry={jest.fn()} />);
+    it('renders fallback UI and logs the error', async () => {
+        await render(<ErrorBoundary error={new Error('boom')} retry={jest.fn()} />);
 
         expect(screen.getByRole('alert')).toBeOnTheScreen();
         expect(screen.getByText(/something went wrong/i)).toBeOnTheScreen();
         expect(consoleErrorSpy).toHaveBeenCalled();
     });
 
-    it('invokes retry when the button is pressed', () => {
+    it('invokes retry when the button is pressed', async () => {
         const retry = jest.fn();
-        render(<ErrorBoundary error={new Error('boom')} retry={retry} />);
+        await render(<ErrorBoundary error={new Error('boom')} retry={retry} />);
 
-        fireEvent.press(screen.getByRole('button'));
+        await fireEvent.press(screen.getByRole('button'));
         expect(retry).toHaveBeenCalledTimes(1);
     });
 });

@@ -9,34 +9,30 @@ jest.mock('@expo/vector-icons/Ionicons', () => ({
 }));
 
 describe('Dialog', () => {
-    it('keeps the backdrop out of the accessibility tree', () => {
-        const { UNSAFE_getByProps } = render(
+    it('keeps the backdrop out of the accessibility tree', async () => {
+        const { getByTestId } = await render(
             <Dialog visible title="Create task" onClose={jest.fn()}>
                 <Text>Dialog content</Text>
             </Dialog>
         );
 
-        const backdrop = UNSAFE_getByProps({
-            className: 'absolute inset-0'
-        });
+        // The backdrop is intentionally hidden from the accessibility tree, so
+        // the query must opt in to hidden elements to reach it at all.
+        const backdrop = getByTestId('dialog-backdrop', { includeHiddenElements: true });
 
-        expect(backdrop.props.accessible).toBe(false);
-        expect(backdrop.props.accessibilityLabel).toBeUndefined();
+        expect(backdrop.props['accessible']).toBe(false);
+        expect(backdrop.props['accessibilityLabel']).toBeUndefined();
     });
 
-    it('still closes when the backdrop is pressed', () => {
+    it('still closes when the backdrop is pressed', async () => {
         const onClose = jest.fn();
-        const { UNSAFE_getByProps } = render(
+        const { getByTestId } = await render(
             <Dialog visible title="Create task" onClose={onClose}>
                 <Text>Dialog content</Text>
             </Dialog>
         );
 
-        const backdrop = UNSAFE_getByProps({
-            className: 'absolute inset-0'
-        });
-
-        fireEvent.press(backdrop);
+        await fireEvent.press(getByTestId('dialog-backdrop', { includeHiddenElements: true }));
 
         expect(onClose).toHaveBeenCalledTimes(1);
     });

@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactElement } from 'react';
+import { useState, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, View } from 'react-native';
 
@@ -29,10 +29,15 @@ export const TodoForm = ({
     const [title, setTitle] = useState(initialTitle);
     const [error, setError] = useState<string | undefined>();
 
-    useEffect(() => {
+    // Reset draft state when the caller switches the edited todo. Done during
+    // render (React's "adjust state when props change" pattern) instead of an
+    // effect, so the stale draft never paints.
+    const [prevInitialTitle, setPrevInitialTitle] = useState(initialTitle);
+    if (prevInitialTitle !== initialTitle) {
+        setPrevInitialTitle(initialTitle);
         setTitle(initialTitle);
         setError(undefined);
-    }, [initialTitle]);
+    }
 
     const handleSubmit = (): void => {
         const normalizedTitle = title.trim();

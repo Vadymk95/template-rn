@@ -5,18 +5,20 @@ import { Text } from 'react-native';
 import { Button } from '@/shared/ui/Button/Button';
 
 describe('Button', () => {
-    it('renders the label and calls onPress', () => {
+    it('renders the label and calls onPress', async () => {
         const onPress = jest.fn();
-        const { getByRole, getByText } = render(<Button label="Create task" onPress={onPress} />);
+        const { getByRole, getByText } = await render(
+            <Button label="Create task" onPress={onPress} />
+        );
 
-        fireEvent.press(getByRole('button'));
+        await fireEvent.press(getByRole('button'));
 
         expect(getByText('Create task')).toBeTruthy();
         expect(onPress).toHaveBeenCalledTimes(1);
     });
 
-    it('renders children instead of the label when custom content is provided', () => {
-        const { getByText, queryByText } = render(
+    it('renders children instead of the label when custom content is provided', async () => {
+        const { getByText, queryByText } = await render(
             <Button label="Hidden label">
                 <Text>Custom content</Text>
             </Button>
@@ -26,10 +28,10 @@ describe('Button', () => {
         expect(queryByText('Hidden label')).toBeNull();
     });
 
-    it('renders optional left and right slots', () => {
+    it('renders optional left and right slots', async () => {
         const leftSlot = createElement(Text, undefined, 'Left icon');
         const rightSlot = createElement(Text, undefined, 'Right icon');
-        const { getByText } = render(
+        const { getByText } = await render(
             <Button label="Open" leftSlot={leftSlot} rightSlot={rightSlot} />
         );
 
@@ -38,31 +40,31 @@ describe('Button', () => {
         expect(getByText('Right icon')).toBeTruthy();
     });
 
-    it('prevents presses while disabled or loading', () => {
+    it('prevents presses while disabled or loading', async () => {
         const onPress = jest.fn();
-        const disabledRender = render(<Button label="Disabled" onPress={onPress} disabled />);
+        const disabledRender = await render(<Button label="Disabled" onPress={onPress} disabled />);
 
-        fireEvent.press(disabledRender.getByRole('button'));
+        await fireEvent.press(disabledRender.getByRole('button'));
         expect(onPress).not.toHaveBeenCalled();
 
-        disabledRender.unmount();
+        await disabledRender.unmount();
 
-        const loadingRender = render(<Button label="Loading" onPress={onPress} loading />);
+        const loadingRender = await render(<Button label="Loading" onPress={onPress} loading />);
         const loadingButton = loadingRender.getByRole('button');
 
-        fireEvent.press(loadingButton);
+        await fireEvent.press(loadingButton);
 
         expect(onPress).not.toHaveBeenCalled();
-        expect(loadingButton.props.accessibilityState).toEqual({
+        expect(loadingButton.props['accessibilityState']).toEqual({
             busy: true,
             disabled: true
         });
     });
 
-    it('warns in development when custom content buttons have no accessible label', () => {
+    it('warns in development when custom content buttons have no accessible label', async () => {
         const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(jest.fn());
 
-        render(
+        await render(
             <Button>
                 <Text>Custom content</Text>
             </Button>

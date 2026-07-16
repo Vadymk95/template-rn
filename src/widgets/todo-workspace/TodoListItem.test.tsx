@@ -19,9 +19,9 @@ describe('TodoListItem', () => {
     const activeTodo: Todo = first;
     const completedTodo: Todo = second;
 
-    it('calls onToggleTodo when the toggle is pressed', () => {
+    it('calls onToggleTodo when the toggle is pressed', async () => {
         const onToggleTodo = jest.fn();
-        const { getByTestId } = render(
+        const { getByTestId } = await render(
             <TodoListItem
                 todo={activeTodo}
                 onEditTodo={jest.fn()}
@@ -30,13 +30,13 @@ describe('TodoListItem', () => {
             />
         );
 
-        fireEvent.press(getByTestId(`todo-toggle-${activeTodo.id}`));
+        await fireEvent.press(getByTestId(`todo-toggle-${activeTodo.id}`));
         expect(onToggleTodo).toHaveBeenCalledWith(activeTodo.id);
     });
 
-    it('calls onDeleteTodo when delete is pressed', () => {
+    it('calls onDeleteTodo when delete is pressed', async () => {
         const onDeleteTodo = jest.fn();
-        const { getByLabelText } = render(
+        const { getByLabelText } = await render(
             <TodoListItem
                 todo={activeTodo}
                 onEditTodo={jest.fn()}
@@ -45,7 +45,7 @@ describe('TodoListItem', () => {
             />
         );
 
-        fireEvent.press(
+        await fireEvent.press(
             getByLabelText(
                 getTodoActionLabel(activeTodo.title, `todo:${TODO_COPY_KEYS.actions.delete}`)
             )
@@ -53,9 +53,9 @@ describe('TodoListItem', () => {
         expect(onDeleteTodo).toHaveBeenCalledWith(activeTodo.id);
     });
 
-    it('calls onEditTodo with the todo when edit is pressed', () => {
+    it('calls onEditTodo with the todo when edit is pressed', async () => {
         const onEditTodo = jest.fn();
-        const { getByLabelText } = render(
+        const { getByLabelText } = await render(
             <TodoListItem
                 todo={activeTodo}
                 onEditTodo={onEditTodo}
@@ -64,7 +64,7 @@ describe('TodoListItem', () => {
             />
         );
 
-        fireEvent.press(
+        await fireEvent.press(
             getByLabelText(
                 getTodoActionLabel(activeTodo.title, `todo:${TODO_COPY_KEYS.actions.edit}`)
             )
@@ -72,8 +72,8 @@ describe('TodoListItem', () => {
         expect(onEditTodo).toHaveBeenCalledWith(activeTodo);
     });
 
-    it('applies strikethrough styling to the title when completed', () => {
-        const { getByText } = render(
+    it('applies strikethrough styling to the title when completed', async () => {
+        const { getByText } = await render(
             <TodoListItem
                 todo={completedTodo}
                 onEditTodo={jest.fn()}
@@ -83,12 +83,12 @@ describe('TodoListItem', () => {
         );
 
         const title = getByText(completedTodo.title);
-        expect(title.props.className).toContain('line-through');
+        expect(title.props['className']).toContain('line-through');
         expect(getByText('todo:status.completed')).toBeTruthy();
     });
 
-    it('shows active status copy for incomplete todos', () => {
-        const { getByText } = render(
+    it('shows active status copy for incomplete todos', async () => {
+        const { getByText } = await render(
             <TodoListItem
                 todo={activeTodo}
                 onEditTodo={jest.fn()}

@@ -2,12 +2,13 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { ColorValue } from 'react-native';
 
 import { TAB_BAR_ACTIVE_TINT } from '@/shared/lib/constants/navigationTheme';
 import { TAB_SCREEN_IONICONS } from '@/shared/lib/constants/tabBarIcons';
 
 interface TabIconProps {
-    color: string;
+    color: ColorValue;
     size: number;
 }
 

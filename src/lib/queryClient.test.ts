@@ -52,7 +52,7 @@ describe('QueryClientAppStateBridge', () => {
         });
     });
 
-    it('registers AppState, forwards focus to TanStack on native, and cleans up', () => {
+    it('registers AppState, forwards focus to TanStack on native, and cleans up', async () => {
         const remove = jest.fn();
         let changeHandler: ((status: string) => void) | undefined;
         jest.spyOn(AppState, 'addEventListener').mockImplementation((event, handler) => {
@@ -70,7 +70,7 @@ describe('QueryClientAppStateBridge', () => {
             writable: true
         });
 
-        const { unmount } = render(createElement(QueryClientAppStateBridge));
+        const { unmount } = await render(createElement(QueryClientAppStateBridge));
 
         expect(changeHandler).toBeDefined();
         changeHandler?.('background');
@@ -78,11 +78,11 @@ describe('QueryClientAppStateBridge', () => {
         changeHandler?.('active');
         expect(setFocusedSpy).toHaveBeenLastCalledWith(true);
 
-        unmount();
+        await unmount();
         expect(remove).toHaveBeenCalledTimes(1);
     });
 
-    it('does not call focusManager when Platform.OS is web', () => {
+    it('does not call focusManager when Platform.OS is web', async () => {
         const remove = jest.fn();
         let changeHandler: ((status: string) => void) | undefined;
         jest.spyOn(AppState, 'addEventListener').mockImplementation((_event, handler) => {
@@ -99,7 +99,7 @@ describe('QueryClientAppStateBridge', () => {
             writable: true
         });
 
-        render(createElement(QueryClientAppStateBridge));
+        await render(createElement(QueryClientAppStateBridge));
 
         changeHandler?.('active');
         expect(setFocusedSpy).not.toHaveBeenCalled();

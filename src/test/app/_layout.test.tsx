@@ -57,7 +57,7 @@ jest.mock('@/shared/lib/i18n', () => {
 
 describe('RootLayout', () => {
     it('renders the i18n init error fallback when i18next bootstrap fails', async () => {
-        const { getByText } = render(<RootLayout />);
+        const { getByText } = await render(<RootLayout />);
 
         await waitFor(() => {
             expect(getByText(I18N_INIT_FALLBACK_COPY.title)).toBeTruthy();

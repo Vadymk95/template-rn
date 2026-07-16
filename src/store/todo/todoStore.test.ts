@@ -48,10 +48,10 @@ describe('useTodoStore', () => {
         });
     });
 
-    it('createTodo trims title and prepends a new incomplete task', () => {
+    it('createTodo trims title and prepends a new incomplete task', async () => {
         const previousTodos = useTodoStore.getState().todos;
 
-        act(() => {
+        await act(() => {
             useTodoStore.getState().createTodo('  Buy oat milk  ');
         });
 
@@ -70,20 +70,20 @@ describe('useTodoStore', () => {
         expect(nextTodos.slice(1)).toEqual(previousTodos);
     });
 
-    it('createTodo ignores empty or whitespace-only titles', () => {
+    it('createTodo ignores empty or whitespace-only titles', async () => {
         const previousTodos = useTodoStore.getState().todos;
 
-        act(() => {
+        await act(() => {
             useTodoStore.getState().createTodo('   ');
         });
 
         expect(useTodoStore.getState().todos).toEqual(previousTodos);
     });
 
-    it('createTodo generates unique ids when two todos are created in the same millisecond', () => {
+    it('createTodo generates unique ids when two todos are created in the same millisecond', async () => {
         const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(1713607200000);
 
-        act(() => {
+        await act(() => {
             useTodoStore.getState().createTodo('First task');
             useTodoStore.getState().createTodo('Second task');
         });
@@ -100,10 +100,10 @@ describe('useTodoStore', () => {
         nowSpy.mockRestore();
     });
 
-    it('createTodo uses the next available suffix after deleting a same-timestamp todo', () => {
+    it('createTodo uses the next available suffix after deleting a same-timestamp todo', async () => {
         const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(1713607200000);
 
-        act(() => {
+        await act(() => {
             useTodoStore.getState().createTodo('First task');
             useTodoStore.getState().createTodo('Second task');
         });
@@ -113,7 +113,7 @@ describe('useTodoStore', () => {
             throw new Error('expected first created todo');
         }
 
-        act(() => {
+        await act(() => {
             useTodoStore.getState().deleteTodo(firstCreatedTodo.id);
             useTodoStore.getState().createTodo('Third task');
         });
@@ -130,13 +130,13 @@ describe('useTodoStore', () => {
         nowSpy.mockRestore();
     });
 
-    it('updateTodo updates the trimmed title and updatedAt timestamp', () => {
+    it('updateTodo updates the trimmed title and updatedAt timestamp', async () => {
         const todoToUpdate = useTodoStore.getState().todos[1];
         if (!todoToUpdate) {
             throw new Error('expected todo to update');
         }
 
-        act(() => {
+        await act(() => {
             useTodoStore.getState().updateTodo(todoToUpdate.id, '  Send release notes  ');
         });
 
@@ -150,13 +150,13 @@ describe('useTodoStore', () => {
         expect(updatedTodo?.updatedAt).not.toBe(todoToUpdate.updatedAt);
     });
 
-    it('updateTodo ignores empty or whitespace-only titles', () => {
+    it('updateTodo ignores empty or whitespace-only titles', async () => {
         const todoToUpdate = useTodoStore.getState().todos[1];
         if (!todoToUpdate) {
             throw new Error('expected todo to update');
         }
 
-        act(() => {
+        await act(() => {
             useTodoStore.getState().updateTodo(todoToUpdate.id, '   ');
         });
 
@@ -167,13 +167,13 @@ describe('useTodoStore', () => {
         expect(unchangedTodo).toEqual(todoToUpdate);
     });
 
-    it('toggleTodo flips the completed flag and updates updatedAt', () => {
+    it('toggleTodo flips the completed flag and updates updatedAt', async () => {
         const todoToToggle = useTodoStore.getState().todos[0];
         if (!todoToToggle) {
             throw new Error('expected todo to toggle');
         }
 
-        act(() => {
+        await act(() => {
             useTodoStore.getState().toggleTodo(todoToToggle.id);
         });
 
@@ -185,13 +185,13 @@ describe('useTodoStore', () => {
         expect(toggledTodo?.updatedAt).not.toBe(todoToToggle.updatedAt);
     });
 
-    it('deleteTodo removes a todo by id', () => {
+    it('deleteTodo removes a todo by id', async () => {
         const todoToDelete = useTodoStore.getState().todos[0];
         if (!todoToDelete) {
             throw new Error('expected todo to delete');
         }
 
-        act(() => {
+        await act(() => {
             useTodoStore.getState().deleteTodo(todoToDelete.id);
         });
 
@@ -199,8 +199,8 @@ describe('useTodoStore', () => {
         expect(useTodoStore.getState().todos).not.toContainEqual(todoToDelete);
     });
 
-    it('setFilter updates the active filter', () => {
-        act(() => {
+    it('setFilter updates the active filter', async () => {
+        await act(() => {
             useTodoStore.getState().setFilter(TODO_FILTERS.completed);
         });
 

@@ -13,6 +13,20 @@ priority: 95
 - The pipeline (Priority 100) orchestrates all phases: Discovery → Simulation → TDD Execution → Verification → Brain Sync → Confidence.
 - Domain standards live in their respective rules. The pipeline enforces them — never bypass it.
 
+## 0.1 Conditional Rule Routing
+
+Not every rule is `alwaysApply: true`. `react-patterns`, `engineering-standards`, `constants`, `fsd-layers`, `resilience`, and `test-driven-development` are glob-scoped (`alwaysApply: false`). Cursor does not always auto-attach glob-scoped rules, so **before planning or editing in a task area, explicitly read** the matching conditional rules:
+
+- **React / UI / screen / component work** → `react-patterns.mdc`, `engineering-standards.mdc`, `constants.mdc` (+ always-on `project-config.mdc`)
+- **New behavioral component or changed behavior** → also `test-driven-development.mdc` before implementation
+- **Tests / mocks / fixtures** → `test-driven-development.mdc`
+- **Imports rewired or new folders under `src/`** → `fsd-layers.mdc` (boundaries are CI law)
+- **Zustand stores / client domain state (`src/store/**`)** → `test-driven-development.mdc`, `resilience.mdc`, `engineering-standards.mdc`
+- **TanStack Query / data fetching / async services** → `resilience.mdc`, `engineering-standards.mdc`
+- **Async / error handling / catch / logging / debugging** → `resilience.mdc`
+- **Styling / NativeWind / render-perf / visual quality** → `react-patterns.mdc` (§6 visual) + `engineering-standards.mdc`
+- **Constants / strings / i18n keys** → `constants.mdc`
+
 ## Intelligence & Context
 
 - **Reasoning**: Use `sequential-thinking` for multi-step logic and `context7` for API lookups when available; otherwise use official docs. **Russian** for chat, **English** for code, comments, commits, and user-facing repo docs.

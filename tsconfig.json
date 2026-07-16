@@ -11,6 +11,7 @@
         "verbatimModuleSyntax": true,
         "forceConsistentCasingInFileNames": true,
         "isolatedModules": true,
+        "types": ["jest", "node"],
         "paths": {
             "@/*": ["./src/*"]
         }

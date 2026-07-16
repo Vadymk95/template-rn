@@ -15,7 +15,7 @@ priority: 100
 
 ### Phase 1 Fast-Track
 
-If the task targets **only** files matching `*.test.ts`, `*.test.tsx`, `*.spec.ts`, `*.spec.tsx`, `global.css`, `tailwind.config.js`, `metro.config.js`, `babel.config.js`, or `*.md` under `.cursor/brain/` — skip Brain reads and proceed directly to Phase 3. State: `"Phase 1 skipped — test/config/docs-only task."` When in doubt → run full Phase 1.
+If the task targets **only** files matching `*.test.ts`, `*.test.tsx`, `*.spec.ts`, `*.spec.tsx`, `global.css`, `tailwind.config.js`, `metro.config.js`, `babel.config.js`, or `*.md` under `.cursor/brain/` — skip Brain reads and proceed directly to Phase 3. State: `"Phase 1 skipped — test/config/docs-only task."` Still emit the **Rule Receipt** (usually `"none — config/test/docs-only"`). When in doubt → run full Phase 1.
 
 ---
 
@@ -26,8 +26,10 @@ Before any reasoning about implementation:
 3. **Layer contract**: If the task adds or rewires **imports** under `src/` or creates **new folders** in `src/`, read `.cursor/rules/fsd-layers.mdc` first — boundaries are CI law.
 4. **Risk detection**: Read `.cursor/brain/SKELETONS.md` if the task touches native config, Metro/Babel, env, router layouts, or persisted stores.
 5. **Context gathering**: Identify affected files. Search for existing patterns before inventing new ones.
-6. **Scope declaration**: Produce clear **In-scope / Out-of-scope** list.
-7. **Explicit declaration**: State in one message: scope + SKELETONS zones touched (or `"none"`). Do not code before this.
+6. **Rule Routing**: Load the matching conditional rules using `global.mdc` §0.1 before planning edits.
+7. **Rule Receipt**: List the conditional rules actually loaded (or `"none — always-on rules only"`).
+8. **Scope declaration**: Produce clear **In-scope / Out-of-scope** list.
+9. **Explicit declaration**: State in one message: scope + SKELETONS zones touched (or `"none"`). Do not code before this.
 
 > **Gate**: If the task touches a SKELETONS zone — flag the risk and propose mitigation before Phase 2.
 
@@ -49,13 +51,13 @@ Before simulating changes:
 2. **State boundary**: Zustand for client/global UI state; TanStack Query for server/async data; local `useState` for component-only UI.
 3. **Tech debt**: Avoid magic strings, implicit cross-module coupling, and untyped external payloads.
 4. **Ghost principle**: Every line must serve the task — no drive-by refactors.
-5. **Stores**: Prefer `createSelectors` for Zustand; never persist secrets to AsyncStorage (use `expo-secure-store`).
+5. **Stores**: NEW Zustand stores expose access via **`createSelectors`** (auto-generated selector hooks); **never** persist tokens/secrets to AsyncStorage — use `expo-secure-store`. Existing stores: leave as-is, do not migrate.
 
 ### Solver-Verifier (mental test cases)
 
 After the critique, generate **1–2 mental test cases** per non-trivial function (happy path + edge). If the trace fails — revise the plan before coding.
 
-> **Gate**: Present the critique. For tasks **> 10 lines** or touching **stores / env / router layouts / native config** — follow **The Approval Law** in `workflow.mdc`.
+> **Gate**: Present the critique. Gate by **risk, not LOC** — a change touching a **SKELETONS / danger zone**, **stores / domain state**, **env**, **router layouts**, **native config**, or a **contract / public-export** change follows **The Approval Law** in `workflow.mdc`; trivial leaf edits proceed.
 
 ---
 

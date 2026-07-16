@@ -30,6 +30,6 @@ priority: 85
 - Keep network and native I/O out of unit tests; inject dependencies or mock at module boundaries.
 - Use the **`@/`** alias in test imports (`moduleNameMapper` is configured in `package.json` for Jest).
 
-## 5. E2E (product phase)
+## 5. E2E (Maestro flows ship in-repo)
 
-- Add **Maestro** or **Detox** when you need full native flows (permissions, deep links, biometrics). This template intentionally ships **unit tests only** to stay generic.
+- The template already ships **Maestro** flows under `.maestro/` (`smoke.yaml`, `create-task.yaml`); run them with **`npm run maestro`**. Extend these for new native journeys (permissions, deep links, biometrics), or add **Detox** if you need a JS-driven gray-box runner. Jest + Testing Library unit/integration tests remain the default in-repo gate.

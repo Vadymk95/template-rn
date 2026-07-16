@@ -34,63 +34,66 @@ const sampleTodo: Todo = {
 };
 
 describe('TodoEditDialog', () => {
-    it('preloads the title field from the todo', () => {
-        const { getByDisplayValue } = render(
+    it('preloads the title field from the todo', async () => {
+        const { getByDisplayValue } = await render(
             <TodoEditDialog todo={sampleTodo} onClose={jest.fn()} onSaveTodo={jest.fn()} />
         );
 
         expect(getByDisplayValue('Review onboarding copy')).toBeTruthy();
     });
 
-    it('shows validation when submit runs with an empty trimmed title', () => {
-        const { getByPlaceholderText, getByRole, getByText } = render(
+    it('shows validation when submit runs with an empty trimmed title', async () => {
+        const { getByPlaceholderText, getByRole, getByText } = await render(
             <TodoEditDialog todo={sampleTodo} onClose={jest.fn()} onSaveTodo={jest.fn()} />
         );
 
-        fireEvent.changeText(getByPlaceholderText('todo:form.titlePlaceholder'), '   ');
-        fireEvent.press(getByRole('button', { name: 'todo:actions.saveSubmit' }));
+        await fireEvent.changeText(getByPlaceholderText('todo:form.titlePlaceholder'), '   ');
+        await fireEvent.press(getByRole('button', { name: 'todo:actions.saveSubmit' }));
 
         expect(getByText('todo:form.titleRequired')).toBeTruthy();
     });
 
-    it('submits a trimmed title, calls onSaveTodo, and closes', () => {
+    it('submits a trimmed title, calls onSaveTodo, and closes', async () => {
         const onClose = jest.fn();
         const onSaveTodo = jest.fn();
-        const { getByPlaceholderText, getByRole } = render(
+        const { getByPlaceholderText, getByRole } = await render(
             <TodoEditDialog todo={sampleTodo} onClose={onClose} onSaveTodo={onSaveTodo} />
         );
 
-        fireEvent.changeText(
+        await fireEvent.changeText(
             getByPlaceholderText('todo:form.titlePlaceholder'),
             '  Updated title  '
         );
-        fireEvent.press(getByRole('button', { name: 'todo:actions.saveSubmit' }));
+        await fireEvent.press(getByRole('button', { name: 'todo:actions.saveSubmit' }));
 
         expect(onSaveTodo).toHaveBeenCalledWith(sampleTodo.id, 'Updated title');
         expect(onClose).toHaveBeenCalled();
     });
 
-    it('invokes onClose when cancel is pressed', () => {
+    it('invokes onClose when cancel is pressed', async () => {
         const onClose = jest.fn();
         const onSaveTodo = jest.fn();
-        const { getByRole } = render(
+        const { getByRole } = await render(
             <TodoEditDialog todo={sampleTodo} onClose={onClose} onSaveTodo={onSaveTodo} />
         );
 
-        fireEvent.press(getByRole('button', { name: 'todo:actions.cancel' }));
+        await fireEvent.press(getByRole('button', { name: 'todo:actions.cancel' }));
 
         expect(onClose).toHaveBeenCalled();
         expect(onSaveTodo).not.toHaveBeenCalled();
     });
 
-    it('does not call onSaveTodo when todo is null even if the form submits', () => {
+    it('does not call onSaveTodo when todo is null even if the form submits', async () => {
         const onSaveTodo = jest.fn();
-        const { getByPlaceholderText, getByRole } = render(
+        const { getByPlaceholderText, getByRole } = await render(
             <TodoEditDialog todo={null} onClose={jest.fn()} onSaveTodo={onSaveTodo} />
         );
 
-        fireEvent.changeText(getByPlaceholderText('todo:form.titlePlaceholder'), 'Ghost title');
-        fireEvent.press(getByRole('button', { name: 'todo:actions.saveSubmit' }));
+        await fireEvent.changeText(
+            getByPlaceholderText('todo:form.titlePlaceholder'),
+            'Ghost title'
+        );
+        await fireEvent.press(getByRole('button', { name: 'todo:actions.saveSubmit' }));
 
         expect(onSaveTodo).not.toHaveBeenCalled();
     });
