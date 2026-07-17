@@ -62,6 +62,12 @@ npm run verify       # typecheck → oxlint → eslint → format:check → test
 npm run ci:local     # verify + expo-doctor (full local parity)
 ```
 
+**Bootstrap after clone**: `npm run prepare` (once) — `.npmrc` disables lifecycle
+scripts as a supply-chain guard, so husky hooks don't install themselves; the
+verify gate fails loudly if hooks are missing. Dependency cooldown is also on
+(`.npmrc` `min-release-age=3`, DAYS): a brand-new package or urgent patch needs
+`npm install <pkg> --min-release-age=0`.
+
 The gate is **zero-warnings**: `eslint --max-warnings 0`, `oxlint --deny-warnings`. If it fails, fix the cause — do **not** downgrade rules, silence warnings, or sprinkle `eslint-disable`. If a rule is genuinely wrong for a class of files, add a documented file-scoped override in `eslint.config.mjs` stating why.
 
 ## Version holds (do not "fix" by bumping)

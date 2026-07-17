@@ -6,8 +6,10 @@ Strict types, validated env, file-based routing, declarative pipeline. **Opinion
 no vendor integrations (auth, crash reporting, forms libraries) baked in; pick those per product.
 **Bundled i18next** (`src/shared/locales/`) is included for typed copy — not remote CMS.
 
-**This is a scaffold, not a runnable project.** Install dependencies, then run
-`npx expo prebuild` if you need native folders.
+**This is a scaffold, not a runnable project.** Install dependencies, run
+`npm run prepare` once (git hooks — lifecycle scripts are disabled via
+`.npmrc` as a supply-chain guard), then `npx expo prebuild` if you need
+native folders.
 
 ---
 
