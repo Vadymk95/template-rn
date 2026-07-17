@@ -11,23 +11,20 @@ import reactCompiler from 'eslint-plugin-react-compiler';
 import templatePlugin from './tooling/eslint-plugin-template/index.mjs';
 import tseslint from 'typescript-eslint';
 
+// v7: element descriptors are FOLDER-scoped (patterns without file extensions;
+// partialMatch: false anchors them at the project root). src/env.ts cannot be
+// an element in v7 (single files are not classifiable) — acceptable gap: its
+// only import is zod, so the shared-layer policy has nothing to guard there.
 const boundariesElements = [
-    { type: 'app', pattern: 'src/app/**/*.{ts,tsx}', mode: 'full' },
-    { type: 'widgets', pattern: 'src/widgets/**/*.{ts,tsx}', mode: 'full' },
-    {
-        type: 'features',
-        pattern: ['src/features/**/*.{ts,tsx}', 'src/hooks/**/*.{ts,tsx}'],
-        mode: 'full'
-    },
-    { type: 'entities', pattern: 'src/store/**/*.{ts,tsx}', mode: 'full' },
-    {
-        type: 'shared',
-        pattern: ['src/lib/**/*.{ts,tsx}', 'src/shared/**/*.{ts,tsx}', 'src/env.ts'],
-        mode: 'full'
-    }
+    { type: 'app', pattern: 'src/app', partialMatch: false },
+    { type: 'widgets', pattern: 'src/widgets', partialMatch: false },
+    { type: 'features', pattern: ['src/features', 'src/hooks'], partialMatch: false },
+    { type: 'entities', pattern: 'src/store', partialMatch: false },
+    { type: 'shared', pattern: ['src/lib', 'src/shared'], partialMatch: false }
 ];
 
-const fsdDependencyRules = [
+// v7 object-based selectors: element selectors are wrapped in `element`.
+const fsdDependencyPolicies = [
     {
         allow: {
             dependency: {
@@ -36,30 +33,30 @@ const fsdDependencyRules = [
         }
     },
     {
-        from: { type: 'app' },
-        disallow: { to: { type: 'entities' } },
+        from: { element: { type: 'app' } },
+        disallow: { to: { element: { type: 'entities' } } },
         message:
             'FSD: Expo Router files must not import entities (stores) directly. Use @/widgets/... or @/features/... public API.'
     },
     {
-        from: { type: 'widgets' },
-        disallow: { to: { type: ['app', 'entities'] } },
+        from: { element: { type: 'widgets' } },
+        disallow: { to: { element: { type: ['app', 'entities'] } } },
         message:
             'FSD: Widgets compose features; they must not import app routes or entity stores. Go through @/features/...'
     },
     {
-        from: { type: 'features' },
-        disallow: { to: { type: ['app', 'widgets'] } },
+        from: { element: { type: 'features' } },
+        disallow: { to: { element: { type: ['app', 'widgets'] } } },
         message: 'FSD: Features must not import upward (app or widgets).'
     },
     {
-        from: { type: 'entities' },
-        disallow: { to: { type: ['app', 'widgets', 'features'] } },
+        from: { element: { type: 'entities' } },
+        disallow: { to: { element: { type: ['app', 'widgets', 'features'] } } },
         message: 'FSD: Entity layer must not import app, widgets, or features.'
     },
     {
-        from: { type: 'shared' },
-        disallow: { to: { type: ['app', 'widgets', 'features', 'entities'] } },
+        from: { element: { type: 'shared' } },
+        disallow: { to: { element: { type: ['app', 'widgets', 'features', 'entities'] } } },
         message: 'FSD: shared (lib/env) must not import product layers.'
     }
 ];
@@ -196,8 +193,9 @@ export default tseslint.config(
                 'error',
                 {
                     default: 'allow',
-                    message: '{{from.type}} is not allowed to depend on {{to.type}}',
-                    rules: fsdDependencyRules
+                    message:
+                        '{{from.element.types.[0]}} is not allowed to depend on {{to.element.types.[0]}}',
+                    policies: fsdDependencyPolicies
                 }
             ]
         }
