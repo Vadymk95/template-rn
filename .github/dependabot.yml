@@ -1,0 +1,46 @@
+version: 2
+updates:
+    - package-ecosystem: npm
+      directory: '/'
+      schedule:
+          interval: weekly
+      open-pull-requests-limit: 10
+      commit-message:
+          prefix: chore(deps)
+      groups:
+          production-dependencies:
+              dependency-type: production
+          development-dependencies:
+              dependency-type: development
+      # The Expo SDK owns the native stack versions — `npx expo install --fix`
+      # is the only valid updater for these; Dependabot bumps would break the
+      # Expo Go / jest-expo pairing. See AGENTS.md "Version holds".
+      ignore:
+          - dependency-name: 'expo'
+          - dependency-name: 'expo-*'
+          - dependency-name: '@expo/*'
+          - dependency-name: 'babel-preset-expo'
+          - dependency-name: 'jest-expo'
+          - dependency-name: 'eslint-config-expo'
+          - dependency-name: 'react'
+          - dependency-name: 'react-dom'
+          - dependency-name: 'react-native'
+          - dependency-name: 'react-native-*'
+          - dependency-name: '@react-native/*'
+          - dependency-name: '@react-native-async-storage/*'
+          # jest-expo is built on jest 29 internals
+          - dependency-name: 'jest'
+            versions: ['>=30']
+          - dependency-name: '@types/jest'
+            versions: ['>=30']
+          # NativeWind 4.x pairs with Tailwind 3.x
+          - dependency-name: 'tailwindcss'
+            versions: ['>=4']
+          # typescript-eslint peer is <6.1; TS version is also SDK-paired
+          - dependency-name: 'typescript'
+            versions: ['>=6.1']
+          # ESLint 10: plugin ecosystem peers still stop at ^9
+          - dependency-name: 'eslint'
+            versions: ['>=10']
+          - dependency-name: '@eslint/js'
+            versions: ['>=10']
