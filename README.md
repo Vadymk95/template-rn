@@ -26,7 +26,7 @@ If you fork this template, keep those files in sync with your product decisions.
 
 ---
 
-## Stack (April 2026)
+## Stack (July 2026)
 
 | Layer          | Choice                                                                                              | Why                                                                        |
 | -------------- | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
@@ -133,8 +133,11 @@ CLI equivalent of the default verify task:
 
 ```bash
 npm run verify
-# = typecheck → lint:oxlint → lint → format:check → test:coverage
+# = check-hooks → typecheck → lint:oxlint → lint → format:check → test:coverage
 ```
+
+The `check-hooks` step fails loudly when git hooks are missing — run
+`npm run prepare` once after clone (lifecycle scripts are disabled via `.npmrc`).
 
 If **`npm run format:check`** fails, run **`npm run format`** and commit — CI
 runs the same check and will fail the PR with a red **Prettier** step.

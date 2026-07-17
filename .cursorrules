@@ -6,9 +6,10 @@ Copilot) should operate in this repo.
 
 ## Authority Order
 
-1. `.cursor/brain/` — source of truth for architecture, risks, decisions.
-2. `.cursor/rules/*.mdc` — enforceable engineering rules (pipeline, style, TDD, stack).
-3. This file — router only. If anything here conflicts with (1) or (2), they win.
+1. `AGENTS.md` — canonical cross-tool agent guide (code is ground truth; it is a verifiable pointer).
+2. `.cursor/brain/` — source of truth for architecture, risks, decisions.
+3. `.cursor/rules/*.mdc` — enforceable engineering rules (pipeline, style, TDD, stack).
+4. This file — router only. If anything here conflicts with (1), (2), or (3), they win.
 
 ## Session Protocol (mandatory first steps)
 

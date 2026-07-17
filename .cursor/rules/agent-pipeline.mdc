@@ -66,7 +66,7 @@ After the critique, generate **1–2 mental test cases** per non-trivial functio
 ### Business logic (stores, hooks, `src/lib/`)
 
 1. List test cases in chat.
-2. **Red** → **Green** → **Refactor** with Jest + Testing Library (`render`, `renderHook`, `act`).
+2. **Red** → **Green** → **Refactor** with Jest + Testing Library (RNTL 14: `render`, `renderHook`, `fireEvent`, `act`, `unmount` are **async — always `await` them**; an un-awaited `unmount()` poisons the next test's render. Queries need `{ includeHiddenElements: true }` to reach intentionally a11y-hidden nodes).
 
 ### UI (React Native screens)
 

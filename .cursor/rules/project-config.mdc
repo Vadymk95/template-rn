@@ -10,9 +10,9 @@ alwaysApply: true
 
 | Layer        | Choice |
 | ------------ | ------ |
-| Runtime      | React Native **0.83** (Expo SDK **55**) |
+| Runtime      | React Native **0.86** (Expo SDK **57**) |
 | Framework    | **Expo** managed workflow |
-| Language     | TypeScript **5.9** strict + extra compiler flags in `tsconfig.json` |
+| Language     | TypeScript **6.0** strict + extra compiler flags in `tsconfig.json` |
 | Routing      | **Expo Router** (file-based under `src/app/`) |
 | Styling      | **NativeWind 4** + **Tailwind CSS 3** (`className`, `global.css`) |
 | Client state | **Zustand** (+ `createSelectors` helper) |
@@ -20,17 +20,17 @@ alwaysApply: true
 | Env          | **`@t3-oss/env-core`** + Zod — only validated `env` object, never raw `process.env` in app code |
 | Unit tests   | **Jest** + **`jest-expo`** + **Testing Library React Native** |
 | E2E          | **Maestro** flows ship in-repo (`.maestro/`, `npm run maestro`); add **Detox** later for a JS-driven gray-box runner — **not** Playwright (Playwright targets browsers; use it only if you ship **Expo Web** and choose to test that surface). |
-| Lint         | **ESLint 9** flat config: `typescript-eslint` strict type-checked + **Expo** + **TanStack Query strict** + **import-x** + **React Compiler** + **Prettier**; **oxlint** fast pass on `src/` |
+| Lint         | **ESLint 9** flat config: `typescript-eslint` strict type-checked + **Expo** + **TanStack Query strict** + **import-x** + **boundaries v7** + **i18next** + **jest** + repo-local **template** plugin + **React Compiler** + **Prettier**; **oxlint** fast pass on `src/`. Zero-warnings gate: `eslint . --max-warnings 0`, `oxlint --deny-warnings` |
 | Format       | **Prettier** |
 
 ## Path aliases
 
-- `@/*` → `src/*` — single definition in `tsconfig.json` (Metro reads it in SDK 55). **No** `../../` in application code.
+- `@/*` → `src/*` — single definition in `tsconfig.json` (Metro reads it, SDK 55+). **No** `../../` in application code.
 
 ## Native & config — DANGER ZONES (wrong edits break the build silently or in production only; see `.cursor/brain/SKELETONS.md`)
 
 - **CNG — `app.config.ts` is the SINGLE source of truth** for bundle id, permissions, plugins, experiments. **NEVER hand-edit generated `ios/` / `android/`** — regenerate with `npx expo prebuild --clean`. A new `plugins: [...]` entry requires a prebuild before the next native build.
-- **New Architecture is mandatory** in SDK 55 — `newArchEnabled` is a no-op now; **do NOT re-add `newArchEnabled: true`** to `app.config.ts`.
+- **New Architecture is mandatory** since SDK 55 (New Arch is the only option) — `newArchEnabled` is a no-op now; **do NOT re-add `newArchEnabled: true`** to `app.config.ts`.
 - **`experiments.reactCompiler: true` stays ON.** Disabling it silently changes render behaviour in components that rely on auto-memoisation — **never** flip it off to "fix" a render bug.
 - **`babel.config.js`**: `react-native-worklets/plugin` **MUST be last** in `plugins` — wrong order = silent animation failure with **no compile error**. Use `react-native-worklets/plugin`, **never** the removed `react-native-reanimated/plugin` path. `nativewind/babel` belongs in `presets`, not `plugins`.
 - **`metro.config.js`**: `withNativeWind` input path **must match `global.css`** — a wrong path means no styles and no error.

@@ -23,7 +23,9 @@ app  →  widgets  →  features  →  entities  →  shared
 | **widgets**  | `src/widgets/**`                            | Composite UI blocks used across routes; compose **features** only (not stores).                      |
 | **features** | `src/features/**`, `src/hooks/**`           | User scenarios: queries, mutations, feature hooks, feature UI. May use **entities** + **shared**.    |
 | **entities** | `src/store/**`                              | Domain model + client state (Zustand slices, selectors). **No** imports from features/widgets/app.   |
-| **shared**   | `src/lib/**`, `src/shared/**`, `src/env.ts` | Env, logger, utils, design tokens helpers, cross-cutting constants. **No** product-layer imports.    |
+| **shared**   | `src/lib/**`, `src/shared/**`               | Env, logger, utils, design tokens helpers, cross-cutting constants. **No** product-layer imports.    |
+
+> `src/env.ts` belongs to **shared** conceptually, but the boundaries lint does **not** classify it — v7 element descriptors are folder-scoped, single files cannot be elements (see the comment above `boundariesElements` in `eslint.config.mjs`). Acceptable gap: its only import is `zod`.
 
 ## Agent placement rules
 

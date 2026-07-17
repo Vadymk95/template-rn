@@ -26,6 +26,8 @@ priority: 85
 
 ## 4. Tooling conventions
 
+- **RNTL 14 is async**: `render`, `renderHook`, `fireEvent`, `act`, `unmount` all return promises — **always `await` them**. An un-awaited `unmount()` poisons the next test's render.
+- Queries skip accessibility-hidden elements by default — pass **`{ includeHiddenElements: true }`** to reach intentionally a11y-hidden nodes (e.g. a dialog backdrop).
 - Mock native modules with **`jest.mock('module', factory)`** — there is no `vi` (Vitest is not used here).
 - Keep network and native I/O out of unit tests; inject dependencies or mock at module boundaries.
 - Use the **`@/`** alias in test imports (`moduleNameMapper` is configured in `package.json` for Jest).
