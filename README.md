@@ -13,6 +13,28 @@ native folders.
 
 ---
 
+## Forking this template - rename checklist
+
+This scaffold ships with placeholder branding. Before you ship a fork, change every
+spot below, then re-grep `templatern` / `template-rn` / `Template RN` to catch any you
+missed. The **native identifiers must change**: an unchanged bundle id, package, or
+scheme collides with the template on a device and breaks deep links.
+
+- **`app.config.ts`** (the native identity source of truth via Continuous Native Generation):
+    - `ios.bundleIdentifier` / `android.package`: `com.example.templatern` plus the `.dev` / `.preview` variants, built in `getBundleId()`
+    - `name`: display name `Template RN` plus the Dev / Preview labels, built in `getAppName()`
+    - `slug`: `template-rn` (keep it equal to the repo folder and EAS slug)
+    - `scheme`: `templatern` (lowercase, no spaces; forms your `yourapp://` deep-link URLs)
+- **`package.json`**: `name`, aligned with the slug
+- **`README.md`**: heading and description
+- **`LICENSE`**: MIT is fine for an open-source fork; for a **proprietary/commercial**
+  app delete `LICENSE` and set `package.json` `"license": "UNLICENSED"` (the repo is
+  already `private`)
+- **Assets, EAS project id, and the Todo example slice**: the full `file:line` checklist
+  lives in **`docs/template-reset.md`**.
+
+---
+
 ## Strict Contract
 
 This template treats structure and quality as **enforced contract**, not team folklore.
