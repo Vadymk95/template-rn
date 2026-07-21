@@ -50,8 +50,12 @@ jobs:
             - name: Verify core contract (typecheck, lint, format, coverage)
               run: npm run verify
 
-            - name: Expo doctor (SDK health — blocking)
+            # Expo doctor checks live external SDK/package state and can go red with
+            # no code change (drift). Advisory, not a PR gate (tooling /consilium
+            # 2026-07-21): it still runs and surfaces in the log, but does not block.
+            - name: Expo doctor (SDK health, advisory)
               run: npm run doctor
+              continue-on-error: true
 
     dependency-review:
         name: Dependency review
