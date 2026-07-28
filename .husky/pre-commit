@@ -1,2 +1,22 @@
 #!/usr/bin/env sh
 npx lint-staged
+
+# `|| exit 1` rather than relying on husky's implicit errexit: the gate must not
+# depend on how the hook happens to be invoked.
+node scripts/check-test-siblings.mjs || exit 1
+
+# Repo-wide pass, not just the staged hunks. lint-staged restores the UNSTAGED
+# hunks of a partially staged file AFTER fixing it, which is how "already
+# formatted but never committed" files appear in the tree. Both checks run before
+# deciding, so one attempt reports everything that is wrong.
+repo_gate_status=0
+npm run lint:oxlint || repo_gate_status=1
+npm run format:check || repo_gate_status=1
+
+if [ "$repo_gate_status" -ne 0 ]; then
+    echo ''
+    echo '✖ pre-commit: the repo-wide lint/format pass failed.'
+    echo '  Fix and stage everything in one step:  npm run fix && git add -u'
+    echo ''
+    exit 1
+fi

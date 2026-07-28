@@ -7,6 +7,25 @@ priority: 85
 
 # TDD protocol (Jest)
 
+## 0. The hook enforces existence; you are responsible for worth
+
+`.husky/pre-commit` runs `scripts/check-test-siblings.mjs`: every **staged** file under
+`src/**` that is not on the exempt list must have a co-located `*.test.ts(x)` sibling, or
+the commit is refused. It is staged-only, so it ratchets — nothing in the tree breaks
+retroactively, but the next edit to an untested file demands a test.
+
+What the hook cannot check, and what actually matters:
+
+- **Mutation check.** Revert the behaviour the test guards and confirm the test goes
+  red. A test that still passes with the fix reverted is characterisation, not coverage,
+  and it is worse than no test because it reads as protection.
+- **Assertions that cannot fail** — `expect(x).toBeTruthy()` on a value the test just
+  built, a `waitFor` whose body cannot throw, asserting empty text where an emptiness
+  matcher was meant.
+- Exempt paths are listed with their reason in `scripts/check-test-siblings.mjs`. Do not
+  extend that list to move a commit along; `src/shared/lib/theme/**` in particular is
+  deliberately NOT exempt.
+
 ## 1. When to write tests first (strict TDD)
 
 - Zustand stores (`src/store/**`)

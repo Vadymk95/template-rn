@@ -159,6 +159,29 @@ Short record of non-obvious trade-offs. Update when reversing a decision.
   destructive rather than a fix. Prefer an override; reach for an allowance only
   when no compatible version exists.
 
+## TDD sibling gate on pre-commit, and no auto-commit hook
+
+- `scripts/check-test-siblings.mjs` refuses a commit when a staged `src/**` file has no
+  co-located `*.test.*` sibling. It checks **staged files only**, which makes it a
+  ratchet: the existing untested files are not retroactively broken, but the next edit to
+  one requires a test. That is deliberate — a gate that fails on day one gets disabled.
+- The exempt list is derived from THIS repo (Jest's `collectCoverageFrom` exclusions plus
+  declaration-only modules), not copied from a sibling template. `src/shared/lib/theme/**`
+  is **not** exempt: it is in the coverage report and `colors.ts` exports a real function
+  whose dark branch is uncovered.
+- The hook proves _existence_, never worth. The mutation check — revert the fix, the test
+  must go red — is in `test-driven-development.mdc` because a hook cannot do it.
+- **The pre-commit hook also runs a repo-wide `lint:oxlint` + `format:check`, collecting
+  both failures before deciding.** `lint-staged` fixes the staged hunks and then restores
+  the unstaged hunks of a partially staged file, which is exactly how "already formatted,
+  never committed" files kept appearing. Both checks run so one attempt reports
+  everything rather than one problem at a time.
+- **Not adopted: a hook that commits for you.** It was considered as the fix for the
+  dangling-formatted-files problem. A hook that creates commits hides what it changed
+  inside a commit nobody wrote, and its failure mode is a formatting fix landing under an
+  unrelated subject. The hook refuses and prints the one-line remedy
+  (`npm run fix && git add -u`) instead.
+
 ## Raw hex and magic numbers are lint errors, not review notes
 
 - Both were already written down as conventions and neither was enforced, which is

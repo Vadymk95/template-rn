@@ -18,6 +18,22 @@ release parity.
 | `babel.config.js` / `metro.config.js` | Restart dev server with `--clear`                          |
 | Test file only                        | `npm run test -- <path>`                                   |
 
+## What the git hooks enforce
+
+- **pre-commit** — `lint-staged` (oxlint --fix → eslint --fix → prettier) on the staged
+  files, then the TDD sibling gate (`scripts/check-test-siblings.mjs`, staged-only), then
+  a **repo-wide** `lint:oxlint` + `format:check`. The repo-wide pass exists because
+  `lint-staged` restores the _unstaged_ hunks of a partially staged file after fixing it
+  — that is how "already formatted but never committed" files appear in the tree. Both
+  repo-wide checks run before the hook decides, so one attempt reports everything.
+  Remedy: `npm run fix && git add -u`.
+- **commit-msg** — commitlint (Conventional Commits, subject ≤96 chars).
+- **pre-push** — `npm run verify:ci`, the same script CI runs.
+
+Not adopted: a hook that commits for you. A hook that creates commits hides what it
+changed inside a commit you did not write, and the failure mode is a fix landing under an
+unrelated message. The hook reports and refuses; the remedy is one command.
+
 ## Repo-wide contract gate (before push / PR)
 
 Two rungs, and the split is deliberate:
