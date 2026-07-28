@@ -30,7 +30,7 @@ When the new product stops looking like the Todo example, review these files tog
 
 - `docs/strict-template-contract.md` — the template's human-facing engineering law
 - `.cursor/brain/VERIFICATION.md` — what is blocking locally and in CI
-- `.cursorrules` and `.cursor/rules/*.mdc` — what future agents will treat as hard guidance
+- `AGENTS.md`, `.cursor/rules/*.mdc` and `.claude/commands/*.md` — what future agents will treat as hard guidance
 - `eslint.config.mjs` and any repo-owned lint rules — what the tooling forbids mechanically
 - `src/shared/locales/**` — route, tab, and product copy that ships in the bundle
 

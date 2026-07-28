@@ -5,7 +5,8 @@ Production-ready React Native + Expo starter — Expo SDK 57, file-based routing
 ## Start here
 
 1. Read `.cursor/brain/PROJECT_CONTEXT.md` before any task. Architecture map: `.cursor/brain/MAP.md`. What to run per change: `.cursor/brain/VERIFICATION.md`. Human-facing strict contract: `docs/strict-template-contract.md`.
-2. `.cursor/rules/*.mdc` are **binding for the files they cover** — read the rules relevant to the area you touch before the first edit.
+2. `.cursor/rules/*.mdc` are **binding for the files they cover** — read the rules relevant to the area you touch before the first edit. `agent-pipeline`, `global`, `project-config` and `workflow` are always applied; the rest load by glob.
+3. Role commands live in `.claude/commands/` (canonical) with thin pointers in `.cursor/commands/` so both tools behave identically: `/onboard`, `/feat`, `/test`, `/review`, `/docs`. Edit the `.claude/` file, never the shim.
 
 ## Source of truth (tiebreaker)
 

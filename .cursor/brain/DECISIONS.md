@@ -159,6 +159,34 @@ Short record of non-obvious trade-offs. Update when reversing a decision.
   destructive rather than a fix. Prefer an override; reach for an allowance only
   when no compatible version exists.
 
+## Role commands in `.claude/commands/`, pointers in `.cursor/commands/`
+
+- Five commands, each turning the agent into a ROLE with this repo's own gate, danger zones and test
+  infrastructure named inside: `onboard`, `feat`, `test`, `review`, `docs`. A generic prompt would make the
+  agent rediscover the repo every session; these name `src/test/setup.ts`, the FSD layers, the
+  `EXPO_PUBLIC_` surface and `expo-secure-store` directly.
+- `.cursor/commands/*.md` are **thin pointers** to the canonical `.claude/` file — the same shim pattern as
+  `CLAUDE.md` → `@AGENTS.md`. Not copies (two files drift) and not symlinks (fragile on Windows).
+- `.claude/` is ignored both locally and by the global ghost-mode ignore, so the tracked path needs the
+  ladder `!.claude/` → `!.claude/commands/` → `!.claude/commands/**`: git will not descend into an ignored
+  directory to find a negation inside it. `settings.local.json` and `settings.json` stay untracked —
+  machine-specific paths and per-machine permission grants do not belong in a template.
+- Cursor resolves personal commands before project ones, so an operator with their own
+  `~/.cursor/commands/{feat,test,review}.md` shadows the repo copies there. `onboard` and `docs` are
+  unshadowed. In Claude Code the repo copies win.
+- `/onboard` closes with a one-line menu of the other four. The operator asks for work in prose rather than
+  typing commands, so the moment right after orientation is the only place that list is useful.
+
+## Legacy `.cursorrules` deleted
+
+- The single-file `.cursorrules` format is superseded by `.cursor/rules/*.mdc`, which Cursor loads with
+  globs and priorities. Keeping both meant two places to update and a silent authority question.
+- Every line of it was verified present elsewhere before deletion: authority order in `global.mdc` and
+  `AGENTS.md`, the Ghost principle and the six-phase pipeline in `agent-pipeline.mdc`, the style policy in
+  `engineering-standards.mdc` and `react-patterns.mdc` (including the `FC`-alias ban), the FSD map in
+  `fsd-layers.mdc` (including the one `global.css` relative-import exception), verification in
+  `VERIFICATION.md` and `workflow.mdc`, the language split in `global.mdc`.
+
 ## TDD sibling gate on pre-commit, and no auto-commit hook
 
 - `scripts/check-test-siblings.mjs` refuses a commit when a staged `src/**` file has no

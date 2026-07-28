@@ -38,6 +38,16 @@ Thumbs.db
 .claude/
 CLAUDE.local.md
 
+# .claude/commands/ holds the repo's own agent commands and IS tracked. The
+# directory itself has to be re-included first: `.claude/` is ignored above (and
+# globally), and git will not descend into an ignored directory to see a negation
+# inside it. Machine-local settings stay untracked.
+!.claude/
+!.claude/commands/
+!.claude/commands/**
+.claude/settings.local.json
+.claude/settings.json
+
 # Metro / Jest
 .metro-cache/
 .jest-cache/

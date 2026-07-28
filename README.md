@@ -40,7 +40,9 @@ scheme collides with the template on a device and breaks deep links.
 This template treats structure and quality as **enforced contract**, not team folklore.
 
 - Human-facing contract: `docs/strict-template-contract.md`
-- Agent rules: `.cursorrules` + `.cursor/rules/*.mdc`
+- Agent guide (all tools): `AGENTS.md`, imported by `CLAUDE.md`
+- Agent rules: `.cursor/rules/*.mdc`
+- Agent commands: `.claude/commands/*.md` (canonical) with `.cursor/commands/*.md` pointing at them
 - Verification matrix: `.cursor/brain/VERIFICATION.md`
 - Route / widget / feature / store placement: `.cursor/brain/MAP.md` + `.cursor/rules/fsd-layers.mdc`
 
