@@ -13,6 +13,8 @@ Before non-trivial work:
 4. `.cursor/rules/fsd-layers.mdc` when imports or new `src/` paths change
 5. `.cursor/brain/SKELETONS.md` when touching native config, stores, env, Metro/Babel, router layouts
 
+Or run `/onboard`, which does the read plus a check of the docs against the code and reports the drift.
+
 ## Architecture law
 
 - Layer order is fixed: `app -> widgets -> features -> entities -> shared`
@@ -31,6 +33,9 @@ not tribal knowledge.
 - UI reads that copy through `useTranslation` / `t()`
 - Feature `constants.ts` files are for ids, key maps, and derived helpers
 - Tokens / reusable variants / spacing / radii belong in theme or scoped constants, not scattered literals
+- Both halves of that are now **enforced**, not advised: `@typescript-eslint/no-magic-numbers` blocks bare
+  numeric literals in `src/**`, and `no-restricted-syntax` blocks raw hex colours outside
+  `src/shared/lib/theme/**`. See `.cursor/rules/constants.mdc` for the allowed set and the exempt paths.
 
 If a string would matter to a user, a translator, a designer, or a future
 agent, it should not be a random inline English literal.
@@ -38,9 +43,11 @@ agent, it should not be a random inline English literal.
 ## Quality gates
 
 - Typical local code-edit loop: `npm run typecheck && npm run lint && npm run test`
-- Repo-wide blocking contract: `npm run verify`
-- Native / machine parity: `npm run ci:local`
-- CI must stay aligned with the declared contract in `.cursor/brain/VERIFICATION.md`
+- Repo-wide blocking contract: `npm run verify` (every offline check) and `npm run verify:ci`
+  (= `audit:gate` + `verify`), which is what husky pre-push and the CI job both run
+- Native / machine parity: `npm run ci:local` (= `verify:ci` + `expo-doctor`)
+- CI does not restate the gate: the job is ONE step over `verify:ci`. A new check goes into the script,
+  never only into the workflow file — that is what keeps a green local run predictive
 - Repo-owned lint rules live in `tooling/eslint-plugin-template/` and are part of the contract, not optional extras
 
 Do not weaken local and CI behavior silently. If a gate changes, update the

@@ -177,6 +177,28 @@ Short record of non-obvious trade-offs. Update when reversing a decision.
 - `/onboard` closes with a one-line menu of the other four. The operator asks for work in prose rather than
   typing commands, so the moment right after orientation is the only place that list is useful.
 
+## Deliberately NOT adopted from the sibling web templates
+
+The four templates share one harness standard, so an absence here should be readable as a decision rather
+than as an oversight.
+
+- **Tailwind class-hygiene lint rules** (`tailwindcss/no-contradicting-classname` and the rest of the
+  four-rule subset). Those plugins read a Tailwind **v4** CSS config (`@theme` in a stylesheet); this repo
+  is NativeWind 4.2 on **Tailwind 3.4** with a JS config, which is a recorded version hold, not a lag. The
+  rules do not apply and adding them would either no-op or misreport. Revisit only together with
+  NativeWind 5.
+- **`SECURITY_REQUIREMENTS.md`.** In the web templates it is entirely HTTP response headers, CSP and nonce
+  injection. A React Native app serves no document and has no CDN in front of it, so the checklist has no
+  target. The equivalent surface here is `EXPO_PUBLIC_*` being public, `expo-secure-store` versus
+  plaintext AsyncStorage, `app.config.ts` permissions and `extra`, deep links as untrusted input, and EAS
+  secrets — covered in `.cursor/brain/SECURITY_REVIEW.md`, `.github/copilot-instructions.md` and the
+  `/review` command.
+- **e2e in the gate.** Maestro flows live under `.maestro/` and run via `npm run maestro`, but they need a
+  simulator or device, so they cannot be part of an offline `verify`. The web templates put Playwright in
+  the gate because a headless browser is available on a CI runner; a device is not.
+- **`expo-doctor` as a blocking step.** It reads live SDK and package state and can go red with no code
+  change. It stays `continue-on-error` in CI and inside `ci:local`, never inside `verify`.
+
 ## Legacy `.cursorrules` deleted
 
 - The single-file `.cursorrules` format is superseded by `.cursor/rules/*.mdc`, which Cursor loads with
