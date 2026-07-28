@@ -23,10 +23,10 @@ jobs:
 
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v7
 
             - name: Setup Node
-              uses: actions/setup-node@v4
+              uses: actions/setup-node@v7
               with:
                   node-version-file: .nvmrc
                   cache: npm
@@ -44,11 +44,17 @@ jobs:
             - name: Upgrade npm to ^11.14 (cross-platform optional binaries fix)
               run: npm install -g npm@^11.14.0
 
+            # `.npmrc` sets ignore-scripts=true as a supply-chain guard; repeating
+            # it on the command line means a change to that file cannot silently
+            # re-enable install scripts in CI.
             - name: Install
-              run: npm ci
+              run: npm ci --ignore-scripts
 
-            - name: Verify core contract (typecheck, lint, format, coverage)
-              run: npm run verify
+            # ONE step over the same script husky pre-push runs. A new check belongs
+            # in `verify` (offline) or `verify:ci` (needs the network) — never only
+            # here, or a green local gate stops meaning a green pipeline.
+            - name: Verify contract (audit gate, typecheck, lint, format, coverage)
+              run: npm run verify:ci
 
             # Expo doctor checks live external SDK/package state and can go red with
             # no code change (drift). Advisory, not a PR gate (tooling /consilium
@@ -68,7 +74,7 @@ jobs:
 
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v7
 
             - name: Review dependency changes for vulnerabilities / license issues
               uses: actions/dependency-review-action@v4

@@ -125,6 +125,53 @@ Short record of non-obvious trade-offs. Update when reversing a decision.
   linters are run as separate passes and no rules are auto-disabled from the oxlint
   side, so `oxlint` has no lockstep partner and can be bumped on its own.
 
+## The gate contract: `verify` is a superset of CI
+
+- `verify` = every check that works **offline**. `verify:ci` = `audit:gate` + `verify`,
+  and `audit:gate` is the only check that needs the network. Husky pre-push runs
+  `verify:ci`; the CI job runs `verify:ci` as a **single step**.
+- **A new check goes into the script, never only into the workflow file.** A check
+  that lives only in `.github/workflows/ci.yml` breaks the one property the gate is
+  for: that a green local run predicts a green pipeline. Three sibling templates had
+  exactly that defect before this pass.
+- `ci:local` = `verify:ci` + `expo-doctor`, so the full pipeline including live SDK
+  health can be reproduced locally in one command.
+
+## Fail-closed audit gate instead of bare `npm audit`
+
+- `npm audit --audit-level=high` **passes when it cannot run** — an unreachable
+  registry, an auth failure or an offline runner all produce a non-report that a
+  naive exit-code check reads as clean. A security gate that succeeds when it did
+  not run is worse than no gate.
+- `scripts/audit-gate.mjs` therefore fails closed on four conditions: an
+  un-allowlisted high/critical advisory, an **expired** allowance, a **stale**
+  allowance (one whose advisory no longer appears — so allowances cannot accumulate
+  silently), and its own inability to complete. Every allowance carries a reason, an
+  upstream status and a hard `expires` date.
+- `evaluateAudit` is a pure function so the policy is unit-testable without hitting
+  the network; `scripts/audit-gate.test.mjs` covers all four branches.
+- **The allowlist is currently empty, and that is the target state.** The two high
+  advisories the tree had were closed with root `overrides` rather than allowances:
+  `brace-expansion >=5.0.8` (`GHSA-mh99-v99m-4gvg`, reachable only through
+  `minimatch@3`, which several lint and Jest 29 dependencies pin) and
+  `fast-uri >=3.1.4` (`GHSA-v2hh-gcrm-f6hx`). npm's own suggested remediation for
+  the first was `eslint-config-expo@6.0.0` — a semver-major **downgrade** from 57,
+  destructive rather than a fix. Prefer an override; reach for an allowance only
+  when no compatible version exists.
+
+## Gate-script specs run on `node:test`, not Jest
+
+- The gate scripts are executable ESM (`.mjs`). Jest 29 does not discover that
+  extension and does not load real ESM without `--experimental-vm-modules`, so
+  wiring them into the Jest run would mean config surface for tooling tests.
+- `npm run test:scripts` = `node --test "scripts/**/*.test.mjs"` — no config, and it
+  keeps gate tooling out of `collectCoverageFrom`. That second property matters: in
+  a sibling template, folding gate scripts into the app's coverage run dropped line
+  coverage from 93% to 82% without a line of app code changing.
+- The glob is quoted so **Node** expands it. An unquoted `scripts/*.test.mjs` relies
+  on the shell, which does not glob on Windows, and a bare `scripts/` directory
+  argument is resolved as a module path and fails with `MODULE_NOT_FOUND`.
+
 ## `react-dom` override + `react@19.2.0`
 
 - Expo pins **React 19.2.0**; npm 10 may hoist **`react-dom@19.2.5`**, which peers

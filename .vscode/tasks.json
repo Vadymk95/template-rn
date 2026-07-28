@@ -1,0 +1,49 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Verify (every offline gate)",
+            "type": "shell",
+            "command": "npm run verify",
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {}
+            },
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": true
+            },
+            "problemMatcher": ["$tsc"]
+        },
+        {
+            "label": "Format check (Prettier)",
+            "type": "shell",
+            "command": "npm run format:check",
+            "options": { "cwd": "${workspaceFolder}" },
+            "presentation": { "reveal": "always", "panel": "shared" },
+            "problemMatcher": []
+        },
+        {
+            "label": "Verify CI contract (adds the network audit gate)",
+            "type": "shell",
+            "command": "npm run verify:ci",
+            "options": { "cwd": "${workspaceFolder}" },
+            "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+            "problemMatcher": ["$tsc"]
+        },
+        {
+            "label": "Full local CI (includes expo-doctor)",
+            "type": "shell",
+            "command": "npm run ci:local",
+            "options": { "cwd": "${workspaceFolder}" },
+            "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+            "problemMatcher": ["$tsc"]
+        }
+    ]
+}

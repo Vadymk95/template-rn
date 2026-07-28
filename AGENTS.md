@@ -58,9 +58,17 @@ Expo SDK 57 · React Native 0.86 · React 19.2 · TypeScript 6.0 strict · Expo 
 
 ```bash
 npm start            # Expo dev server (QR → Expo Go / Dev Client)
-npm run verify       # typecheck → oxlint → eslint → format:check → test:coverage (commit gate)
-npm run ci:local     # verify + expo-doctor (full local parity)
+npm run verify       # every OFFLINE check: hooks → typecheck → oxlint → eslint → format → scripts → coverage
+npm run verify:ci    # audit:gate (network) + verify — what husky pre-push AND CI both run
+npm run fix          # the one remedy: oxlint --fix → eslint --fix → prettier --write
+npm run ci:local     # verify:ci + expo-doctor (full local parity)
+npm run bench:verify # per-step timings when the gate feels slow
 ```
+
+**The gate contract**: `verify` is a strict superset of every offline check CI performs, and `verify:ci`
+adds the one check that needs the network (`audit:gate`). The CI job is a single step over `verify:ci`.
+A new check therefore goes into the **script**, never only into the workflow file — otherwise a green
+local gate stops meaning a green pipeline.
 
 **Bootstrap after clone**: `npm run prepare` (once) — `.npmrc` disables lifecycle
 scripts as a supply-chain guard, so husky hooks don't install themselves; the

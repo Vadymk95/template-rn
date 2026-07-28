@@ -24,14 +24,19 @@
         "lint": "eslint . --max-warnings 0",
         "lint:fix": "eslint . --fix",
         "lint:oxlint": "oxlint --config .oxlintrc.json --deny-warnings src",
+        "fix": "oxlint --config .oxlintrc.json --fix src && eslint . --fix && prettier --write .",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
-        "verify": "node scripts/check-hooks.mjs && npm run typecheck && npm run lint:oxlint && npm run lint && npm run format:check && npm run test:coverage",
+        "audit:gate": "node scripts/audit-gate.mjs",
+        "verify": "node scripts/check-hooks.mjs && npm run typecheck && npm run lint:oxlint && npm run lint && npm run format:check && npm run test:scripts && npm run test:coverage",
+        "verify:ci": "npm run audit:gate && npm run verify",
         "verify:native": "npm run verify && npm run doctor",
         "verify:rc": "react-compiler-healthcheck src",
+        "bench:verify": "node scripts/bench-verify.mjs",
         "test": "jest",
         "test:watch": "jest --watch",
         "test:coverage": "jest --coverage",
+        "test:scripts": "node --test \"scripts/**/*.test.mjs\"",
         "bundle:analyze": "EXPO_ATLAS=1 expo export --platform ios --output-dir .atlas",
         "bundle:analyze:android": "EXPO_ATLAS=1 expo export --platform android --output-dir .atlas-android",
         "perf:capture": "node scripts/capture-bundle-metrics.mjs --export",
@@ -39,7 +44,7 @@
         "perf:measure": "node scripts/capture-bundle-metrics.mjs",
         "perf:baseline": "node scripts/capture-bundle-metrics.mjs --export --platform all --write-baseline",
         "perf:check": "node scripts/capture-bundle-metrics.mjs --export --platform all --check",
-        "ci:local": "npm run verify:native",
+        "ci:local": "npm run verify:ci && npm run doctor",
         "maestro": "maestro test .maestro",
         "prepare": "husky"
     },
@@ -165,6 +170,8 @@
     "overrides": {
         "react-dom": "19.2.3",
         "uuid": ">=11.1.1",
+        "brace-expansion": ">=5.0.8",
+        "fast-uri": ">=3.1.4",
         "eslint-plugin-react": {
             "eslint": "$eslint"
         },

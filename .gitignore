@@ -29,6 +29,10 @@ Thumbs.db
 .vscode/*
 !.vscode/settings.json
 !.vscode/extensions.json
+# Tracked because README documents these tasks — an untracked file makes that
+# claim false for every fork. Each task calls an npm script rather than spelling
+# the gate out, so it cannot drift from `verify`.
+!.vscode/tasks.json
 
 # AI agents (local scratch)
 .claude/

@@ -1,2 +1,12 @@
 #!/usr/bin/env sh
-npm run verify
+# Same script CI runs, so a green push cannot turn into a red pipeline.
+# `verify:ci` = audit:gate (needs the network) + verify (everything offline).
+if ! npm run verify:ci; then
+    echo ''
+    echo '✖ pre-push: verify:ci failed — the pipeline would fail the same way.'
+    echo '  Formatting or lint findings:  npm run fix && git add -u'
+    echo '  Advisory blocked by the gate: fix the dependency, or add a dated'
+    echo '  allowance to scripts/audit-allowlist.json with the reason.'
+    echo ''
+    exit 1
+fi

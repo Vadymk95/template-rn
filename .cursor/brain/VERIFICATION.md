@@ -20,9 +20,25 @@ release parity.
 
 ## Repo-wide contract gate (before push / PR)
 
-Run `npm run verify` — order: `typecheck` → `lint:oxlint` → `lint` →
-`format:check` → `test:coverage`. This is the primary blocking quality gate for
-the template and should stay green before pushing.
+Two rungs, and the split is deliberate:
+
+- **`npm run verify`** — every check that works OFFLINE, in order: `check-hooks` →
+  `typecheck` → `lint:oxlint` → `lint` → `format:check` → `test:scripts` →
+  `test:coverage`. An implementer with no network can still run the whole thing.
+- **`npm run verify:ci`** — `audit:gate` (needs the registry) + `verify`. This is
+  what husky pre-push runs and what the CI job runs, as a single step.
+
+`verify` is a **strict superset of the offline checks CI performs**. The rule that
+keeps it that way: a new check goes into the script, never only into
+`.github/workflows/ci.yml`. A check that lives only in the workflow means a green
+local gate no longer predicts a green pipeline — which is the exact failure this
+contract exists to remove.
+
+Read the exit code without a pipe — `npm run verify > /tmp/verify.log 2>&1; echo $?`.
+Piping to `tail` returns the pipe's status, so a failed run reads as a pass.
+
+When it fails: `npm run fix && git add -u` for lint/format findings. Never lower a
+severity, move a coverage threshold, or extend an ignore list to reach green.
 
 ## Native / machine parity
 
@@ -32,9 +48,10 @@ Run `npm run ci:local` when:
 - preparing a release branch
 - validating a machine against Expo tooling
 
-`ci:local` = `npm run verify:native` (= `verify` + `doctor`). `expo-doctor` is
-intentionally kept out of the core repo contract because it depends on local
-native tooling.
+`ci:local` = `verify:ci` + `doctor`. `expo-doctor` is intentionally kept out of the
+core repo contract because it depends on local native tooling and on live SDK
+state; CI runs it `continue-on-error` for the same reason. `verify:native`
+(= `verify` + `doctor`) is the offline variant.
 
 ## Before first EAS build
 

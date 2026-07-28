@@ -131,7 +131,12 @@ Single source of truth: `tsconfig.json` `paths`. Metro reads this directly
 - `npm run lint` — ESLint flat
 - `npm run lint:oxlint` — fast pre-pass (Rust-based, `src` scope)
 - `npm run test` — Jest
-- `npm run ci:local` — typecheck → oxlint → eslint → format:check → test:coverage → expo-doctor
+- `npm run test:scripts` — gate-script specs (`node:test`, not Jest — see DECISIONS)
+- `npm run fix` — the one remedy command: oxlint --fix → eslint --fix → prettier --write
+- `npm run verify` — every OFFLINE check; the commit gate
+- `npm run verify:ci` — `audit:gate` (needs the network) + `verify`; what pre-push and CI both run
+- `npm run bench:verify` — per-step timings for the gate
+- `npm run ci:local` — `verify:ci` + expo-doctor (full local parity)
 - `npm run perf:*` — optional Hermes bundle export + metric capture against `scripts/perf-baseline.json` (see `scripts/perf-program.md`)
 - `npx expo prebuild --clean` — regenerate `ios/` and `android/` from config
 - `eas build` — cloud build (no Mac required for iOS)

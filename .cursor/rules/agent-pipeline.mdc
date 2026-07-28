@@ -93,8 +93,10 @@ Implement with `@testing-library/react-native`; add or extend tests after the UI
 Default source of truth: `.cursor/brain/VERIFICATION.md`.
 
 - Typical code-edit loop: `npm run typecheck && npm run lint && npm run test`
-- Repo-wide contract gate: `npm run verify`
+- Repo-wide contract gate: `npm run verify` (offline) / `npm run verify:ci` (adds the network audit; what pre-push and CI run)
 - Native toolchain / release parity: `npm run ci:local`
+- Capture the exit code **without a pipe** — `cmd > log 2>&1; echo $?`. A pipe returns the pipe's status and a failed run reads as a pass.
+- Remedy for lint/format findings: `npm run fix && git add -u`. Never lower a severity or move a threshold to reach green.
 
 ### 4.2 Failure protocol
 

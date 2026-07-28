@@ -27,8 +27,11 @@ A plan must list: files touched, one-line intent per file, test strategy (TDD vs
 Source of truth: `.cursor/brain/VERIFICATION.md`.
 
 - Typical TS/TSX change: `npm run typecheck && npm run lint && npm run test`
-- Repo-wide gate before push / PR: `npm run verify`
-- Full native tooling parity: `npm run ci:local`
+- Repo-wide offline gate: `npm run verify`
+- Before push / PR: `npm run verify:ci` (= `audit:gate` + `verify`) — the same script husky pre-push and CI run
+- Full native tooling parity: `npm run ci:local` (= `verify:ci` + `expo-doctor`)
+- Read the exit code **without a pipe**: `npm run verify > /tmp/verify.log 2>&1; echo $?`. Piping to `tail` returns the pipe's status, so a failed run reads as a pass.
+- A new check belongs in the **script**, never only in `.github/workflows/ci.yml`.
 
 ## Git commits
 

@@ -146,23 +146,35 @@ Oxlint).
 
 **Tasks (Terminal → Run Task):**
 
-- **Verify (same gates as CI, no expo-doctor)** — default test task; matches
-  GitHub Actions except `expo-doctor` (useful when Xcode on the machine is not
-  pinned to Expo’s matrix yet).
-- **Full local CI** — `npm run ci:local` including `expo-doctor`.
+- **Verify (every offline gate)** — default test task; `npm run verify`, no network
+  and no `expo-doctor` (useful when Xcode on the machine is not pinned to Expo’s
+  matrix yet).
+- **Verify CI contract** — `npm run verify:ci`; adds the audit gate, so it is what
+  the pipeline actually runs.
+- **Full local CI** — `npm run ci:local`, which is `verify:ci` plus `expo-doctor`.
+
+Each task calls an npm script instead of spelling the gate out, so the tasks cannot
+drift from `verify`.
 
 CLI equivalent of the default verify task:
 
 ```bash
 npm run verify
-# = check-hooks → typecheck → lint:oxlint → lint → format:check → test:coverage
+# = check-hooks → typecheck → lint:oxlint → lint → format:check → test:scripts → test:coverage
 ```
 
 The `check-hooks` step fails loudly when git hooks are missing — run
 `npm run prepare` once after clone (lifecycle scripts are disabled via `.npmrc`).
 
-If **`npm run format:check`** fails, run **`npm run format`** and commit — CI
-runs the same check and will fail the PR with a red **Prettier** step.
+`verify` holds every check that works **offline**. `verify:ci` adds the one that
+needs the registry (`audit:gate`) and is what husky pre-push and the CI job both
+run — the job is a single step over that script. So a green `verify:ci` locally
+means a green pipeline, and any new check belongs in the script rather than in the
+workflow file.
+
+If the gate fails on lint or formatting, `npm run fix && git add -u` is the one
+remedy command (oxlint --fix → eslint --fix → prettier --write). CI runs the same
+checks and will fail the PR the same way.
 
 ---
 
@@ -182,7 +194,7 @@ Native / machine parity:
 
 ```bash
 npm run ci:local
-# = npm run verify + expo-doctor
+# = npm run verify:ci + expo-doctor  (verify:ci = audit:gate + verify)
 ```
 
 ---
