@@ -101,12 +101,29 @@ Short record of non-obvious trade-offs. Update when reversing a decision.
 - Personal preference (`.prettierrc.json`). Community RN norm is 2 spaces —
   adjust if onboarding friction becomes real.
 
-## ESLint 9 (not 10) + `eslint-config-expo`
+## ESLint 10 + `eslint-config-expo` (supersedes the ESLint 9 pin)
 
-- ESLint **10** currently trips `eslint-plugin-react` inside `eslint-config-expo`
-  (`getFilename` / resolver edge cases). **ESLint 9.39.x** is the pragmatic pin
-  until Expo’s flat config stack catches up.
-- Type-aware `typescript-eslint` rules are scoped to **`src/**`** so `app.config.ts` and other root tooling stay outside the type-aware project surface.
+- **ESLint 9 reached end of life**, so the pin was not a stable position — it was a
+  countdown. The blocker that motivated it is real but has a one-line fix, so the
+  pin is gone.
+- **The blocker**: `eslint-config-expo` sets `settings.react.version: 'detect'`.
+  Under ESLint 10 the detection path in `eslint-plugin-react` calls the removed
+  `context.getFilename()`, and every React rule throws while loading —
+  `Error while loading rule 'react/display-name': contextOrFilename.getFilename is not a function`.
+- **The fix**: a trailing config object in `eslint.config.mjs` that sets
+  `settings.react.version` to a **literal** (`'19.2'`). It carries no `files` key,
+  so it applies everywhere, and being last it wins over the Expo preset. Removing
+  it reproduces the crash — verified, it is load-bearing rather than decorative.
+- Two plugins arrive transitively through `eslint-config-expo` with an `eslint`
+  peer capped below 10 — `eslint-plugin-react` (`^9.7`) and `eslint-plugin-import`
+  (`^9`). Both are mapped to the installed ESLint through root `overrides`
+  (`{ "eslint": "$eslint" }`) rather than with `--legacy-peer-deps`, which would
+  disable peer resolution for the whole tree. `eslint-plugin-jsx-a11y` is not
+  installed here, so unlike the web templates it needs no entry.
+- Type-aware `typescript-eslint` rules stay scoped to **`src/**`** so `app.config.ts` and other root tooling stay outside the type-aware project surface.
+- **`eslint-plugin-oxlint` is deliberately NOT installed** in this repo: the two
+  linters are run as separate passes and no rules are auto-disabled from the oxlint
+  side, so `oxlint` has no lockstep partner and can be bumped on its own.
 
 ## `react-dom` override + `react@19.2.0`
 

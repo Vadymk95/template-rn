@@ -32,7 +32,7 @@ ships the toolchain and the architectural spine.
 | Storage        | expo-secure-store (secrets) + AsyncStorage (cache)                   | —                     |
 | Observability  | stub `logger.ts` (wire Sentry/etc in product)                        | —                     |
 | Testing        | Jest + jest-expo + @testing-library/react-native (built-in matchers) | —                     |
-| Linting        | ESLint 9 flat + eslint-config-expo + import-x + oxlint pre-pass      | —                     |
+| Linting        | ESLint 10 flat + eslint-config-expo + import-x + oxlint pre-pass     | —                     |
 | Formatting     | Prettier                                                             | 3                     |
 | Git hooks      | Husky + commitlint + lint-staged                                     | —                     |
 | Compiler       | React Compiler (enabled via `experiments.reactCompiler`)             | stable                |

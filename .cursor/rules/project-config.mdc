@@ -20,7 +20,7 @@ alwaysApply: true
 | Env          | **`@t3-oss/env-core`** + Zod — only validated `env` object, never raw `process.env` in app code |
 | Unit tests   | **Jest** + **`jest-expo`** + **Testing Library React Native** |
 | E2E          | **Maestro** flows ship in-repo (`.maestro/`, `npm run maestro`); add **Detox** later for a JS-driven gray-box runner — **not** Playwright (Playwright targets browsers; use it only if you ship **Expo Web** and choose to test that surface). |
-| Lint         | **ESLint 9** flat config: `typescript-eslint` strict type-checked + **Expo** + **TanStack Query strict** + **import-x** + **boundaries v7** + **i18next** + **jest** + repo-local **template** plugin + **React Compiler** + **Prettier**; **oxlint** fast pass on `src/`. Zero-warnings gate: `eslint . --max-warnings 0`, `oxlint --deny-warnings` |
+| Lint         | **ESLint 10** flat config: `typescript-eslint` strict type-checked + **Expo** + **TanStack Query strict** + **import-x** + **boundaries v7** + **i18next** + **jest** + repo-local **template** plugin + **React Compiler** + **Prettier**; **oxlint** fast pass on `src/`. Zero-warnings gate: `eslint . --max-warnings 0`, `oxlint --deny-warnings` |
 | Format       | **Prettier** |
 
 ## Path aliases

@@ -75,7 +75,9 @@ The gate is **zero-warnings**: `eslint --max-warnings 0`, `oxlint --deny-warning
 - **Native/Expo packages are SDK-pinned** — `react`, `react-native`, `react-native-*`, `expo-*` versions come from `npx expo install --fix`, NOT from `npm outdated`. Bumping past the SDK list breaks Expo Go / jest-expo.
 - **Jest stays 29.x** — `jest-expo@57` is built on jest 29 internals (`babel-jest ^29.2.1`); `@types/jest` stays 29.x with it.
 - **Tailwind stays 3.4.x** — NativeWind 4.x is built against the Tailwind 3 config format.
-- **ESLint stays 9.x / TypeScript stays `~6.0.x` / `oxlint` tilde-tracks `eslint-plugin-oxlint`** — same ecosystem blocks as the sibling web templates (verified 2026-07-16).
+- **TypeScript stays `~6.0.x`** — `typescript-eslint@8` peers `typescript >=4.8.4 <6.1.0`.
+- **ESLint is 10.x.** `eslint-config-expo` sets `settings.react.version: 'detect'`, which crashes every React rule under ESLint 10, so `eslint.config.mjs` ends with a trailing block pinning the version to a literal. Do not delete it and do not set it back to `'detect'` — see the ESLint 10 entry in `.cursor/brain/DECISIONS.md`.
+- **`oxlint` has no lockstep partner here** — `eslint-plugin-oxlint` is deliberately not installed, so oxlint is bumped on its own (unlike the sibling web templates).
 - **`@expo/vector-icons` is deprecated upstream** (SDK 56+) but pinned explicitly and functional; migration path is `npx @react-native-vector-icons/codemod` — a deliberate follow-up, not a drive-by.
 - **`overrides.uuid >= 11.1.1`** is a security floor for the `@expo/ngrok`/`xcode` dev chains — do not remove to quiet npm.
 

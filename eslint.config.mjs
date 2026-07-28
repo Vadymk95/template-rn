@@ -310,5 +310,18 @@ export default tseslint.config(
             '@typescript-eslint/no-require-imports': 'off',
             '@typescript-eslint/explicit-function-return-type': 'off'
         }
+    },
+    // ─── React version must be a LITERAL, never 'detect' ────────────────────
+    // eslint-config-expo sets `settings.react.version: 'detect'`. Under ESLint 10
+    // the detection path in eslint-plugin-react calls the removed
+    // `context.getFilename()` and every React rule throws instead of linting —
+    // the gate goes red for a reason that has nothing to do with the code.
+    // This block carries no `files` key so it applies to every file and, being
+    // last, wins over the Expo preset. Keep it in step with `react` in
+    // package.json.
+    {
+        settings: {
+            react: { version: '19.2' }
+        }
     }
 );
