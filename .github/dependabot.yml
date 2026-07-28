@@ -44,11 +44,13 @@ updates:
           # typescript-eslint peer is <6.1; TS version is also SDK-paired
           - dependency-name: 'typescript'
             versions: ['>=6.1']
-          # ESLint 10: plugin ecosystem peers still stop at ^9
+          # ESLint: the repo IS on 10.x. The floor is >=11 so patches and minors
+          # inside 10 still arrive; a major would again outrun the plugin peers
+          # that `overrides` map to `$eslint`.
           - dependency-name: 'eslint'
-            versions: ['>=10']
+            versions: ['>=11']
           - dependency-name: '@eslint/js'
-            versions: ['>=10']
+            versions: ['>=11']
 
     - package-ecosystem: github-actions
       directory: '/'
