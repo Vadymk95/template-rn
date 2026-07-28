@@ -178,6 +178,25 @@ export default tseslint.config(
                 'error',
                 { ignorePrimitives: { string: true } }
             ],
+            // ─── No bare numeric literals in logic ───────────────────────────
+            // A number with no name cannot be searched for, and the same number
+            // in two places drifts silently. The ignore list is the set that is
+            // self-explanatory in context: identity/empty/pair, percent and
+            // millisecond bases. Everything else gets a named constant — see
+            // .cursor/rules/constants.mdc for where it belongs.
+            // Token tables and config files are exempt below: there the number
+            // IS the definition, and naming it would just add indirection.
+            '@typescript-eslint/no-magic-numbers': [
+                'error',
+                {
+                    ignore: [-1, 0, 1, 2, 100, 1000],
+                    ignoreEnums: true,
+                    ignoreReadonlyClassProperties: true,
+                    ignoreArrayIndexes: true,
+                    ignoreDefaultValues: true,
+                    ignoreTypeIndexes: true
+                }
+            ],
             'import-x/order': [
                 'error',
                 {
@@ -204,6 +223,46 @@ export default tseslint.config(
         files: ['src/lib/logger.ts'],
         rules: {
             'no-console': ['warn', { allow: ['log', 'warn', 'error'] }]
+        }
+    },
+    // ─── No raw hex colours outside the token tables ────────────────────────
+    // Colours have exactly two homes: the NativeWind theme in `global.css`
+    // (consumed as `className`) and `COLOR_VALUES` in
+    // src/shared/lib/theme/colors.ts for the places that need a real value
+    // (navigation options, Reanimated, native props). A literal anywhere else
+    // drifts from both — this rule exists because `TAB_BAR_ACTIVE_TINT` had
+    // already drifted to `#0a0a0a` while the token said `#09090B`.
+    // Both selectors are needed: a plain string and a template literal are
+    // different AST nodes.
+    {
+        files: ['src/**/*.{ts,tsx}'],
+        ignores: ['src/shared/lib/theme/**', '**/*.{test,spec}.{ts,tsx}', 'src/test/**'],
+        rules: {
+            'no-restricted-syntax': [
+                'error',
+                {
+                    selector:
+                        'Literal[value=/#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\\b/]',
+                    message:
+                        'No raw hex colours outside src/shared/lib/theme — use a token from COLOR_VALUES or a NativeWind class.'
+                },
+                {
+                    selector:
+                        'TemplateElement[value.raw=/#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\\b/]',
+                    message:
+                        'No raw hex colours outside src/shared/lib/theme — use a token from COLOR_VALUES or a NativeWind class.'
+                }
+            ]
+        }
+    },
+    // ─── Token tables define the numbers; naming them would be indirection ──
+    // src/shared/lib/theme/** is the design vocabulary (radii, spacing, type
+    // scale, control sizes, colour values). A magic-number rule there would
+    // demand a constant for the constant.
+    {
+        files: ['src/shared/lib/theme/**/*.ts'],
+        rules: {
+            '@typescript-eslint/no-magic-numbers': 'off'
         }
     },
     {
@@ -281,6 +340,11 @@ export default tseslint.config(
             ...jestPlugin.configs['flat/recommended'].rules,
             // Test helpers/fixtures don't need declared return contracts.
             '@typescript-eslint/explicit-function-return-type': 'off',
+            // A test asserting a constant must spell the value out. Importing the
+            // constant it checks would make the assertion tautological — change the
+            // constant and the test follows it silently. Literal fixtures are the
+            // point here, so the rule is off rather than worked around.
+            '@typescript-eslint/no-magic-numbers': 'off',
             '@typescript-eslint/no-unsafe-assignment': 'off',
             '@typescript-eslint/no-unsafe-member-access': 'off',
             '@typescript-eslint/no-unsafe-call': 'off',
@@ -308,7 +372,11 @@ export default tseslint.config(
             'prettier/prettier': 'error',
             'import-x/no-default-export': 'off',
             '@typescript-eslint/no-require-imports': 'off',
-            '@typescript-eslint/explicit-function-return-type': 'off'
+            '@typescript-eslint/explicit-function-return-type': 'off',
+            // Build/native config: the numbers and colours there ARE the values
+            // (ports, versions, splash background), with nothing to reference.
+            '@typescript-eslint/no-magic-numbers': 'off',
+            'no-restricted-syntax': 'off'
         }
     },
     // ─── React version must be a LITERAL, never 'detect' ────────────────────

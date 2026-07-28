@@ -39,6 +39,15 @@ import { AppState, Platform } from 'react-native';
 //    Never put API response data into a Zustand store.
 // ─────────────────────────────────────────────────────────────────────────────
 
+const MINUTE_MS = 60_000;
+const STALE_MINUTES = 1;
+const GC_MINUTES = 5;
+
+// A 4xx is the server telling us the request itself is wrong; retrying sends the
+// same wrong request again. 5xx and transport failures are the retryable class.
+const HTTP_CLIENT_ERROR_FLOOR = 400;
+const HTTP_SERVER_ERROR_FLOOR = 500;
+
 const getErrorStatus = (error: unknown): number | undefined => {
     if (error !== null && typeof error === 'object' && 'status' in error) {
         const status = (error as { status?: unknown }).status;
@@ -64,11 +73,15 @@ export const QueryClientAppStateBridge = (): ReactElement | null => {
 export const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
-            staleTime: 60_000,
-            gcTime: 5 * 60_000,
+            staleTime: STALE_MINUTES * MINUTE_MS,
+            gcTime: GC_MINUTES * MINUTE_MS,
             retry: (failureCount, error) => {
                 const status = getErrorStatus(error);
-                if (status !== undefined && status >= 400 && status < 500) {
+                if (
+                    status !== undefined &&
+                    status >= HTTP_CLIENT_ERROR_FLOOR &&
+                    status < HTTP_SERVER_ERROR_FLOOR
+                ) {
                     return false;
                 }
                 return failureCount < 2;

@@ -36,12 +36,18 @@ export const ORDER_STATUS = {
 export type OrderStatus = (typeof ORDER_STATUS)[keyof typeof ORDER_STATUS];
 ```
 
-## 4. ESLint: no raw user copy in UI layers
+## 4. ESLint: what is enforced, not just recommended
+
+- **Magic numbers** — `@typescript-eslint/no-magic-numbers` across `src/**`. `-1 0 1 2 100 1000`, enum members, array indexes, default values and type indexes are allowed; anything else needs a name in the location the table above gives. Off in `src/shared/lib/theme/**` (the number IS the token), in tests (a test that imports the constant it asserts is tautological) and in root config files.
+- **Raw hex colours** — `no-restricted-syntax` blocks hex in string AND template literals everywhere under `src/**` except `src/shared/lib/theme/**`. Colours come from a NativeWind class or from `COLOR_VALUES`. The rule exists because a copied literal had already drifted from the token.
+- **FSD layer imports** — `boundaries/dependencies`, see `fsd-layers.mdc`.
+
+## 5. ESLint: no raw user copy in UI layers
 
 - In UI layers (`src/app/**`, `src/widgets/**`, `src/features/**`, `src/shared/ui/**`), lint blocks raw user-visible literals in JSX text and user-facing props. Use **`t()`**, locale keys, or feature key maps instead of bundled English.
 - **`words.exclude`** allows whitespace-only, numeric-only, and URL-ish punctuation fragments — tune in `eslint.config.mjs` if a false positive appears.
 
-## 5. Anti-patterns
+## 6. Anti-patterns
 
 - `enum` for string unions — prefer `as const` + derived type.
 - Duplicated literals across modules when one key or constant would do.

@@ -28,6 +28,12 @@ Expo SDK 57 · React Native 0.86 · React 19.2 · TypeScript 6.0 strict · Expo 
 
 **NativeWind** — `className` only, no StyleSheet. `hover:` classes are no-ops on native, use `active:` / `pressed:`.
 
+**Colours** — a NativeWind class, or `COLOR_VALUES` from `src/shared/lib/theme/colors.ts` where an API needs a real value (navigation options, native props). Raw hex anywhere else under `src/` fails the gate.
+
+**Numbers** — `@typescript-eslint/no-magic-numbers` is on across `src/**`. `-1 0 1 2 100 1000` and enum/index/default positions are free; anything else gets a name. Exempt: `src/shared/lib/theme/**`, tests, root config files.
+
+**Layer imports** — `boundaries/dependencies` enforces the FSD map (`app` → `widgets` → `features` → `entities` → `shared`, downward only). It is lint law, not a convention: see `.cursor/rules/fsd-layers.mdc`.
+
 **Components** — arrow-only; explicit props type + explicit output: `const Screen = (): ReactElement => …; export default Screen` (or `FunctionComponent<Props>` annotation) — enforced by `@typescript-eslint/explicit-function-return-type` (inline callbacks exempt). Interface callbacks use property style (`onSelect: (id: string) => void`) — enforced by `method-signature-style`. Extract logic to `useComponentName.ts` next to heavy UI.
 
 **Stores** — Zustand with `createSelectors`. Tokens go to `expo-secure-store`, not AsyncStorage.

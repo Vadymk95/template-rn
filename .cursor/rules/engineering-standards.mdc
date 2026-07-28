@@ -45,7 +45,8 @@ priority: 88
 - **User-visible copy:** `src/shared/locales/` + `useTranslation` / `t()` — typed via `src/shared/lib/i18n/resources.ts`. See `.cursor/rules/constants.mdc`.
 - **Other constants:** `src/shared/lib/constants/`, feature-local `constants.ts`, or `src/store/<domain>/constants.ts` per scope.
 - **Query keys:** colocate with the query module under `src/features/...` or `src/hooks/...` as `const queryKeys = { ... } as const`.
-- **Magic numbers:** name at use site or extract to the nearest `constants.ts` / shared helper with a short comment only if non-obvious.
+- **Magic numbers:** enforced by `@typescript-eslint/no-magic-numbers`, not left to judgement — name at the use site or extract to the nearest `constants.ts`. See `constants.mdc` for the allowed set and the exempt paths.
+- **Colours:** a NativeWind class, or `COLOR_VALUES` from `src/shared/lib/theme/colors.ts` where a real value is required. Raw hex outside that file fails the gate.
 
 ## 4. AI readability
 

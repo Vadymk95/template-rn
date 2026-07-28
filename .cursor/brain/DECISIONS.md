@@ -159,6 +159,25 @@ Short record of non-obvious trade-offs. Update when reversing a decision.
   destructive rather than a fix. Prefer an override; reach for an allowance only
   when no compatible version exists.
 
+## Raw hex and magic numbers are lint errors, not review notes
+
+- Both were already written down as conventions and neither was enforced, which is
+  the state where a rule quietly stops being true. `TAB_BAR_ACTIVE_TINT` proved it:
+  a copied literal `#0a0a0a` sitting next to a comment that said "do not sprinkle raw
+  hex in layouts", while the token it claimed to mirror was `#09090B`. It now reads
+  `COLOR_VALUES.light.textPrimary`, so the two cannot diverge again.
+- **Raw hex** (`no-restricted-syntax`, string AND template-literal selectors) is
+  blocked everywhere under `src/**` except `src/shared/lib/theme/**`, which is where
+  colours are defined. Tests are exempt.
+- **`@typescript-eslint/no-magic-numbers`** is on across `src/**` with `-1 0 1 2 100
+1000` plus enum members, array indexes, default values and type indexes allowed.
+  Exempt: `src/shared/lib/theme/**` (there the number is the definition), root config
+  files, and tests. Tests are exempt on purpose — a test that imports the constant it
+  asserts is tautological, so pinning the literal is the correct thing to do there.
+- Known limitation left in place deliberately: the tab bar tint is the light value
+  and does not follow the colour scheme. Making it theme-aware is a behaviour change
+  with its own test, not part of a lint pass; the constant says so at the top.
+
 ## Secret scan and CodeQL, with the plan boundary written down
 
 - `security.yml` runs **gitleaks** (full commit history, its own scanner, works on any
