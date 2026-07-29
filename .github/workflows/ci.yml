@@ -77,4 +77,4 @@ jobs:
               uses: actions/checkout@v7
 
             - name: Review dependency changes for vulnerabilities / license issues
-              uses: actions/dependency-review-action@v4
+              uses: actions/dependency-review-action@v5
