@@ -1,11 +1,12 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router';
+import { useColorScheme } from 'nativewind';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ColorValue } from 'react-native';
 
-import { TAB_BAR_ACTIVE_TINT } from '@/shared/lib/constants/navigationTheme';
 import { TAB_SCREEN_IONICONS } from '@/shared/lib/constants/tabBarIcons';
+import { getThemeColorValue } from '@/shared/lib/theme/colors';
 
 interface TabIconProps {
     color: ColorValue;
@@ -22,9 +23,17 @@ const SettingsTabIcon = ({ color, size }: TabIconProps): ReactElement => (
 
 const TabsLayout = (): ReactElement => {
     const { t } = useTranslation('common');
+    // React Navigation needs a real colour value, not a NativeWind class, so the
+    // tint is read from the token table per scheme. A fixed value here made the
+    // active tab near-invisible in dark mode: near-black on a near-black bar.
+    const { colorScheme } = useColorScheme();
 
     return (
-        <Tabs screenOptions={{ tabBarActiveTintColor: TAB_BAR_ACTIVE_TINT }}>
+        <Tabs
+            screenOptions={{
+                tabBarActiveTintColor: getThemeColorValue(colorScheme, 'textPrimary')
+            }}
+        >
             <Tabs.Screen
                 name="index"
                 options={{

@@ -34,13 +34,13 @@ Imports flow **down-stack only** (app may use shared; shared must not import ent
 
 ## Navigation & theme (no literals in layouts)
 
-| Need                         | Where                                          |
-| ---------------------------- | ---------------------------------------------- |
-| Typed `href` / path literals | `src/shared/lib/constants/routes.ts`           |
-| Expo Router segment names    | `src/shared/lib/constants/expoRouter.ts`       |
-| Tab bar active tint (hex)    | `src/shared/lib/constants/navigationTheme.ts`  |
-| Tab Ionicons glyph names     | `src/shared/lib/constants/tabBarIcons.ts`      |
-| i18n init failure copy       | `src/shared/lib/constants/initFallbackCopy.ts` |
+| Need                         | Where                                                                       |
+| ---------------------------- | --------------------------------------------------------------------------- |
+| Typed `href` / path literals | `src/shared/lib/constants/routes.ts`                                        |
+| Expo Router segment names    | `src/shared/lib/constants/expoRouter.ts`                                    |
+| Tab Ionicons glyph names     | `src/shared/lib/constants/tabBarIcons.ts`                                   |
+| Tab bar active tint          | none — `(tabs)/_layout.tsx` reads the scheme and calls `getThemeColorValue` |
+| i18n init failure copy       | `src/shared/lib/constants/initFallbackCopy.ts`                              |
 
 ## Entry points
 

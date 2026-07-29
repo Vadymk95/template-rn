@@ -235,10 +235,11 @@ than as an oversight.
 ## Raw hex and magic numbers are lint errors, not review notes
 
 - Both were already written down as conventions and neither was enforced, which is
-  the state where a rule quietly stops being true. `TAB_BAR_ACTIVE_TINT` proved it:
-  a copied literal `#0a0a0a` sitting next to a comment that said "do not sprinkle raw
-  hex in layouts", while the token it claimed to mirror was `#09090B`. It now reads
-  `COLOR_VALUES.light.textPrimary`, so the two cannot diverge again.
+  the state where a rule quietly stops being true. The tab bar tint proved it: a
+  copied literal `#0a0a0a` sat in `navigationTheme.ts` next to a comment saying "do
+  not sprinkle raw hex in layouts", while the token it claimed to mirror was
+  `#09090B`. Enabling the rule surfaced it; the constant is gone and
+  `(tabs)/_layout.tsx` now derives the value from the token table instead.
 - **Raw hex** (`no-restricted-syntax`, string AND template-literal selectors) is
   blocked everywhere under `src/**` except `src/shared/lib/theme/**`, which is where
   colours are defined. Tests are exempt.
@@ -247,9 +248,14 @@ than as an oversight.
   Exempt: `src/shared/lib/theme/**` (there the number is the definition), root config
   files, and tests. Tests are exempt on purpose — a test that imports the constant it
   asserts is tautological, so pinning the literal is the correct thing to do there.
-- Known limitation left in place deliberately: the tab bar tint is the light value
-  and does not follow the colour scheme. Making it theme-aware is a behaviour change
-  with its own test, not part of a lint pass; the constant says so at the top.
+- The limitation the lint rule exposed was then fixed on its own merits: the tab bar
+  tint was the LIGHT value regardless of scheme, so the active tab was near-black on a
+  near-black bar in dark mode. `(tabs)/_layout.tsx` now reads `useColorScheme()` and
+  calls `getThemeColorValue`, matching how every `shared/ui` component already resolves
+  a real colour value. `src/test/app/tabs-layout.test.tsx` guards it by capturing
+  `screenOptions` from a file-local `expo-router` mock — the shared mock drops props,
+  so a test written against it would have passed whatever the layout did. Verified by
+  mutation: restoring the fixed light value turns the dark-scheme case red.
 
 ## Secret scan and CodeQL, with the plan boundary written down
 
