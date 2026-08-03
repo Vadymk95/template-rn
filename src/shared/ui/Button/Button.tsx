@@ -6,6 +6,7 @@ import { logger } from '@/lib/logger';
 import { cn } from '@/lib/utils';
 import {
     CONTROL_SIZE_TOKENS,
+    MAX_FONT_SCALE_IN_FIXED_CONTROL,
     getThemeColorValue,
     INTERACTION_STATE_TOKENS,
     RADII_TOKENS,
@@ -88,7 +89,15 @@ export const Button = ({
         >
             {leftSlot ? <View>{leftSlot}</View> : null}
             {label ? (
-                <Text className={cn(TYPOGRAPHY_TOKENS.button, BUTTON_LABEL_CLASS_NAMES[variant])}>
+                <Text
+                    className={cn(TYPOGRAPHY_TOKENS.button, BUTTON_LABEL_CLASS_NAMES[variant])}
+                    /*
+                     * The control's height is fixed, and text scales with the OS setting by default, so
+                     * at the top of the accessibility slider the label is clipped rather than wrapped.
+                     * This bounds the multiplier instead of disabling scaling — see the token.
+                     */
+                    maxFontSizeMultiplier={MAX_FONT_SCALE_IN_FIXED_CONTROL}
+                >
                     {label}
                 </Text>
             ) : null}

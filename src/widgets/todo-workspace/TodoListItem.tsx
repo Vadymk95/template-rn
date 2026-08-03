@@ -10,6 +10,9 @@ import { SPACING_TOKENS, TYPOGRAPHY_TOKENS } from '@/shared/lib/theme/tokens';
 import { Button } from '@/shared/ui/Button/Button';
 import { Card } from '@/shared/ui/Card/Card';
 
+/** A summary row shows two lines of title; the rest is ellipsised. */
+const TODO_TITLE_MAX_LINES = 2;
+
 interface TodoListItemProps {
     todo: TodoItemModel;
     onEditTodo: (todo: TodoItemModel) => void;
@@ -59,6 +62,14 @@ export const TodoListItem = ({
                                 ? 'text-muted-foreground line-through'
                                 : 'text-foreground'
                         ].join(' ')}
+                        /*
+                         * A summary row, so the title is capped and ellipsised rather than allowed to
+                         * grow the card without bound. Nothing in this app limited title length, so a
+                         * long or unbroken one pushed every following row off the screen. The full text
+                         * is still reachable — the edit dialog shows it in a field.
+                         */
+                        numberOfLines={TODO_TITLE_MAX_LINES}
+                        ellipsizeMode="tail"
                     >
                         {todo.title}
                     </Text>

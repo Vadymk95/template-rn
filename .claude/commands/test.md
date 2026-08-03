@@ -62,6 +62,14 @@ This is the substance of the command. For every changed unit, walk these axes an
 - **Boundaries, from both sides.** For a rule at N, assert N and N-1. Empty, one, many. First and last.
   Zero results versus a failed request — they are different and often collapse into the same branch by
   accident.
+- **Content extremes, for anything that renders copy.** The shortest string allowed, a typical one, a long
+  one, ONE UNBROKEN TOKEN with nothing to wrap on, plus zero/one/many for a collection — and the OS font
+  scale, the axis with no web equivalent and the one most often missed. States are in
+  `src/test/contentStress.ts`. RNTL has no layout engine, so assert the PROPS that bound a layout
+  (`numberOfLines` + `ellipsizeMode` on a summary row, a shrinking text column, `maxFontSizeMultiplier`
+  inside a fixed-height control) and never claim anything about pixels; pixels need `npm run maestro` on a
+  device. Where a prop does not survive NativeWind's JSX interop into the rendered tree, assert the module
+  SOURCE and write the reason next to it.
 - **Contract seams between modules.** Where your change crosses a boundary — component to hook, hook to
   store selector, api function to Zod schema — assert the shape that crosses it. A response typed by
   assertion instead of parsed with `safeFetch` is trusted on faith; test what happens when the shape is

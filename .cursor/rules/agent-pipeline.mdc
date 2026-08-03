@@ -142,3 +142,34 @@ End with: `Confidence: HIGH | MEDIUM | LOW — <one-line reason>`.
 - Editing many files without intermediate `typecheck` / `lint` / `test`.
 - Bypassing Brain sync declaration.
 - `../../` imports, raw `console.error(e)` without context, secrets in `EXPO_PUBLIC_*`.
+
+### 4.1a Verification Integrity
+
+Green means nothing until you know the gate can go red.
+
+1. **Capture the exit code without a pipe**: `npm run verify > /tmp/verify.log 2>&1; echo $?`. Piping
+   to `tail` returns the PIPE's status, so a failed build reads as a pass.
+2. **Mutation-check the tests**: if mentally reverting your change leaves the suite green, the test is
+   worthless. Writing a test is Phase 3; proving it would have failed is this step.
+3. **Prove a new gate gates**: break it on purpose once — an expired entry in
+   `scripts/audit-allowlist.json`, a raw hex in a component, a staged `src` logic file with no
+   `*.test.*` sibling — and watch it refuse. Then revert the sabotage.
+4. **A check that reports success when it could not run is fail-OPEN.** Ask what it does on a missing
+   directory, an empty result, or no network — not only on the failure it was written for.
+5. **Name the condition under which the green would have been RED.** If you cannot name one, the check
+   proved nothing — and a check that cannot fail still gets recorded as evidence. Three real shapes in
+   this repo: a layout measurement taken while i18next still hides the document sees NO element and
+   passes every invariant vacuously; a Playwright `testMatch` that matches nothing collects zero tests
+   and exits 0; and `vitest --coverage` prints `Excluding it from coverage` for a file it could not
+   parse and then exits 0 with a percentage over a smaller set.
+6. **Check the cases that "cannot happen".** For UI that is: the shortest copy allowed, the longest, one
+   unbroken token with nothing to wrap on, zero items, one item, many — plus the OS font scale, which is
+   the axis with no web equivalent and the one most often missed. The states are in
+   `src/test/contentStress.ts`.
+7. **Know what RNTL structurally cannot see, and say so instead of faking it.** There is no layout engine
+   behind the test renderer, so a test can assert the PROPS that bound a layout (`numberOfLines`,
+   `maxFontSizeMultiplier`, a shrinking column) and nothing about the resulting pixels. Some props do not
+   even survive NativeWind's JSX interop into what RNTL exposes — measured, not assumed — and there the
+   honest assertion is against the module source, with the reason written next to it. Pixels need a
+   device: that is what `.maestro/` is for.
+

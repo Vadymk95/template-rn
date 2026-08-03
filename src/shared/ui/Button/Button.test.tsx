@@ -1,8 +1,13 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { fireEvent, render } from '@testing-library/react-native';
 import { createElement } from 'react';
 import { Text } from 'react-native';
 
+import { MAX_FONT_SCALE_IN_FIXED_CONTROL } from '@/shared/lib/theme/controlSizes';
 import { Button } from '@/shared/ui/Button/Button';
+import { STRESS_FONT_SCALE } from '@/test/contentStress';
 
 describe('Button', () => {
     it('renders the label and calls onPress', async () => {
@@ -76,5 +81,27 @@ describe('Button', () => {
         );
 
         consoleWarnSpy.mockRestore();
+    });
+
+    it('bounds the label against the OS font scale, because the control height is fixed', () => {
+        /*
+         * Asserted against the SOURCE, not the rendered tree, and the reason is a measurement: the
+         * rendered label carries only `className` and `children` — NativeWind's JSX interop re-creates
+         * the element and the prop does not survive into what RNTL exposes. So a render assertion here
+         * would be permanently red for a correct component, which is worse than no assertion. The prop
+         * still reaches the native side at runtime; what a test can protect is that the module keeps
+         * passing it.
+         *
+         * Why it matters: the control heights in `controlSizes.ts` are fixed and `<Text>` scales with
+         * the system setting by default, so at the top of the accessibility slider the label is CLIPPED
+         * rather than wrapped — the control still reports its 44 points while the words are cut off.
+         */
+        const source = readFileSync(join(process.cwd(), 'src/shared/ui/Button/Button.tsx'), 'utf8');
+
+        expect(source).toContain('maxFontSizeMultiplier={MAX_FONT_SCALE_IN_FIXED_CONTROL}');
+        // Never `allowFontScaling={false}` — that ignores the user's setting outright.
+        expect(source).not.toContain('allowFontScaling={false}');
+        expect(MAX_FONT_SCALE_IN_FIXED_CONTROL).toBeGreaterThan(1);
+        expect(MAX_FONT_SCALE_IN_FIXED_CONTROL).toBeLessThan(STRESS_FONT_SCALE);
     });
 });

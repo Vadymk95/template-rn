@@ -61,6 +61,20 @@ Expo SDK 57 · React Native 0.86 · React 19.2 · TypeScript 6.0 strict · Expo 
 
 **Consistency beats preference** — match the surrounding file's style and patterns.
 
+**Content variance** — anything that renders authored copy is proven against content it has NOT seen:
+`minimal` / `typical` / `long` / `unbroken` for text, `none` / `one` / `many` for collections, and the OS
+font scale. States live in `src/test/contentStress.ts`. The native axes are not the web ones: there is no
+`overflow-wrap` to forget, and what breaks a screen is an unbounded line count in a summary row, a row
+whose text sibling cannot shrink, and the accessibility font slider against a fixed control height. Cap a
+summary line count (`numberOfLines` + `ellipsizeMode`) and bound a label in a fixed-height control
+(`maxFontSizeMultiplier`) — never `allowFontScaling={false}`, which ignores the user's setting.
+
+**RNTL cannot measure layout, and that limit is stated rather than worked around** — it renders to a tree
+with no layout engine, so a test asserts the PROPS that bound a layout and nothing about pixels. Some
+props do not survive NativeWind's JSX interop into what RNTL exposes (measured on the button label, whose
+rendered props are only `className` and `children`); there the assertion goes against the module source
+with the reason next to it. Pixels need a device — `.maestro/`.
+
 ## Commands / the gate
 
 ```bash

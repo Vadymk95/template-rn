@@ -496,3 +496,40 @@ Then `Sentry.wrap()` the root layout. EAS Build source-map upload via `@sentry/r
 **When NOT to extract**: single-use, logger tags, i18n keys, vocabulary tokens (`TYPOGRAPHY_TOKENS` / `SPACING_TOKENS` / declarative tables stay), testIDs, prototype scope. `TODO_FILTERS` (`src/store/todo/constants.ts`) stays co-located with its entity — domain enum, not external contract.
 
 **Revisit trigger**: if consumer fork adds >3 stores or >5 query keys without using factories within 60 days, drop pattern from template seed.
+
+## Content variance on native: props, not pixels — and the limit is stated
+
+**Decision.** Content-bearing components are proven against content they have not seen. The states live in
+`src/test/contentStress.ts` — `minimal` / `typical` / `long` / `unbroken` for text, `none` / `one` / `many`
+for collections, plus the OS **font scale**. Every assertion is about the PROPS that bound a layout; none
+claims anything about pixels.
+
+**Why not a geometry harness like the web siblings.** They render a dev-only fixture route and MEASURE it
+in a browser at five widths. There is no browser here: RNTL renders to a tree with no layout engine behind
+it, and `.maestro/` needs a device and is deliberately not in the gate. Pretending otherwise would produce
+assertions that look like measurements and are not, which is worse than admitting the limit.
+
+**The native axes are not the web ones.** There is no `overflow-wrap` to forget. What actually breaks a
+native screen is an unbounded line count in a summary row, a row whose text sibling cannot shrink, and the
+accessibility font slider meeting a fixed control height. The first two now have guards
+(`numberOfLines` + `ellipsizeMode` on the todo title, a `flex-1` text column asserted by test); the third
+is `MAX_FONT_SCALE_IN_FIXED_CONTROL`, bounded rather than disabled — `allowFontScaling={false}` ignores
+the user's setting and is never the answer.
+
+**Measured, and it changed the shape of a test:** the button label's rendered props are only `className`
+and `children` — `maxFontSizeMultiplier` does not survive NativeWind's JSX interop into what RNTL
+exposes. A render assertion there would be permanently red for a correct component, so that one contract
+is asserted against the module SOURCE with the reason written next to it. Same pattern as a class-string
+contract on the web side: pin the intent where the render cannot show it, and say which it is.
+
+**Both guards were mutation-proven:** removing `numberOfLines` fails four cases, removing
+`maxFontSizeMultiplier` fails one; reverting restores sixteen passes.
+
+**Deliberately NOT added here, with the reason:** a coverage-dropout guard. The web siblings wrap the
+coverage run and refuse on vitest's `Excluding it from coverage` marker, measured from a real run. Jest
+prints something different, and the marker was not measured on this stack — wiring a grep for a string
+nobody has seen would be decoration. That is the one item from the sibling pass left open here.
+
+**`bench:verify` derives its step list** from the `verify` script (following the alias) instead of
+restating it, and throws on a segment it cannot parse. Its spec runs under `node:test` like the other gate
+specs, not Jest — the sibling templates' vitest version was rewritten rather than copied.

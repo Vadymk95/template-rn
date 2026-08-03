@@ -112,3 +112,31 @@ Router v5+) rather than the old route-group redirect pattern (`(auth)`/`(app)` +
 - ESLint `import-x/no-cycle` can flag Expo Router `_layout` → screen → hook →
   `_layout` chains that are not real cycles. If confirmed safe, add an inline
   `// eslint-disable-next-line import-x/no-cycle` with a reason.
+
+---
+
+## Content variance
+
+Any component that renders authored copy must be proven against content it has not seen. The states live
+in `src/test/contentStress.ts`: `minimal` / `typical` / `long` / `unbroken` for text, `none` / `one` /
+`many` for collections, plus the OS **font scale** — the axis with no web equivalent, and the one that
+breaks a fixed-height control.
+
+What this template can and cannot check, stated rather than implied:
+
+- **It can assert the PROPS that bound a layout** — `numberOfLines` + `ellipsizeMode` on a summary row,
+  a text column that can shrink, `maxFontSizeMultiplier` on a label inside a fixed-height control.
+- **It cannot assert pixels.** RNTL renders to a tree with no layout engine behind it. There is no
+  browser to measure in, so unlike the web siblings there is no geometry harness here; the device run is
+  `npm run maestro`, and it is not in the gate.
+- **Some props do not survive NativeWind's JSX interop** into what RNTL exposes — measured on the button
+  label, whose rendered props are only `className` and `children`. Where that happens the assertion goes
+  against the module SOURCE with the reason next to it, because a render assertion would be permanently
+  red for a correct component.
+
+Green also means nothing until you have seen the check go red. When you add or change a guard, remove it
+once on purpose and confirm the test refuses, then revert — both guards here were proven that way.
+
+**Before believing a green result, name the concrete condition under which it would have been RED.** If
+you cannot name one, the check proved nothing, and a check that cannot fail still gets recorded as
+evidence.

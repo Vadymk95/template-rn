@@ -26,3 +26,4 @@ export { CONTROL_SIZE_TOKENS, type ControlSize };
 export { RADII_TOKENS };
 export { SPACING_TOKENS };
 export { TYPOGRAPHY_TOKENS };
+export { MAX_FONT_SCALE_IN_FIXED_CONTROL } from '@/shared/lib/theme/controlSizes';
