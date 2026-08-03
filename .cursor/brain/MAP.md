@@ -97,3 +97,11 @@ Imports flow **down-stack only** (app may use shared; shared must not import ent
 | Local E2E smoke (Maestro)     | `.maestro/*.yaml` — not part of default CI; run when adopting flows                                                                                          |
 | Optional bundle metrics       | `scripts/capture-bundle-metrics.mjs`, `npm run perf:*`, `scripts/perf-program.md` — local baseline/check; wire into CI only if the team wants a numeric gate |
 | Path alias `@/*`              | `tsconfig.json` `paths` (single source of truth)                                                                                                             |
+
+## Content variance
+
+| Path                                   | Role                                                                                                                                                                            |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/test/contentStress.ts`            | The content states and their transforms — text lengths, collection counts, and the OS font scale. No browser here, so tests assert the props that bound a layout, never pixels. |
+| `src/shared/lib/theme/controlSizes.ts` | Fixed control heights plus `MAX_FONT_SCALE_IN_FIXED_CONTROL`, derived from the smallest of them.                                                                                |
+| `scripts/check-coverage.mjs`           | Runs the coverage suite and refuses a report that silently dropped a file jest could not parse.                                                                                 |

@@ -525,10 +525,13 @@ contract on the web side: pin the intent where the render cannot show it, and sa
 **Both guards were mutation-proven:** removing `numberOfLines` fails four cases, removing
 `maxFontSizeMultiplier` fails one; reverting restores sixteen passes.
 
-**Deliberately NOT added here, with the reason:** a coverage-dropout guard. The web siblings wrap the
-coverage run and refuse on vitest's `Excluding it from coverage` marker, measured from a real run. Jest
-prints something different, and the marker was not measured on this stack — wiring a grep for a string
-nobody has seen would be decoration. That is the one item from the sibling pass left open here.
+**Coverage dropout — CLOSED, once the marker was MEASURED on this stack.** It was briefly left open with
+the reason "jest prints something different and nobody has measured it here", which was honest and is no
+longer true. Measured: an unparseable file inside the coverage scope makes jest print
+`Failed to collect coverage from <file>` and **exit 0**, with the summary reporting an unchanged 95.51%
+over a set that quietly shrank. `scripts/check-coverage.mjs` wraps the run and refuses on that marker;
+proven in both directions. The marker differs from vitest's (`Excluding it from coverage`), which is
+exactly why it had to be measured rather than ported.
 
 **`bench:verify` derives its step list** from the `verify` script (following the alias) instead of
 restating it, and throws on a segment it cannot parse. Its spec runs under `node:test` like the other gate
