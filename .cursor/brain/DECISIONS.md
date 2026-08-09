@@ -536,3 +536,55 @@ exactly why it had to be measured rather than ported.
 **`bench:verify` derives its step list** from the `verify` script (following the alias) instead of
 restating it, and throws on a segment it cannot parse. Its spec runs under `node:test` like the other gate
 specs, not Jest — the sibling templates' vitest version was rewritten rather than copied.
+
+## Complexity ratchet: thresholds above the measured ceiling, production code only
+
+Five ESLint core rules (`complexity` 15, `max-depth` 3, `max-params` 4, `max-lines-per-function` 120,
+`max-lines` 200) gate `src/**` excluding tests. Thresholds come from a measurement, not taste: an
+ESLint API probe with every rule at warn-zero measured the tree at p95 complexity 5, with ONE
+outlier: `shared/ui/Button/Button.tsx:72` at 20 (the shadcn-style variant-resolver arrow — a flat
+per-variant class lookup, depth 1). The global limit is 15 (above the next-highest, 13 in
+`shared/ui/Input`), and Button carries a documented file-scoped override pinned at its measured 20,
+so the exception cannot absorb new growth — one more branch fires the rule. Depth 2 / params 3 /
+92 lines per function and 142 per file (both Button.tsx) measured 2026-08-09; the gate is clean on
+day one and fires only on future drift. A first-run lesson is recorded here on purpose: the initial
+threshold was set from a TRUNCATED probe output (tail cut the complexity section) and the gate
+itself caught the error on the first full run — read the whole measurement before deriving a number
+from it. **Tests are exempt on purpose**: a `describe` block is one function to these rules and
+table-driven suites are long by design; indexing the ratchet on test style is the failure mode that
+killed this rule set in a sibling repo's review. When a threshold fires, split the function; raising a
+number requires a fresh measurement recorded here.
+
+## Mutation testing: weekly strength gate, deliberately outside `verify`
+
+`npm run test:mutation` (StrykerJS 9.6.1 + jest runner) measures what coverage cannot: whether the
+tests would CATCH a wrong implementation. Baseline measured 2026-08-09: **mutation score 53.72%** —
+289 of 538 scoreable mutants killed, 218 survived, 31 in code no test covers, 3 runtime errors —
+against green 80/60/80/80 coverage floors. That gap is the reason the tool exists here.
+`thresholds.break: 48` is a floor-of-record: the weekly `mutation.yml` job (cron + dispatch) fails
+only when strength regresses below the measured baseline; raise the floor after a good run, never
+lower it to go green. NOT in `verify`/pre-push: a full run costs 2m02s locally and more on CI runners.
+**The jest runner works with jest-expo unmodified** — measured, not assumed; `projectType: "custom"`
+picks up the package.json jest config. Scope mirrors `collectCoverageFrom` (app shell, env, i18n glue,
+constants, locales, `_example*` and barrels stay out for the same reasons they are out of coverage).
+RNTL's no-layout limit applies here too: mutants whose effect is purely visual are invisible to this
+score and belong to `.maestro/`. Hardenings from an external review of this proposal:
+`.stryker-tmp`/`reports` are gitignored AND `ignorePatterns` keeps `.env*` out of Stryker's sandbox
+copy (Stryker does not read `.gitignore`); the runner's tree enters the fail-closed audit gate — if it
+ever carries a high advisory, the remedy is an override floor with a major cap, not an allowlist entry.
+
+## Override floors + the one honest allowlist: fresh-advisory sweep of 2026-08-09
+
+Fresh high advisories landed on the existing tree at once. Floors (all with major caps): `js-yaml`
+
+> =4.3.1 <5 scoped under cosmiconfig / @eslint/eslintrc / @expo/xcpretty, and >=3.15.1 <4 scoped under
+> @istanbuljs/load-nyc-config (two majors need two floors — a top-level pin would force the 3.x consumer
+> onto 4.x, which removed `safeLoad`); `nanoid` >=3.3.17 <4 scoped under expo-router; `brace-expansion`
+> =5.0.9 <6 and `fast-uri` >=4.1.2 <5 — both were OUR OWN uncapped floors that aged into the vulnerable
+> ranges, the exact class the sibling ADRs predicted; `uuid` capped at <15 in the same pass.
+> **`image-size` (two DoS advisories, ICNS and JXL/HEIF infinite loops) is allowlisted, not floored,**
+> because no fixed release exists: the 1.x line ends at 1.2.1 and the 2.x line at 2.0.2, both inside the
+> vulnerable range, and even metro@latest depends on ^1.0.2. The only consumer is metro's build-time
+> measurement of repo-local image assets, so no attacker-supplied image reaches the parser here. The
+> allowance self-expires 2026-11-01; re-check on the next Expo SDK/metro bump. An allowance is the last
+> resort — this is what the last resort looks like: an unfixed upstream, not an inconvenient finding.

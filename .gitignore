@@ -6,6 +6,9 @@ node_modules/
 dist/
 web-build/
 coverage/
+# Stryker mutation testing (the incremental report is a local/CI cache, not a source)
+.stryker-tmp/
+reports/
 .bundle-check/
 .atlas/
 .atlas-android/

@@ -1,1 +1,14 @@
-[]
+[
+    {
+        "id": "GHSA-w3rx-r6r6-pgpr",
+        "reason": "image-size ICNS-parser DoS. No fixed release exists: the 1.x line ends at 1.2.1 and the 2.x line at 2.0.2, both inside the vulnerable range, and even metro@latest (0.87.0) depends on ^1.0.2 - so no override floor can close this. The only consumer is metro's build-time measurement of repo-local image assets; no attacker-supplied image reaches that path in this template.",
+        "upstream": "Blocked in metro (image-size ^1.0.2), which arrives pinned through the Expo SDK. Re-check on the next Expo SDK/metro bump or an image-size release above 2.0.2.",
+        "expires": "2026-11-01"
+    },
+    {
+        "id": "GHSA-5p2g-fcmc-qvqq",
+        "reason": "image-size JXL/HEIF-parser DoS. Same package, same unfixed-upstream situation and same build-time-only exposure as GHSA-w3rx-r6r6-pgpr above.",
+        "upstream": "Blocked in metro (image-size ^1.0.2), pinned through the Expo SDK. Re-check on the next Expo SDK/metro bump or an image-size release above 2.0.2.",
+        "expires": "2026-11-01"
+    }
+]

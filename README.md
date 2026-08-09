@@ -174,6 +174,11 @@ run — the job is a single step over that script. So a green `verify:ci` locall
 means a green pipeline, and any new check belongs in the script rather than in the
 workflow file.
 
+`npm run test:mutation` (StrykerJS) measures test strength — whether the suite
+would catch a wrong implementation, not just execute the code. It runs as a weekly
+`mutation.yml` CI job with a measured floor (`thresholds.break` in
+`stryker.config.json`) and stays outside `verify` because a full run costs minutes.
+
 If the gate fails on lint or formatting, `npm run fix && git add -u` is the one
 remedy command (oxlint --fix → eslint --fix → prettier --write). CI runs the same
 checks and will fail the PR the same way.

@@ -84,6 +84,7 @@ npm run verify:ci    # audit:gate (network) + verify — what husky pre-push AND
 npm run fix          # the one remedy: oxlint --fix → eslint --fix → prettier --write
 npm run ci:local     # verify:ci + expo-doctor (full local parity)
 npm run bench:verify # per-step timings when the gate feels slow
+npm run test:mutation # StrykerJS strength gate — weekly `mutation.yml` job, NOT in verify (2m per run)
 ```
 
 **The gate contract**: `verify` is a strict superset of every offline check CI performs, and `verify:ci`
@@ -99,6 +100,10 @@ verify gate fails loudly if hooks are missing. Dependency cooldown is also on
 
 The gate is **zero-warnings**: `eslint --max-warnings 0`, `oxlint --deny-warnings`. If it fails, fix the cause — do **not** downgrade rules, silence warnings, or sprinkle `eslint-disable`. If a rule is genuinely wrong for a class of files, add a documented file-scoped override in `eslint.config.mjs` stating why.
 
+**Complexity ratchet** — `complexity` 15 / `max-depth` 3 / `max-params` 4 / `max-lines-per-function` 120 / `max-lines` 200 over `src/**`, tests exempt. Thresholds sit above the measured ceiling (see `DECISIONS.md`), so a hit means new drift: split the function first; raising a number needs a fresh measurement and a `DECISIONS.md` line.
+
+**Mutation testing** — `npm run test:mutation` (StrykerJS + jest runner, weekly `mutation.yml` CI job). Coverage proves code RUNS under tests; the mutation score proves tests would CATCH a wrong implementation — the two disagree here by design (80% coverage floor vs 53.7% baseline score). `thresholds.break` in `stryker.config.json` is a measured floor-of-record: raise it after a good run, never lower it to go green. RNTL's no-layout limit applies to mutants too: a defect only pixels would show belongs to `.maestro/`, not this score.
+
 ## Version holds (do not "fix" by bumping)
 
 - **Native/Expo packages are SDK-pinned** — `react`, `react-native`, `react-native-*`, `expo-*` versions come from `npx expo install --fix`, NOT from `npm outdated`. Bumping past the SDK list breaks Expo Go / jest-expo.
@@ -108,7 +113,7 @@ The gate is **zero-warnings**: `eslint --max-warnings 0`, `oxlint --deny-warning
 - **ESLint is 10.x.** `eslint-config-expo` sets `settings.react.version: 'detect'`, which crashes every React rule under ESLint 10, so `eslint.config.mjs` ends with a trailing block pinning the version to a literal. Do not delete it and do not set it back to `'detect'` — see the ESLint 10 entry in `.cursor/brain/DECISIONS.md`.
 - **`oxlint` has no lockstep partner here** — `eslint-plugin-oxlint` is deliberately not installed, so oxlint is bumped on its own (unlike the sibling web templates).
 - **`@expo/vector-icons` is deprecated upstream** (SDK 56+) but pinned explicitly and functional; migration path is `npx @react-native-vector-icons/codemod` — a deliberate follow-up, not a drive-by.
-- **`overrides.uuid >= 11.1.1`** is a security floor for the `@expo/ngrok`/`xcode` dev chains — do not remove to quiet npm.
+- **`overrides` in `package.json` are security floors WITH major caps** (`">=fixed <next-major"`). Two of our own uncapped floors (brace-expansion, fast-uri) aged into their advisories' vulnerable ranges and turned the audit gate red — an uncapped floor is a delayed regression. Do not remove a floor to quiet npm, and never write one without a cap; details in `DECISIONS.md`. The `image-size` advisories are ALLOWLISTED, not floored: no fixed release exists in either major (see `scripts/audit-allowlist.json`).
 
 ## Machine-agnostic configs
 

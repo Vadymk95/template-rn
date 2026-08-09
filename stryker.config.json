@@ -1,0 +1,31 @@
+{
+    "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+    "testRunner": "jest",
+    "jest": {
+        "projectType": "custom"
+    },
+    "mutate": [
+        "src/**/*.{ts,tsx}",
+        "!src/**/*.test.*",
+        "!src/**/*.d.ts",
+        "!src/**/index.ts",
+        "!src/test/**",
+        "!src/app/**",
+        "!src/env.ts",
+        "!src/shared/lib/constants/**",
+        "!src/shared/lib/i18n/**",
+        "!src/shared/locales/**",
+        "!src/**/*.stories.{ts,tsx}",
+        "!src/lib/api/_example*"
+    ],
+    "ignorePatterns": [".env*", ".expo", "coverage", "reports", "android", "ios"],
+    "incremental": true,
+    "incrementalFile": "reports/stryker-incremental.json",
+    "reporters": ["clear-text", "progress"],
+    "thresholds": {
+        "high": 80,
+        "low": 60,
+        "break": 48
+    },
+    "tempDirName": ".stryker-tmp"
+}
