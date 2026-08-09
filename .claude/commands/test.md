@@ -93,6 +93,11 @@ and what failed. A test you did not see fail is a test you are guessing about.
 Every test needs a meaningful assertion. `expect(true).toBe(true)`, `expect(x).toBeTruthy()` on a value the
 test just built, and a `waitFor` whose body cannot throw all count as no assertion at all.
 
+For guards and acceptance lists — anything whose job is to REFUSE values — also prove the accepting
+direction: a legitimate near-variant must stay green. A guard you have only ever seen refuse may be
+refusing too much, and a revert-style proof cannot see that side; an over-strict test rejects valid
+implementations as readily as a weak one admits broken ones.
+
 ## 6. Run them the way the gate does
 
 ```bash
