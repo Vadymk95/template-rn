@@ -568,7 +568,9 @@ lower it to go green. NOT in `verify`/pre-push: a full run costs 2m02s locally a
 picks up the package.json jest config. Scope mirrors `collectCoverageFrom` (app shell, env, i18n glue,
 constants, locales, `_example*` and barrels stay out for the same reasons they are out of coverage).
 RNTL's no-layout limit applies here too: mutants whose effect is purely visual are invisible to this
-score and belong to `.maestro/`. Hardenings from an external review of this proposal:
+score and belong to `.maestro/`. The score also measures only the KILL side — would the suite catch a
+breakage — and cannot see an over-strict test that wrongly rejects a legitimate implementation; that
+side stays with review discipline. Hardenings from an external review of this proposal:
 `.stryker-tmp`/`reports` are gitignored AND `ignorePatterns` keeps `.env*` out of Stryker's sandbox
 copy (Stryker does not read `.gitignore`); the runner's tree enters the fail-closed audit gate — if it
 ever carries a high advisory, the remedy is an override floor with a major cap, not an allowlist entry.
