@@ -50,6 +50,9 @@ keeps it that way: a new check goes into the script, never only into
 local gate no longer predicts a green pipeline — which is the exact failure this
 contract exists to remove.
 
+`npm run test:mutation` sits on neither rung on purpose: it runs weekly via the
+`mutation.yml` cron, never as part of `verify` — see AGENTS.md § Mutation testing.
+
 Read the exit code without a pipe — `npm run verify > /tmp/verify.log 2>&1; echo $?`.
 Piping to `tail` returns the pipe's status, so a failed run reads as a pass.
 
