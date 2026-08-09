@@ -379,6 +379,51 @@ export default tseslint.config(
             'no-restricted-syntax': 'off'
         }
     },
+    /*
+     * Complexity ratchet — thresholds sit ABOVE the measured ceiling, so the tree is
+     * clean today and only future drift can trip them. Measured 2026-08-09 over
+     * src/** excluding tests (ESLint API probe with every rule at warn-zero):
+     *   complexity              max 20  (shared/ui/Button/Button.tsx:72 — outlier, see below; next is 13, p95 is 5)
+     *   max-depth               max 2
+     *   max-params              max 3
+     *   max-lines-per-function  max 92  (worst: shared/ui/Button/Button.tsx)
+     *   max-lines               max 142 (worst: shared/ui/Button/Button.tsx)
+     * Tests and src/test/ are exempt on purpose: a describe block is one function and
+     * table-driven suites are long by design, so these rules there would only teach
+     * people to split tests for the linter's sake. When a threshold fires, the first
+     * answer is to split the function, not to raise the number; raising it needs a
+     * fresh measurement and a DECISIONS.md line ("Complexity ratchet" entry).
+     */
+    {
+        files: ['src/**/*.{ts,tsx}'],
+        ignores: ['**/*.test.*', 'src/test/**'],
+        rules: {
+            complexity: ['error', 15],
+            'max-depth': ['error', 3],
+            'max-params': ['error', 4],
+            'max-lines-per-function': [
+                'error',
+                { max: 120, skipBlankLines: true, skipComments: true }
+            ],
+            'max-lines': ['error', { max: 200, skipBlankLines: true, skipComments: true }]
+        }
+    },
+    /*
+     * Documented file-scoped exception, per the zero-warnings contract in AGENTS.md.
+     * Button's single variant-resolver arrow measures complexity 20: one conditional
+     * per variant/size/state combination in the NativeWind class map — the shadcn-style
+     * pattern this kit ships, where every branch is a flat, readable lookup line, not
+     * nesting (max-depth in that file is 1). Splitting it would scatter one variant
+     * table across helpers and make the kit HARDER to copy from. The ceiling is pinned
+     * at its measured value so the exception cannot quietly absorb new growth: one more
+     * branch fires the rule, and that is the moment to split the table instead.
+     */
+    {
+        files: ['src/shared/ui/Button/Button.tsx'],
+        rules: {
+            complexity: ['error', 20]
+        }
+    },
     // ─── React version must be a LITERAL, never 'detect' ────────────────────
     // eslint-config-expo sets `settings.react.version: 'detect'`. Under ESLint 10
     // the detection path in eslint-plugin-react calls the removed
