@@ -45,7 +45,8 @@ payload shape, native config, or the router. Trivial leaf edits proceed with a b
 - **UI**: implement, then cover it with `@testing-library/react-native`. RNTL 14 is async — `render`,
   `renderHook`, `fireEvent`, `act` and `unmount` all return promises and must be awaited. An un-awaited
   `unmount()` poisons the next test's render.
-- Max two files per iteration without an intermediate check.
+- Max two files per iteration without an intermediate check — the check is `npm run verify:iter`
+  (seconds). The full gate is not an iteration tool.
 - Every `src` logic file needs a co-located `*.test.*` — the pre-commit hook refuses otherwise. Write the
   test because it is worth having, not to satisfy the hook.
 - Match the surrounding file exactly: 4-space indent, single quotes, arrow-only components with an
@@ -56,6 +57,8 @@ payload shape, native config, or the router. Trivial leaf edits proceed with a b
   regression.
 
 ## 4. Verify
+
+The full gate runs ONCE, here — iteration between batches used `verify:iter` (§3):
 
 ```bash
 npm run verify > /tmp/verify.log 2>&1; echo $?

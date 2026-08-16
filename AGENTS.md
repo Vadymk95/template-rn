@@ -79,6 +79,7 @@ with the reason next to it. Pixels need a device — `.maestro/`.
 
 ```bash
 npm start            # Expo dev server (QR → Expo Go / Dev Client)
+npm run verify:iter  # iteration tier: oxlint → tsc (incremental) → jest --onlyChanged (seconds; not a hand-over gate)
 npm run verify       # every OFFLINE check: hooks → typecheck → oxlint → eslint → format → scripts → coverage
 npm run verify:ci    # audit:gate (network) + verify — what husky pre-push AND CI both run
 npm run fix          # the one remedy: oxlint --fix → eslint --fix → prettier --write
@@ -91,6 +92,12 @@ npm run test:mutation # StrykerJS strength gate — weekly `mutation.yml` job, N
 adds the one check that needs the network (`audit:gate`). The CI job is a single step over `verify:ci`.
 A new check therefore goes into the **script**, never only into the workflow file — otherwise a green
 local gate stops meaning a green pipeline.
+
+**The gate is tiered by moment, not run per edit.** Iterating: `npm run verify:iter` (oxlint → tsc
+incremental → `jest --onlyChanged`, seconds). Handing over: the full `verify` runs ONCE before the task
+is reported done, and the reviewer re-runs it at acceptance — heavy verification belongs to code being
+accepted, not to every iteration. Pre-push (`verify:ci`) stays the one full run before anything leaves
+the machine; the tiering is not permission to skip it.
 
 **Bootstrap after clone**: `npm run prepare` (once) — `.npmrc` disables lifecycle
 scripts as a supply-chain guard, so husky hooks don't install themselves; the

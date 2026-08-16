@@ -7,16 +7,16 @@ release parity.
 
 ## By change type
 
-| Changed                               | Run                                                        |
-| ------------------------------------- | ---------------------------------------------------------- |
-| TS/TSX business code                  | `npm run typecheck && npm run lint && npm run test`        |
-| Style-only (className tweaks)         | `npm run lint`                                             |
-| `src/env.ts` or `.env`                | `npm run typecheck` + restart dev server                   |
-| `app.config.ts`                       | `npx expo-doctor && npx expo prebuild --clean` (if native) |
-| Native config plugin                  | `npx expo prebuild --clean && npm run ios` / `android`     |
-| `package.json` dependency             | `npx expo install --fix && npx expo-doctor`                |
-| `babel.config.js` / `metro.config.js` | Restart dev server with `--clear`                          |
-| Test file only                        | `npm run test -- <path>`                                   |
+| Changed                               | Run                                                         |
+| ------------------------------------- | ----------------------------------------------------------- |
+| TS/TSX business code                  | `npm run verify:iter` (oxlint → tsc → `jest --onlyChanged`) |
+| Style-only (className tweaks)         | `npm run lint`                                              |
+| `src/env.ts` or `.env`                | `npm run typecheck` + restart dev server                    |
+| `app.config.ts`                       | `npx expo-doctor && npx expo prebuild --clean` (if native)  |
+| Native config plugin                  | `npx expo prebuild --clean && npm run ios` / `android`      |
+| `package.json` dependency             | `npx expo install --fix && npx expo-doctor`                 |
+| `babel.config.js` / `metro.config.js` | Restart dev server with `--clear`                           |
+| Test file only                        | `npm run test -- <path>`                                    |
 
 ## What the git hooks enforce
 
@@ -36,8 +36,13 @@ unrelated message. The hook reports and refuses; the remedy is one command.
 
 ## Repo-wide contract gate (before push / PR)
 
-Two rungs, and the split is deliberate:
+Three rungs, and the split is deliberate:
 
+- **`npm run verify:iter`** — the iteration rung: `lint:oxlint` → `typecheck` (incremental) →
+  `jest --onlyChanged --passWithNoTests` (only tests git sees as affected by uncommitted work).
+  Seconds; run it after every change — the full gate runs ONCE, before the task is reported done.
+  `--onlyChanged` follows the module graph from changed files, so cross-cutting suites and
+  `scripts/**` tests (`test:scripts`) surface at the full-gate run, not during iteration.
 - **`npm run verify`** — every check that works OFFLINE, in order: `check-hooks` →
   `typecheck` → `lint:oxlint` → `lint` → `format:check` → `test:scripts` →
   `test:coverage`. An implementer with no network can still run the whole thing.
