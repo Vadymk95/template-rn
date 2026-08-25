@@ -184,7 +184,7 @@
             "eslint": "$eslint"
         },
         "expo-router": {
-            "nanoid": ">=3.3.17 <4"
+            "nanoid": ">=3.3.18 <4"
         },
         "cosmiconfig": {
             "js-yaml": ">=4.3.1 <5"
@@ -197,6 +197,9 @@
         },
         "@istanbuljs/load-nyc-config": {
             "js-yaml": ">=3.15.1 <4"
+        },
+        "postcss": {
+            "nanoid": ">=3.3.18 <4"
         }
     }
 }
