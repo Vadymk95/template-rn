@@ -22,10 +22,10 @@
         "doctor": "expo-doctor",
         "typecheck": "tsc --noEmit",
         "lint": "eslint . --max-warnings 0 --cache --cache-location .eslintcache",
-        "lint:fix": "eslint . --fix",
+        "lint:fix": "eslint . --fix --cache --cache-location .eslintcache",
         "lint:oxlint": "oxlint --config .oxlintrc.json --deny-warnings src",
-        "fix": "oxlint --config .oxlintrc.json --fix src && eslint . --fix && prettier --write .",
-        "format": "prettier --write .",
+        "fix": "oxlint --config .oxlintrc.json --fix src && eslint . --fix --cache --cache-location .eslintcache && prettier --write .",
+        "format": "prettier --write . --cache --cache-location .prettiercache",
         "format:check": "prettier --check . --cache --cache-location .prettiercache",
         "audit:gate": "node scripts/audit-gate.mjs",
         "verify": "node scripts/check-hooks.mjs && npm run lint:oxlint && npm run format:check && npm run typecheck && npm run lint && npm run test:scripts && npm run test:coverage",
@@ -132,11 +132,11 @@
     "lint-staged": {
         "*.{ts,tsx,js,jsx}": [
             "oxlint --config .oxlintrc.json --fix",
-            "eslint --fix",
-            "prettier --write"
+            "eslint --fix --cache --cache-location .eslintcache",
+            "prettier --write --cache --cache-location .prettiercache"
         ],
         "*.{json,md,yml,yaml}": [
-            "prettier --write"
+            "prettier --write --cache --cache-location .prettiercache"
         ]
     },
     "jest": {
