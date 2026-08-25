@@ -61,6 +61,7 @@ CLAUDE.local.md
 # TypeScript / tooling caches
 *.tsbuildinfo
 .eslintcache
+.prettiercache
 
 # Local signing / store credentials (never commit)
 *.jks
