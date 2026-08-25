@@ -7,16 +7,17 @@ release parity.
 
 ## By change type
 
-| Changed                               | Run                                                         |
-| ------------------------------------- | ----------------------------------------------------------- |
-| TS/TSX business code                  | `npm run verify:iter` (oxlint → tsc → `jest --onlyChanged`) |
-| Style-only (className tweaks)         | `npm run lint`                                              |
-| `src/env.ts` or `.env`                | `npm run typecheck` + restart dev server                    |
-| `app.config.ts`                       | `npx expo-doctor && npx expo prebuild --clean` (if native)  |
-| Native config plugin                  | `npx expo prebuild --clean && npm run ios` / `android`      |
-| `package.json` dependency             | `npx expo install --fix && npx expo-doctor`                 |
-| `babel.config.js` / `metro.config.js` | Restart dev server with `--clear`                           |
-| Test file only                        | `npm run test -- <path>`                                    |
+| Changed                                 | Run                                                         |
+| --------------------------------------- | ----------------------------------------------------------- |
+| TS/TSX business code                    | `npm run verify:iter` (oxlint → tsc → `jest --onlyChanged`) |
+| Style-only (className tweaks)           | `npm run lint`                                              |
+| i18n copy (`src/shared/locales/*.json`) | `npm run format:check`                                      |
+| `src/env.ts` or `.env`                  | `npm run typecheck` + restart dev server                    |
+| `app.config.ts`                         | `npx expo-doctor && npx expo prebuild --clean` (if native)  |
+| Native config plugin                    | `npx expo prebuild --clean && npm run ios` / `android`      |
+| `package.json` dependency               | `npx expo install --fix && npx expo-doctor`                 |
+| `babel.config.js` / `metro.config.js`   | Restart dev server with `--clear`                           |
+| Test file only                          | `npm run test -- <path>`                                    |
 
 ## What the git hooks enforce
 
