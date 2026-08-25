@@ -44,8 +44,11 @@ Three rungs, and the split is deliberate:
   `--onlyChanged` follows the module graph from changed files, so cross-cutting suites and
   `scripts/**` tests (`test:scripts`) surface at the full-gate run, not during iteration.
 - **`npm run verify`** — every check that works OFFLINE, in order: `check-hooks` →
-  `typecheck` → `lint:oxlint` → `lint` → `format:check` → `test:scripts` →
-  `test:coverage`. An implementer with no network can still run the whole thing.
+  `lint:oxlint` → `format:check` → `typecheck` → `lint` (cached) → `test:scripts` →
+  `test:coverage` — cheap independent stages first. An implementer with no network can
+  still run the whole thing. **No gate preflight here, deliberately:** this gate has no
+  production build, no e2e port and no required env, so every candidate check would be
+  one that cannot fail — and a check that cannot fail only claims coverage.
 - **`npm run verify:ci`** — `audit:gate` (needs the registry) + `verify`. This is
   what husky pre-push runs and what the CI job runs, as a single step.
 

@@ -28,7 +28,7 @@
         "format": "prettier --write .",
         "format:check": "prettier --check . --cache --cache-location .prettiercache",
         "audit:gate": "node scripts/audit-gate.mjs",
-        "verify": "node scripts/check-hooks.mjs && npm run typecheck && npm run lint:oxlint && npm run lint && npm run format:check && npm run test:scripts && npm run test:coverage",
+        "verify": "node scripts/check-hooks.mjs && npm run lint:oxlint && npm run format:check && npm run typecheck && npm run lint && npm run test:scripts && npm run test:coverage",
         "verify:iter": "npm run lint:oxlint && npm run typecheck && jest --onlyChanged --passWithNoTests",
         "verify:ci": "npm run audit:gate && npm run verify",
         "verify:native": "npm run verify && npm run doctor",

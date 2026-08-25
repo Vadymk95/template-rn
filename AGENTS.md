@@ -80,7 +80,7 @@ with the reason next to it. Pixels need a device — `.maestro/`.
 ```bash
 npm start            # Expo dev server (QR → Expo Go / Dev Client)
 npm run verify:iter  # iteration tier: oxlint → tsc (incremental) → jest --onlyChanged (seconds; not a hand-over gate)
-npm run verify       # every OFFLINE check: hooks → typecheck → oxlint → eslint → format → scripts → coverage
+npm run verify       # every OFFLINE check: hooks → oxlint → format → typecheck → eslint (cached) → scripts → coverage
 npm run verify:ci    # audit:gate (network) + verify — what husky pre-push AND CI both run
 npm run fix          # the one remedy: oxlint --fix → eslint --fix → prettier --write
 npm run ci:local     # verify:ci + expo-doctor (full local parity)
