@@ -11,21 +11,19 @@ hooks, the tracer and what the absence of a scaffold phase is based on.
 - **Push** — the pre-push hook runs `verify:ci`. Never run it, `verify`, or `ci:local` by hand;
   `ci:local` additionally needs local native tooling and takes minutes.
 
-**No scaffold phase here, and that is a measurement.** The web siblings gate a phase-0 push that
-skips build/e2e until the first deploy. Measured here 2026-08-30: the whole gate is ~20s
-(lint 7.9 · coverage 4.4 · script tests 3.4 · tsc 2.4 · format 1.4 · oxlint 0.4 · hooks 0.1) with no
-build, no e2e and no size stage — so a phase switch would be machinery gating nothing. Recorded in
-`scripts/gate-tiers.json`; revisit if a native build or a Maestro run ever enters the gate.
+**No scaffold phase here, and that is a measurement — the numbers and the decision live in
+`scripts/gate-tiers.json` (`_phaseMeaning`), and this is the pointer.** In short: nothing in this
+gate is heavy enough to defer, so a phase switch would be machinery gating nothing. Revisit if a
+native build or a Maestro run ever enters the gate.
 
-## The tracer
+## The tracer — how it works (the RULES it enforces are the tier law)
 
 Every `verify*` run appends one TSV row to `.gate-trace.log` (gitignored); `npm run trace:report`
 turns rows into findings — a forbidden stage run standalone, a run over its moment's budget, a code
 check against a docs-only change, a push from a linked worktree. Moments, budgets and classes are
 DATA in `scripts/gate-tiers.json`; the analyser names no stage, so the discipline changes by editing
 that JSON. Telemetry sees WHO ran WHAT and HOW LONG — whether a check CAN fail is mutation-proving's
-job. **After a push: gate output present in the terminal is part of the contract — silence is a
-failure, not a pass.**
+job.
 
 ## By change type
 

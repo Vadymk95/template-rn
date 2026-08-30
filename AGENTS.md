@@ -104,8 +104,7 @@ a sibling repo, where five copies still demanded the full chain before the first
 - **Commit**: the pre-commit hook owns it. Nothing to run by hand.
 - **Push**: the pre-push hook runs `verify:ci`, the one full run before anything leaves the machine.
   Unlike the web siblings this repo has NO scaffold phase, and that is a measurement rather than an
-  omission: the whole gate is ~20s with no build, no e2e and no size stage, so there is nothing
-  heavy to defer (recorded in `scripts/gate-tiers.json`).
+  omission — the numbers are in `scripts/gate-tiers.json` (`_phaseMeaning`).
 
 **Prohibitions, stated as such:** an implementer or reviewer NEVER runs `verify` / `verify:ci` /
 `ci:local` / `test:mutation` by hand — the full chain belongs to the push hook and CI, and a result
