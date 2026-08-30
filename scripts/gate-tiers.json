@@ -1,0 +1,46 @@
+{
+    "_description": "The gate discipline as data. scripts/trace-report.mjs reads this instead of hardcoding stage names; the analyser names no stage. Editing THIS file is how the discipline changes. Docs: .cursor/brain/VERIFICATION.md.",
+    "phase": 1,
+    "_phaseMeaning": "The web siblings gate a scaffold phase that skips build/e2e until the first deploy. MEASURED here 2026-08-30: the whole gate is 8.7s (coverage 4.2 · lint 2.1 · tsc 1.2 · format 0.5 · oxlint 0.4 · script tests 0.2 · hooks 0.05) — there is no build, no e2e and no size stage to skip, so a phase switch would be machinery gating nothing. Recorded as a decision, not an omission; revisit if a native build or a Maestro run ever enters the gate.",
+    "checks": {
+        "verify:iter": {
+            "class": "code",
+            "description": "oxlint -> tsc -> jest --onlyChanged"
+        },
+        "verify": {
+            "class": "code",
+            "description": "hooks -> oxlint -> format -> tsc -> eslint -> script tests -> coverage"
+        },
+        "verify:ci": { "class": "code", "description": "audit:gate -> verify; what pre-push runs" },
+        "verify:native": { "class": "code", "description": "verify -> expo doctor" },
+        "lint": { "class": "code", "description": "eslint (cached)" },
+        "test": { "class": "code", "description": "jest" },
+        "test:coverage": { "class": "code", "description": "coverage with the dropout guard" }
+    },
+    "moments": {
+        "iterate": {
+            "description": "The desk. Run per change.",
+            "expected": ["verify:iter"],
+            "forbidden": ["verify", "verify:ci", "verify:native", "lint", "test", "test:coverage"],
+            "budgetSeconds": 15,
+            "runsRegardlessOfDiff": false,
+            "requiresMainCheckout": false
+        },
+        "commit": {
+            "description": "Husky pre-commit: staged autofix, TDD sibling gate, repo-wide checks. Those run as direct commands, not traced npm scripts, so this moment is declared for completeness.",
+            "expected": [],
+            "forbidden": [],
+            "budgetSeconds": 15,
+            "runsRegardlessOfDiff": false,
+            "requiresMainCheckout": true
+        },
+        "push": {
+            "description": "Husky pre-push -> verify:ci. Runs unconditionally, never shortened by what the diff touched.",
+            "expected": ["verify:ci"],
+            "budgetSeconds": 30,
+            "forbidden": [],
+            "runsRegardlessOfDiff": true,
+            "requiresMainCheckout": true
+        }
+    }
+}

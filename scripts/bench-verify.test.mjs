@@ -72,6 +72,22 @@ describe('resolveScript', () => {
         );
     });
 
+    it('follows the gate-trace wrapper to its inner script — the steps live there', () => {
+        const scripts = {
+            verify: 'node scripts/gate-trace.mjs verify -- npm run verify:inner',
+            'verify:inner': 'npm run lint && npm run typecheck'
+        };
+
+        assert.equal(resolveScript(scripts, 'verify'), 'npm run lint && npm run typecheck');
+    });
+
+    it('throws on a cycle routed through the gate-trace wrapper form too', () => {
+        assert.throws(
+            () => resolveScript({ a: 'node scripts/gate-trace.mjs a -- npm run a' }, 'a'),
+            /cycle/
+        );
+    });
+
     it('throws on a cycle instead of looping forever', () => {
         assert.throws(() => resolveScript({ a: 'npm run b', b: 'npm run a' }, 'a'), /cycle/);
     });

@@ -93,8 +93,7 @@ Implement with `@testing-library/react-native`; add or extend tests after the UI
 Default source of truth: `.cursor/brain/VERIFICATION.md`.
 
 - Typical code-edit loop: `npm run verify:iter` — oxlint → tsc (incremental) → `jest --onlyChanged` (seconds). Drill into a failure with `npm run typecheck` / `npm run lint` / `npm test -- <path>`.
-- Repo-wide contract gate, ONCE before reporting the task done — not per edit: `npm run verify` (offline) / `npm run verify:ci` (adds the network audit; what pre-push and CI run)
-- Native toolchain / release parity: `npm run ci:local`
+- The full chain (`verify` / `verify:ci` / `ci:local`) belongs to the pre-push hook and CI; an implementer never runs it. (This line said "ONCE before reporting the task done" until 2026-08-30 — the tier law now lives only in `AGENTS.md` § Commands / the gate.)
 - Capture the exit code **without a pipe** — `cmd > log 2>&1; echo $?`. A pipe returns the pipe's status and a failed run reads as a pass.
 - Remedy for lint/format findings: `npm run fix && git add -u`. Never lower a severity or move a threshold to reach green.
 

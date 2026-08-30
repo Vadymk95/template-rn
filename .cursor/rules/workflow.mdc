@@ -27,10 +27,8 @@ A plan must list: files touched, one-line intent per file, test strategy (TDD vs
 Source of truth: `.cursor/brain/VERIFICATION.md`.
 
 - Typical TS/TSX change: `npm run verify:iter` — oxlint → tsc (incremental) → `jest --onlyChanged` (seconds). Drill into a failure with `npm run typecheck` / `npm run lint` / `npm test -- <path>`.
-- Repo-wide offline gate, ONCE before reporting the task done (not per edit): `npm run verify`
-- Before push / PR: `npm run verify:ci` (= `audit:gate` + `verify`) — the same script husky pre-push and CI run
-- Full native tooling parity: `npm run ci:local` (= `verify:ci` + `expo-doctor`)
-- Read the exit code **without a pipe**: `npm run verify > /tmp/verify.log 2>&1; echo $?`. Piping to `tail` returns the pipe's status, so a failed run reads as a pass.
+- The full chain (`verify` / `verify:ci` / `ci:local`) is NOT run by hand — the pre-push hook and CI own it. (This line said "ONCE before reporting the task done" until 2026-08-30; the tier law now lives in ONE place, `AGENTS.md` § Commands / the gate, and is not restated here.)
+- Read the exit code **without a pipe**: `npm run verify:iter > /tmp/verify.log 2>&1; echo $?`. Piping to `tail` returns the pipe's status, so a failed run reads as a pass. After a push: gate output present in the terminal is part of the contract — silence is a failure, not a pass.
 - A new check belongs in the **script**, never only in `.github/workflows/ci.yml`.
 
 ## Git commits

@@ -84,6 +84,7 @@ npm run verify       # every OFFLINE check: hooks → oxlint → format → type
 npm run verify:ci    # audit:gate (network) + verify — what husky pre-push AND CI both run
 npm run fix          # the one remedy: oxlint --fix → eslint --fix → prettier --write
 npm run ci:local     # verify:ci + expo-doctor (full local parity)
+npm run trace:report # findings from .gate-trace.log (forbidden moments, budgets, worktrees)
 npm run bench:verify # per-step timings when the gate feels slow
 npm run test:mutation # StrykerJS strength gate — weekly `mutation.yml` job, NOT in verify (2m per run)
 ```
@@ -93,11 +94,34 @@ adds the one check that needs the network (`audit:gate`). The CI job is a single
 A new check therefore goes into the **script**, never only into the workflow file — otherwise a green
 local gate stops meaning a green pipeline.
 
-**The gate is tiered by moment, not run per edit.** Iterating: `npm run verify:iter` (oxlint → tsc
-incremental → `jest --onlyChanged`, seconds). Handing over: the full `verify` runs ONCE before the task
-is reported done, and the reviewer re-runs it at acceptance — heavy verification belongs to code being
-accepted, not to every iteration. Pre-push (`verify:ci`) stays the one full run before anything leaves
-the machine; the tiering is not permission to skip it.
+**The gate is tiered by moment, and THIS paragraph is the only place the tier law lives** — every
+other file (rules, commands, brain) points here and must not restate it, because a restated
+pipeline rule goes stale in place and a stale mandate costs a day of 40-minute rounds (measured in
+a sibling repo, where five copies still demanded the full chain before the first report).
+
+- **Iterate** (per change): `npm run verify:iter` — oxlint → tsc incremental → `jest --onlyChanged`,
+  seconds.
+- **Commit**: the pre-commit hook owns it. Nothing to run by hand.
+- **Push**: the pre-push hook runs `verify:ci`, the one full run before anything leaves the machine.
+  Unlike the web siblings this repo has NO scaffold phase, and that is a measurement rather than an
+  omission: the whole gate is ~20s with no build, no e2e and no size stage, so there is nothing
+  heavy to defer (recorded in `scripts/gate-tiers.json`).
+
+**Prohibitions, stated as such:** an implementer or reviewer NEVER runs `verify` / `verify:ci` /
+`ci:local` / `test:mutation` by hand — the full chain belongs to the push hook and CI, and a result
+an agent cannot act on is not worth its minutes. A review round gets the diff plus `verify:iter`;
+acceptance does not re-run the full gate — the push does. Parallel lanes never run heavy stages
+(one machine, shared caches). Native pixels are Maestro's job, never the gate's.
+
+**Every gate run is traced** to `.gate-trace.log`; `npm run trace:report` turns it into findings
+(a forbidden stage run standalone, a run over its moment's budget, a code check on a docs-only
+change, a push from a linked worktree). The discipline changes by editing
+`scripts/gate-tiers.json`, never the analyser. **After a push, gate output present in the terminal
+is part of the contract: silence is a failure, not a pass** — a push that printed no gate ran no
+gate, whatever the exit code says.
+
+**Ports:** the gate binds none, so nothing here kills anything. If a Metro port is busy, MOVE
+(`npx expo start --port <free>`), never kill a server you did not start.
 
 **Bootstrap after clone**: `npm run prepare` (once) — `.npmrc` disables lifecycle
 scripts as a supply-chain guard, so husky hooks don't install themselves; the

@@ -28,9 +28,9 @@
         "format": "prettier --write . --cache --cache-location .prettiercache",
         "format:check": "prettier --check . --cache --cache-location .prettiercache",
         "audit:gate": "node scripts/audit-gate.mjs",
-        "verify": "node scripts/check-hooks.mjs && npm run lint:oxlint && npm run format:check && npm run typecheck && npm run lint && npm run test:scripts && npm run test:coverage",
-        "verify:iter": "npm run lint:oxlint && npm run typecheck && jest --onlyChanged --passWithNoTests",
-        "verify:ci": "npm run audit:gate && npm run verify",
+        "verify": "node scripts/gate-trace.mjs verify -- npm run verify:inner",
+        "verify:iter": "node scripts/gate-trace.mjs verify:iter -- npm run verify:iter:inner",
+        "verify:ci": "node scripts/gate-trace.mjs verify:ci -- npm run verify:ci:inner",
         "verify:native": "npm run verify && npm run doctor",
         "verify:rc": "react-compiler-healthcheck src",
         "bench:verify": "node scripts/bench-verify.mjs",
@@ -49,7 +49,11 @@
         "perf:check": "node scripts/capture-bundle-metrics.mjs --export --platform all --check",
         "ci:local": "npm run verify:ci && npm run doctor",
         "maestro": "maestro test .maestro",
-        "prepare": "husky"
+        "prepare": "husky",
+        "verify:inner": "node scripts/check-hooks.mjs && npm run lint:oxlint && npm run format:check && npm run typecheck && npm run lint && npm run test:scripts && npm run test:coverage",
+        "verify:iter:inner": "npm run lint:oxlint && npm run typecheck && jest --onlyChanged --passWithNoTests",
+        "verify:ci:inner": "npm run audit:gate && npm run verify",
+        "trace:report": "node scripts/trace-report.mjs"
     },
     "dependencies": {
         "@expo/vector-icons": "^15.1.1",

@@ -58,10 +58,12 @@ payload shape, native config, or the router. Trivial leaf edits proceed with a b
 
 ## 4. Verify
 
-The full gate runs ONCE, here — iteration between batches used `verify:iter` (§3):
+Hand-over runs the ITERATION tier — the full chain belongs to the push hook and CI and is not run
+by hand (tier law: `AGENTS.md` § Commands / the gate). This step said "the full gate runs ONCE,
+here" until 2026-08-30:
 
 ```bash
-npm run verify > /tmp/verify.log 2>&1; echo $?
+npm run verify:iter > /tmp/verify.log 2>&1; echo $?
 ```
 
 Exit code **without a pipe**. Then: revert your change mentally and ask which of your new tests would
