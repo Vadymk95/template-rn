@@ -53,7 +53,8 @@
         "verify:inner": "node scripts/check-hooks.mjs && npm run lint:oxlint && npm run format:check && npm run typecheck && npm run lint && npm run test:scripts && npm run test:coverage",
         "verify:iter:inner": "npm run lint:oxlint && npm run typecheck && jest --onlyChanged --passWithNoTests",
         "verify:ci:inner": "npm run audit:gate && npm run verify",
-        "trace:report": "node scripts/trace-report.mjs"
+        "trace:report": "node scripts/trace-report.mjs",
+        "test:one": "node scripts/gate-trace.mjs test -- npx --no-install jest"
     },
     "dependencies": {
         "@expo/vector-icons": "^15.1.1",

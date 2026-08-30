@@ -75,6 +75,31 @@ props do not survive NativeWind's JSX interop into what RNTL exposes (measured o
 rendered props are only `className` and `children`); there the assertion goes against the module source
 with the reason next to it. Pixels need a device — `.maestro/`.
 
+## Entering this repo cheaply (read this before sweeping the source)
+
+Measured on a sibling project 2026-08-30: an agent's entry is ~93% READING SOURCE to find where
+things are and whether the task is still needed, and ~7% the documents that load automatically. So
+the levers are pointing and looking, in this order:
+
+1. **Open `.cursor/brain/READING_INDEX.md` first** — it maps a SITUATION ("about to change a shared
+   primitive") to the two or three files that answer it. It is a pointer file: it never restates a
+   rule, so it cannot go stale in the way a summary does.
+2. **Check the work is still needed** — `git log --oneline -15` plus one grep for the thing the task
+   names. Two of five lanes in that measurement returned "already done" after ~430k tokens; both
+   were five minutes of grep.
+3. **Do not invent a way to LOOK** - RNTL has no layout engine, so nothing here can measure a pixel. Assert the props that bound a layout, then `.maestro/`, then a device. `.cursor/brain/READING_INDEX.md` closes with the full substitute ladder.
+4. **Name the files when you dispatch work to another agent.** The largest observed difference
+   between a 33-tool-call lane and a 191-tool-call lane was how precisely the task pointed.
+
+**Where a rule must live, because the two tools do not read the same repo.** Claude Code loads
+`CLAUDE.md` -> `AGENTS.md` -> the brain files `AGENTS.md` `@`-imports. Cursor loads `AGENTS.md` plus
+every `.cursor/rules/*.mdc` marked `alwaysApply: true`. **`AGENTS.md` is the only file both read**, so
+a rule that must reach both belongs HERE; a rule placed only in a `.mdc` is invisible to Claude Code,
+and one moved down into a brain file may be invisible to Cursor. On the sibling project three copies
+of one gate rule sat in `.cursor/rules/*.mdc` and a fix to the shared preamble never reached the
+agent it was written for - a day of 40-minute rounds. Verify what each tool loads before moving a
+rule between files.
+
 ## Commands / the gate
 
 ```bash
@@ -84,6 +109,7 @@ npm run verify       # every OFFLINE check: hooks → oxlint → format → type
 npm run verify:ci    # audit:gate (network) + verify — what husky pre-push AND CI both run
 npm run fix          # the one remedy: oxlint --fix → eslint --fix → prettier --write
 npm run ci:local     # verify:ci + expo-doctor (full local parity)
+npm run test:one -- <file> # one jest test file, through the tracer (not around it)
 npm run trace:report # findings from .gate-trace.log (forbidden moments, budgets, worktrees)
 npm run bench:verify # per-step timings when the gate feels slow
 npm run test:mutation # StrykerJS strength gate — weekly `mutation.yml` job, NOT in verify (2m per run)
