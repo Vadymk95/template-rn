@@ -133,7 +133,7 @@ Single source of truth: `tsconfig.json` `paths`. Metro reads this directly
 - `npm run test` — Jest
 - `npm run test:scripts` — gate-script specs (`node:test`, not Jest — see DECISIONS)
 - `npm run fix` — the one remedy command: oxlint --fix → eslint --fix → prettier --write
-- `npm run verify:iter` — the iteration rung: oxlint → tsc (incremental) → `jest --onlyChanged` (seconds). Run per change; the gate runs ONCE before hand-over.
+- `npm run verify:iter` — the iteration rung: oxlint → tsc (incremental) → `jest --onlyChanged` (seconds). Run per change; the full chain belongs to the push hook and CI (tier law: `AGENTS.md` § Commands / the gate).
 - `npm run verify` — every OFFLINE check; the commit gate
 - `npm run verify:ci` — `audit:gate` (needs the network) + `verify`; what pre-push and CI both run
 - `npm run bench:verify` — per-step timings for the gate

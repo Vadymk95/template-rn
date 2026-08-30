@@ -28,8 +28,7 @@ allocating means skipping — a uniform pass has no earlier verdict of its own t
 
 Every round — findings or acceptance — gets the diff read plus the iteration tier, run yourself and
 never on the author's word. The full chain belongs to the push hook and CI; acceptance does not
-pre-run it (this section demanded the full gate at acceptance until 2026-08-30; tier law:
-`AGENTS.md` § Commands / the gate):
+pre-run it (tier law: `AGENTS.md` § Commands / the gate):
 
 ```bash
 npm run verify:iter > /tmp/verify.log 2>&1; echo $?

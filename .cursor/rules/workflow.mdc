@@ -27,7 +27,7 @@ A plan must list: files touched, one-line intent per file, test strategy (TDD vs
 Source of truth: `.cursor/brain/VERIFICATION.md`.
 
 - Typical TS/TSX change: `npm run verify:iter` — oxlint → tsc (incremental) → `jest --onlyChanged` (seconds). Drill into a failure with `npm run typecheck` / `npm run lint` / `npm test -- <path>`.
-- The full chain (`verify` / `verify:ci` / `ci:local`) is NOT run by hand — the pre-push hook and CI own it. (This line said "ONCE before reporting the task done" until 2026-08-30; the tier law now lives in ONE place, `AGENTS.md` § Commands / the gate, and is not restated here.)
+- The full chain is NOT run by hand — the pre-push hook and CI own it (tier law: `AGENTS.md` § Commands / the gate, not restated here).
 - Read the exit code **without a pipe**: `npm run verify:iter > /tmp/verify.log 2>&1; echo $?`. Piping to `tail` returns the pipe's status, so a failed run reads as a pass. After a push: gate output present in the terminal is part of the contract — silence is a failure, not a pass.
 - A new check belongs in the **script**, never only in `.github/workflows/ci.yml`.
 

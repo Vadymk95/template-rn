@@ -46,7 +46,7 @@ payload shape, native config, or the router. Trivial leaf edits proceed with a b
   `renderHook`, `fireEvent`, `act` and `unmount` all return promises and must be awaited. An un-awaited
   `unmount()` poisons the next test's render.
 - Max two files per iteration without an intermediate check — the check is `npm run verify:iter`
-  (seconds). The full gate is not an iteration tool.
+  (seconds). The full chain is the push hook's, never an implementer's.
 - Every `src` logic file needs a co-located `*.test.*` — the pre-commit hook refuses otherwise. Write the
   test because it is worth having, not to satisfy the hook.
 - Match the surrounding file exactly: 4-space indent, single quotes, arrow-only components with an
@@ -59,8 +59,7 @@ payload shape, native config, or the router. Trivial leaf edits proceed with a b
 ## 4. Verify
 
 Hand-over runs the ITERATION tier — the full chain belongs to the push hook and CI and is not run
-by hand (tier law: `AGENTS.md` § Commands / the gate). This step said "the full gate runs ONCE,
-here" until 2026-08-30:
+by hand (tier law: `AGENTS.md` § Commands / the gate):
 
 ```bash
 npm run verify:iter > /tmp/verify.log 2>&1; echo $?

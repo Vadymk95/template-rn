@@ -57,15 +57,14 @@ Not adopted: a hook that commits for you. A hook that creates commits hides what
 changed inside a commit you did not write, and the failure mode is a fix landing under an
 unrelated message. The hook reports and refuses; the remedy is one command.
 
-## Repo-wide contract gate (before push / PR)
+## What each chain contains (mechanics — WHEN to run them is the tier law)
 
 Three rungs, and the split is deliberate:
 
 - **`npm run verify:iter`** — the iteration rung: `lint:oxlint` → `typecheck` (incremental) →
   `jest --onlyChanged --passWithNoTests` (only tests git sees as affected by uncommitted work).
-  Seconds; run it after every change — the full gate runs ONCE, before the task is reported done.
   `--onlyChanged` follows the module graph from changed files, so cross-cutting suites and
-  `scripts/**` tests (`test:scripts`) surface at the full-gate run, not during iteration.
+  `scripts/**` tests (`test:scripts`) surface at the push chain, not during iteration.
 - **`npm run verify`** — every check that works OFFLINE, in order: `check-hooks` →
   `lint:oxlint` → `format:check` → `typecheck` → `lint` (cached) → `test:scripts` →
   `test:coverage` — cheap independent stages first. An implementer with no network can
@@ -84,7 +83,7 @@ contract exists to remove.
 `npm run test:mutation` sits on neither rung on purpose: it runs weekly via the
 `mutation.yml` cron, never as part of `verify` — see AGENTS.md § Mutation testing.
 
-Read the exit code without a pipe — `npm run verify > /tmp/verify.log 2>&1; echo $?`.
+Read the exit code without a pipe — `npm run verify:iter > /tmp/verify.log 2>&1; echo $?`.
 Piping to `tail` returns the pipe's status, so a failed run reads as a pass.
 
 When it fails: `npm run fix && git add -u` for lint/format findings. Never lower a
