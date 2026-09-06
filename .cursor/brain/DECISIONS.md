@@ -2,6 +2,14 @@
 
 Short record of non-obvious trade-offs. Update when reversing a decision.
 
+## [2026-09] Dependency pass: the SDK list is the authority, and the cooldown held three of its versions
+
+**Decision**: bring every compatible dependency to its latest release in one pass, take Stryker 10, and let `npx expo install --check` decide native versions — never `npm outdated`. `npm update` moved the Expo packages inside their `~57.0.x` ranges and the transitive Metro / `@react-native/*` packages to fixed releases, which took the audit from 11 high to 0 and removed `image-size` from the tree entirely; both `image-size` allowances left `scripts/audit-allowlist.json` in the same commit (a stale allowance fails the gate by design).
+
+**What the cooldown held**: `expo@57.0.20` and `expo-router@57.0.19` (published 2026-09-04) and `react-native@0.86.3` (published 2026-09-06) are the versions the SDK list expects, and `.npmrc` `min-release-age=3` refused them on 2026-09-06 as intended. Trigger: on or after 2026-09-09 run `npx expo install --fix`; until then `jest-expo@57.0.5` peers `@react-native/jest-preset@^0.86.3` while `react-native@0.86.0` optionally peers `0.86.0`, so a fresh `npm install <pkg>` reports ERESOLVE — `npm update` and `npm ci` from the lock are unaffected (proved: `npm ci --ignore-scripts` installed 1537 packages cleanly).
+
+**What else moved**: `oxlint` `~1.75.0` → `~1.81.0` (no lockstep partner here). `typescript-eslint@8.69` brought `@typescript-eslint/no-meaningless-void-operator`, which flagged the five `void _param;` statements in the `src/lib/logger.ts` reporter stub; they became no-op comments (a commented body is not an empty function for `no-empty-function`). Stryker 10 on the same tree: 54.32 against 53.92 on 9.6.1, floor 48 unchanged. Held on purpose: Jest 29 (jest-expo), Tailwind 3.4 (NativeWind), TypeScript 6.0 (typescript-eslint peer), Babel 7 (babel-preset-expo), and every SDK-pinned native package outside the Expo list.
+
 ## Expo managed > bare React Native
 
 - EAS Build removes the Mac requirement for iOS, which is the #1 solo-dev
