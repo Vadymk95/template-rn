@@ -6,13 +6,10 @@ const isProd = process.env.NODE_ENV === 'production';
 // Implementation should keep this shape so call sites stay untouched.
 const report = {
     breadcrumb: (_level: 'info' | 'warn', _message: string, _data?: LogContext): void => {
-        void _level;
-        void _message;
-        void _data;
+        // no-op until a crash reporter is wired; the parameters fix the call-site shape
     },
     capture: (_error: Error, _context?: LogContext): void => {
-        void _error;
-        void _context;
+        // no-op until a crash reporter is wired; the parameters fix the call-site shape
     }
 };
 
