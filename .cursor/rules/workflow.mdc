@@ -28,8 +28,7 @@ Source of truth: `.cursor/brain/VERIFICATION.md`.
 
 - Typical TS/TSX change: `npm run verify:iter` — oxlint → tsc (incremental) → `jest --onlyChanged` (seconds). Drill into a failure with `npm run typecheck` / `npm run lint` / `npm test -- <path>`.
 - The full chain is NOT run by hand — the pre-push hook and CI own it (tier law: `AGENTS.md` § Commands / the gate, not restated here).
-- Read the exit code **without a pipe**: `npm run verify:iter > /tmp/verify.log 2>&1; echo $?`. Piping to `tail` returns the pipe's status, so a failed run reads as a pass. After a push: gate output present in the terminal is part of the contract — silence is a failure, not a pass.
-- A new check belongs in the **script**, never only in `.github/workflows/ci.yml`.
+- Exit code without a pipe, and the rest of the verification-integrity checklist: `.cursor/rules/agent-pipeline.mdc` § 4.1a (single home). The push contract and the superset rule: `AGENTS.md` § Commands / the gate, not restated here.
 
 ## Git commits
 

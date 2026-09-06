@@ -162,17 +162,17 @@ CLI equivalent of the default verify task:
 
 ```bash
 npm run verify
-# = check-hooks → typecheck → lint:oxlint → lint → format:check → test:scripts → test:coverage
+# the stage order is the `verify` script in package.json — not repeated here on purpose
 ```
 
 The `check-hooks` step fails loudly when git hooks are missing — run
 `npm run prepare` once after clone (lifecycle scripts are disabled via `.npmrc`).
 
-`verify` holds every check that works **offline**. `verify:ci` adds the one that
+`verify` holds every check that works **offline**; `verify:ci` adds the one that
 needs the registry (`audit:gate`) and is what husky pre-push and the CI job both
-run — the job is a single step over that script. So a green `verify:ci` locally
-means a green pipeline, and any new check belongs in the script rather than in the
-workflow file.
+run. The moments (iterate, commit, push, CI), what is never run by hand and the
+superset rule are defined ONCE in `AGENTS.md` § Commands / the gate; stage timings
+live in `.cursor/brain/VERIFICATION.md`.
 
 `npm run test:mutation` (StrykerJS) measures test strength — whether the suite
 would catch a wrong implementation, not just execute the code. It runs as a weekly
@@ -188,16 +188,12 @@ checks and will fail the PR the same way.
 ## Post-edit pipeline
 
 ```bash
-npm run typecheck && npm run lint && npm run test
+npm run verify:iter   # the iterate moment: oxlint → tsc (incremental) → jest --onlyChanged, seconds
 ```
 
-Repo-wide contract gate:
+The full chain belongs to the pre-push hook and CI (`AGENTS.md` § Commands / the gate).
 
-```bash
-npm run verify
-```
-
-Native / machine parity:
+Native / machine parity (a human parity check, not an agent moment):
 
 ```bash
 npm run ci:local

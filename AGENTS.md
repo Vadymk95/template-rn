@@ -91,14 +91,9 @@ the levers are pointing and looking, in this order:
 4. **Name the files when you dispatch work to another agent.** The largest observed difference
    between a 33-tool-call lane and a 191-tool-call lane was how precisely the task pointed.
 
-**Where a rule must live, because the two tools do not read the same repo.** Claude Code loads
-`CLAUDE.md` -> `AGENTS.md` -> the brain files `AGENTS.md` `@`-imports. Cursor loads `AGENTS.md` plus
-every `.cursor/rules/*.mdc` marked `alwaysApply: true`. **`AGENTS.md` is the only file both read**, so
-a rule that must reach both belongs HERE; a rule placed only in a `.mdc` is invisible to Claude Code,
-and one moved down into a brain file may be invisible to Cursor. On the sibling project three copies
-of one gate rule sat in `.cursor/rules/*.mdc` and a fix to the shared preamble never reached the
-agent it was written for - a day of 40-minute rounds. Verify what each tool loads before moving a
-rule between files.
+**Where a rule must live** (which tool reads which file, and why a rule that must reach every tool
+belongs in this file): § Commands / the gate › Lanes › _Two tools, one file_. Verify what each tool
+loads before moving a rule between files.
 
 ## Commands / the gate
 
@@ -115,38 +110,91 @@ npm run bench:verify # per-step timings when the gate feels slow
 npm run test:mutation # StrykerJS strength gate — weekly `mutation.yml` job, NOT in verify (2m per run)
 ```
 
-**The gate contract**: `verify` is a strict superset of every offline check CI performs, and `verify:ci`
-adds the one check that needs the network (`audit:gate`). The CI job is a single step over `verify:ci`.
-A new check therefore goes into the **script**, never only into the workflow file — otherwise a green
-local gate stops meaning a green pipeline.
+<!-- shared-harness:begin -->
+<!-- This block is byte-identical in all four templates (template-1, template-spa-pwa, template-next-seo, template-rn). Change it in every template in the same commit, or not at all. Stack-specific facts (which stages `verify` runs, ports, what is skipped and why, timings) live OUTSIDE this block: in the command table above and in `.cursor/brain/VERIFICATION.md`. -->
 
-**The gate is tiered by moment, and THIS paragraph is the only place the tier law lives** — every
-other file (rules, commands, brain) points here and must not restate it, because a restated
-pipeline rule goes stale in place and a stale mandate costs a day of 40-minute rounds (measured in
-a sibling repo, where five copies still demanded the full chain before the first report).
+### The tier law - this section is the ONLY place it lives
 
-- **Iterate** (per change): `npm run verify:iter` — oxlint → tsc incremental → `jest --onlyChanged`,
-  seconds.
-- **Commit**: the pre-commit hook owns it. Nothing to run by hand.
-- **Push**: the pre-push hook runs `verify:ci`, the one full run before anything leaves the machine.
-  Unlike the web siblings this repo has NO scaffold phase, and that is a measurement rather than an
-  omission — the numbers are in `scripts/gate-tiers.json` (`_phaseMeaning`).
+Every other file (rules, commands, brain, README, Copilot instructions) points here and restates nothing.
+A restated pipeline rule goes stale in place; a stale copy cost a sibling repo a day of 40-minute rounds
+because five copies still demanded the full chain before the first report. `scripts/gate-tiers.json` is
+the machine-readable form (expected and forbidden scripts per moment, budgets, phase); when this prose and
+that file disagree, the file wins and the prose is fixed in the same commit.
 
-**Prohibitions, stated as such:** an implementer or reviewer NEVER runs `verify` / `verify:ci` /
-`ci:local` / `test:mutation` by hand — the full chain belongs to the push hook and CI, and a result
-an agent cannot act on is not worth its minutes. A review round gets the diff plus `verify:iter`;
-acceptance does not re-run the full gate — the push does. Parallel lanes never run heavy stages
-(one machine, shared caches). Native pixels are Maestro's job, never the gate's.
+**Four moments, and one that is not a gate.**
 
-**Every gate run is traced** to `.gate-trace.log`; `npm run trace:report` turns it into findings
-(a forbidden stage run standalone, a run over its moment's budget, a code check on a docs-only
-change, a push from a linked worktree). The discipline changes by editing
-`scripts/gate-tiers.json`, never the analyser. **After a push, gate output present in the terminal
-is part of the contract: silence is a failure, not a pass** — a push that printed no gate ran no
-gate, whatever the exit code says.
+- **Iterate** - per change, seconds. Run `verify:iter`. Where the change touches a surface that has its
+  own spec and the repo has a browser lane, run that ONE spec through the traced single-spec script (see
+  the command table). Nothing heavier.
+- **Measure** - whenever only a rendered result can answer the question: the measure script (build +
+  look) or the probe, where the repo has them. Legal at any time, in any lane, never a violation.
+  Measuring is not verifying: it runs no lint, no types, no tests.
+- **Commit** - the pre-commit hook owns it: staged autofix, the TDD sibling gate, then the repo-wide cheap
+  checks. Nothing to run by hand; on refusal the hook prints the remedy.
+- **Push** - the pre-push hook runs the gate ONCE, never shortened by what the diff touched. Where the
+  repo has heavy stages (build, size, e2e), the push script is phase-aware: phase 0 (scaffold, before the
+  first deploy) runs the offline checks and loudly SKIPS the heavy stages; phase 1 (from the first deploy)
+  runs the full `verify:ci`. A skipped stage is printed, never silent; flip the phase in one commit at the
+  first deploy. A repo whose gate has no heavy stage runs the full `verify:ci` at push and records in
+  `gate-tiers.json` that a phase switch would gate nothing.
+- **CI** - phase-blind: always the full `verify:ci` (`audit:gate` + `verify`), plus what only CI can do
+  (the security workflow, the scheduled mutation job, a mandatory dev-smoke job where the repo has one).
 
-**Ports:** the gate binds none, so nothing here kills anything. If a Metro port is busy, MOVE
-(`npx expo start --port <free>`), never kill a server you did not start.
+**Prohibitions, stated as such.** An implementer or a reviewer NEVER runs `verify`, `verify:ci`,
+`verify:full`, `build` or the e2e suite by hand: the full chain belongs to the push hook and CI, and a
+result an agent cannot act on is not worth its minutes. A review round gets the diff plus `verify:iter`;
+acceptance does not re-run the gate, the push does. Parallel lanes never run heavy stages (one machine,
+shared caches): heavy work serialises at the push. Individual scripts (`typecheck`, `lint`, `test`, `fix`)
+are drill-downs on a specific failure; none of them is a moment.
+
+**`verify` is a strict superset of the offline checks CI runs**, so a green `verify` predicts a green CI.
+Keeping that true is a rule: a new check goes into the script, never only into the workflow file.
+`audit:gate` sits in `verify:ci` rather than `verify` because it needs the network, so an offline agent can
+still run the whole offline gate. `bench:verify` derives its step list from the `verify` script; a
+hand-written second list has already drifted once.
+
+**Every gate run is traced** to `.gate-trace.log`; `trace:report` turns the log into findings (forbidden
+moments, blown budgets, gate runs from a worktree). After a push, gate output in the terminal is part of
+the contract: **silence is a failure, not a pass** - a push that printed no gate ran no gate, whatever the
+exit code says.
+
+**Ports.** A busy port means MOVE, never kill a server you did not start; the single-spec and measure
+scripts take the next free port. Only the push gate clears its own port.
+
+### Lanes - who runs what
+
+- **Main agent, inline.** Iterate and measure while working; the push runs the chain. Never the full gate
+  by hand.
+- **Implementer subagent.** Works in a hand-made `git worktree` OUTSIDE the repo directory, on its own
+  port, with `node_modules` symlinked from the main checkout. Iterate and measure only; the gate never
+  runs from a worktree (the tracer records it as a finding). The lead removes the worktree, checks the
+  branch out in the main checkout and pushes from there, so the gate runs once, at the push, for every
+  writer.
+- **Copilot coding agent.** Hand-over is a fully specified issue (goal as behaviour, paths in scope,
+  acceptance, out of scope; use `.github/ISSUE_TEMPLATE/agent-task.yml` where the repo ships it), assigned
+  to Copilot. It works on its own branch and opens a draft pull request; workflows on that PR start only
+  after a human approves the run. Task class: verifiable by the gate, under ~400 changed lines, contract
+  stated in the issue, nothing on the mandatory-human-review list. Its review context is
+  `.github/copilot-instructions.md`, which points here for the gate.
+- **Review, any lane.** The diff plus `verify:iter`, never a re-run of the gate. Findings are correctness,
+  test strength, security, readability; style belongs to the linters. A non-author human approves; an
+  agent's own green is not an approval.
+- **Two tools, one file.** Claude Code reads `CLAUDE.md` -> `AGENTS.md` -> the `@`-imported brain; Cursor
+  reads `AGENTS.md` plus every `alwaysApply: true` rule; Copilot reads `.github/copilot-instructions.md`.
+  `AGENTS.md` is the only file all of them read, which is why the law lives here and everything else is a
+  pointer.
+
+<!-- shared-harness:end -->
+
+**This repo's specifics, outside the shared block.** There is no browser lane: no measure script, no
+probe, no single-spec e2e — RNTL has no layout engine, so a question only a rendered result can answer
+goes to `.maestro/` or a device (the substitute ladder closes `.cursor/brain/READING_INDEX.md`). The
+push runs the full `verify:ci` directly; `scripts/gate-tiers.json` (`_phaseMeaning`) records why a
+scaffold phase would gate nothing here. The by-hand prohibition also covers `ci:local` and
+`test:mutation`. Native pixels are Maestro's job, never the gate's. The tracer additionally flags a
+code check on a docs-only change; the discipline changes by editing `scripts/gate-tiers.json`, never
+the analyser. Ports: the gate binds none, so nothing here kills anything — if a Metro port is busy,
+MOVE (`npx expo start --port <free>`).
 
 **Bootstrap after clone**: `npm run prepare` (once) — `.npmrc` disables lifecycle
 scripts as a supply-chain guard, so husky hooks don't install themselves; the
