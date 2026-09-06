@@ -8,3 +8,6 @@ coverage
 .atlas
 .maestro/reports
 package-lock.json
+
+# Stryker sandboxes: a crashed mutation run leaves one behind, and the gate must not lint a copy of the repo
+.stryker-tmp/

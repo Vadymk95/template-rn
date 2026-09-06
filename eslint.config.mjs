@@ -65,6 +65,8 @@ export default tseslint.config(
     {
         ignores: [
             '**/node_modules/**',
+            // A crashed Stryker run leaves its sandbox behind; the gate must never lint a copy of the repo.
+            '.stryker-tmp/**',
             '.expo/**',
             'dist/**',
             'ios/**',

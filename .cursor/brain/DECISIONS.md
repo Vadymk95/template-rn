@@ -598,3 +598,12 @@ Fresh high advisories landed on the existing tree at once. Floors (all with majo
 > measurement of repo-local image assets, so no attacker-supplied image reaches the parser here. The
 > allowance self-expires 2026-11-01; re-check on the next Expo SDK/metro bump. An allowance is the last
 > resort — this is what the last resort looks like: an unfixed upstream, not an inconvenient finding.
+
+## [2026-09] Gate hygiene: the Stryker sandbox is ignored by prettier and ESLint, not only by git
+
+A Stryker run that crashed in a sibling template left `.stryker-tmp/sandbox-*` behind, and the next push
+there failed with 44 lint errors that were all inside that copy of the repo (prettier "Delete ⏎" on the
+copied files, ESLint "multiple candidate TSConfigRootDirs"). `.stryker-tmp` was in `.gitignore` only, in
+all four templates. It is now also in `.prettierignore` and in ESLint's global ignores here: a tool's temp
+directory belongs in every ignore list the gate reads, or a crashed tool run reddens the gate for an
+unrelated change and reads as a regression.
