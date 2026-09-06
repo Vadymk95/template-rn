@@ -38,6 +38,11 @@ updates:
             versions: ['>=30']
           - dependency-name: '@types/jest'
             versions: ['>=30']
+          # babel-jest@29 (pulled by jest-expo@57) peers @babel/core ^7.8.0, so
+          # Babel 8 arrives together with Jest 30, never on its own. Drop this
+          # ignore in the same commit that lifts the jest hold above.
+          - dependency-name: '@babel/core'
+            versions: ['>=8']
           # NativeWind 4.x pairs with Tailwind 3.x
           - dependency-name: 'tailwindcss'
             versions: ['>=4']
