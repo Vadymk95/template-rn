@@ -15,12 +15,13 @@
         "verify:native": { "class": "code", "description": "verify -> expo doctor" },
         "lint": { "class": "code", "description": "eslint (cached)" },
         "test": { "class": "code", "description": "jest" },
-        "test:coverage": { "class": "code", "description": "coverage with the dropout guard" }
+        "test:coverage": { "class": "code", "description": "coverage with the dropout guard" },
+        "test:one": { "class": "code", "description": "one jest test file, through the tracer" }
     },
     "moments": {
         "iterate": {
             "description": "The desk. Run per change.",
-            "expected": ["verify:iter"],
+            "expected": ["verify:iter", "test:one"],
             "forbidden": ["verify", "verify:ci", "verify:native", "lint", "test", "test:coverage"],
             "budgetSeconds": 15,
             "runsRegardlessOfDiff": false,
