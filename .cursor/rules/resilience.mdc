@@ -28,3 +28,10 @@ priority: 92
 - **Never** put billing-capable secrets or API keys in **`EXPO_PUBLIC_*`** variables — they are inlined into the JS bundle at build time and are **not** secret.
 - Adding a var = edit `.env.example` **and** the `src/env.ts` Zod schema, then **restart Metro** (env is read once at build).
 - Tokens belong in **`expo-secure-store`**, **never** AsyncStorage and **never** in a Zustand `persist` `partialize` — a leaked token there is a plaintext leak (see `.cursor/brain/SKELETONS.md`).
+
+## 5. Boundary adapter
+
+- A response is parsed **once**, at the boundary: `safeFetch` / `safeFetchQueryFn` + a Zod schema (`src/lib/api/safeFetch.ts`; live example `src/lib/api/_exampleSafeQuery.ts`). AsyncStorage and `expo-secure-store` reads go through `Schema.safeParse` the same way.
+- Defaults and renames live in the schema or a mapper next to it — `.default()`, `.catch()`, `.transform()`, or a `toViewModel(dto)` beside the query module (`src/features/<name>/api/`, placement in `fsd-layers.mdc`) — never in a component.
+- Screens, widgets and feature hooks receive the parsed view model: they never see a raw DTO and never supply their own fallbacks (`data?.x ?? ''` in JSX is the smell).
+- A schema change is a payload-contract change: the Approval Law applies (`workflow.mdc`, the contract / public-export row).

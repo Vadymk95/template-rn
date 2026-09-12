@@ -29,6 +29,7 @@ priority: 87
 
 - Hooks only at the top level of components or other hooks.
 - Domain hooks live under `src/hooks/<domain>/` with tests alongside when logic is non-trivial.
+- **Where a file goes** (screen → widget → feature → entity → shared, and the placement rules): `fsd-layers.mdc` — not restated here.
 
 ## 5. Anti-patterns
 
@@ -51,3 +52,19 @@ AI-generated UI has recognizable tells; for any UI work reject the default in fa
 - **Spacing from the scale** — `p-2`…`p-6`, `gap-*` applied with intent; not uniform oversized `p-8` padding on everything.
 - **Realistic copy via i18n** — every user-visible string through `t()` / `src/shared/locales/` JSON, never lorem-ipsum or hardcoded English (real strings reveal true wrapping / overflow / length).
 - **Content-first layout** — priority-driven, not the generic hero + uniform stock-card grid. Use real lists (`@shopify/flash-list`) and real thumbnails (`expo-image`), not decorative placeholder rows.
+
+## 7. Composition over props
+
+- **Trigger**: a component is about to gain a third boolean prop, or a second variant axis next to its variant map (`BUTTON_VARIANTS` in `src/shared/ui/Button/Button.tsx`). Stop adding props.
+- **Prefer slots**: `children` or named slot props (`leftSlot` / `rightSlot`, as `Button` already does) — the caller passes the element, the component places it. There is no `asChild` on native; a slot IS the delegation.
+- **Or a compound component**: the parent owns state in a context, sub-components read it (`Panel` / `Panel.Header` / `Panel.Body`, `View`-based; a header wraps its children in `Text`, because a bare string inside a `View` crashes on native).
+- A new prop is right only when it changes the component's own behaviour, not what it renders.
+
+```tsx
+// Before: <Panel title="…" showIcon iconLeft compact />  — every combination is a branch inside Panel
+// After: the caller composes what the panel renders (sketch, not a shipped component)
+<Panel>
+    <Panel.Header icon={<Icon />}>{title}</Panel.Header>
+    <Panel.Body>{children}</Panel.Body>
+</Panel>
+```
