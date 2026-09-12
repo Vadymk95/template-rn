@@ -49,6 +49,9 @@ Workflow uses minimal `permissions` where applicable. Secrets in GitHub Actions 
 
 ## Recommendations (before production)
 
+- Session tokens stay in `expo-secure-store` (`secureToken`); never in `AsyncStorage`, never in `EXPO_PUBLIC_*`, never logged.
+- Thin client, no client-side pricing: the app sends an intent or an id and renders what the server returns; money is validated server-side and parsed once at the boundary (`.cursor/rules/resilience.mdc` § Boundary adapter).
+
 1. **Dependency policy:** Enable Dependabot or Renovate; review native dependency changes (they affect attack surface and store policies).
 2. **Pre-release:** Run your org’s SAST/DAST on the API and mobile pipeline; add **certificate pinning** only if threat model requires it (operational cost).
 3. **Store submission:** Complete platform privacy questionnaires using actual data practices (analytics, crash reporting, third-party SDKs).
