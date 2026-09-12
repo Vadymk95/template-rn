@@ -50,6 +50,7 @@ CLAUDE.local.md
 !.claude/commands/**
 .claude/settings.local.json
 .claude/settings.json
+.claude/worktrees/
 
 # Metro / Jest
 .metro-cache/
