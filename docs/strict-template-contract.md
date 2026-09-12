@@ -42,7 +42,7 @@ agent, it should not be a random inline English literal.
 
 ## Quality gates
 
-- Typical local code-edit loop: `npm run typecheck && npm run lint && npm run test`
+- Typical local code-edit loop: `npm run verify:iter` — the iterate moment (`AGENTS.md` § Commands / the gate)
 - Repo-wide blocking contract: `npm run verify` (every offline check) and `npm run verify:ci`
   (= `audit:gate` + `verify`), which is what husky pre-push and the CI job both run
 - Native / machine parity: `npm run ci:local` (= `verify:ci` + `expo-doctor`)
@@ -67,7 +67,7 @@ A change is not done until:
 1. structure still matches the layer contract
 2. user copy is in the right place
 3. lint, typecheck, formatting, and tests pass for the intended scope
-4. repo-wide `npm run verify` passes before merge-worthy completion
+4. the push gate (`verify:ci`) ran and printed its stages — it runs at push, never by hand
 5. docs / brain files are updated if the architectural contract changed
 
 ## After a fork

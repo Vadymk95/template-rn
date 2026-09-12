@@ -11,11 +11,11 @@ priority: 100
 
 ---
 
-## Phase 1: Deep Discovery (mandatory)
+## Step 1: Deep Discovery (mandatory)
 
-### Phase 1 Fast-Track
+### Step 1 Fast-Track
 
-If the task targets **only** files matching `*.test.ts`, `*.test.tsx`, `*.spec.ts`, `*.spec.tsx`, `global.css`, `tailwind.config.js`, `metro.config.js`, `babel.config.js`, or `*.md` under `.cursor/brain/` — skip Brain reads and proceed directly to Phase 3. State: `"Phase 1 skipped — test/config/docs-only task."` Still emit the **Rule Receipt** (usually `"none — config/test/docs-only"`). When in doubt → run full Phase 1.
+If the task targets **only** files matching `*.test.ts`, `*.test.tsx`, `*.spec.ts`, `*.spec.tsx`, `global.css`, `tailwind.config.js`, `metro.config.js`, `babel.config.js`, or `*.md` under `.cursor/brain/` — skip Brain reads and proceed directly to Step 3. State: `"Step 1 skipped — test/config/docs-only task."` Still emit the **Rule Receipt** (usually `"none — config/test/docs-only"`). When in doubt → run full Step 1.
 
 ---
 
@@ -31,11 +31,11 @@ Before any reasoning about implementation:
 8. **Scope declaration**: Produce clear **In-scope / Out-of-scope** list.
 9. **Explicit declaration**: State in one message: scope + SKELETONS zones touched (or `"none"`). Do not code before this.
 
-> **Gate**: If the task touches a SKELETONS zone — flag the risk and propose mitigation before Phase 2.
+> **Gate**: If the task touches a SKELETONS zone — flag the risk and propose mitigation before Step 2.
 
 ---
 
-## Phase 2: Architectural Simulation
+## Step 2: Architectural Simulation
 
 ### Inference-Time Scaling
 
@@ -57,11 +57,11 @@ Before simulating changes:
 
 After the critique, generate **1–2 mental test cases** per non-trivial function (happy path + edge). If the trace fails — revise the plan before coding.
 
-> **Gate**: Present the critique. Gate by **risk, not LOC** — a change touching a **SKELETONS / danger zone**, **stores / domain state**, **env**, **router layouts**, **native config**, or a **contract / public-export** change follows **The Approval Law** in `workflow.mdc`; trivial leaf edits proceed.
+> **Gate**: Present the critique. Gate by **risk, not LOC** (the risk list: `workflow.mdc` § The Approval Law); trivial leaf edits proceed.
 
 ---
 
-## Phase 3: TDD-First Execution
+## Step 3: TDD-First Execution
 
 ### Business logic (stores, hooks, `src/lib/`)
 
@@ -74,7 +74,7 @@ Implement with `@testing-library/react-native`; add or extend tests after the UI
 
 ### Iteration protocol
 
-- **Batch size**: 1–2 files per iteration; verify between batches.
+- **Batch size**: 1–2 files per iteration (an iteration is what sits between two `verify:iter` runs, INSIDE one PLAN slice — the slice is the 2-7 × <400-line unit of `AGENTS.md` › Before code); verify between batches.
 - **Ghost principle**: Re-check after each edit that scope did not creep.
 
 ### Per-file checklist
@@ -86,7 +86,7 @@ Implement with `@testing-library/react-native`; add or extend tests after the UI
 
 ---
 
-## Phase 4: Autonomous Verification Loop
+## Step 4: Autonomous Verification Loop
 
 ### 4.1 Automated checks
 
@@ -115,7 +115,7 @@ Plan alignment, ghost-principle check, regression scan on public exports.
 
 ---
 
-## Phase 5: Brain Auto-Sync
+## Step 5: Brain Auto-Sync
 
 | Brain file        | Update when                                        |
 | ----------------- | -------------------------------------------------- |
@@ -129,7 +129,7 @@ If nothing changed: state **`Brain sync: none needed.`**
 
 ---
 
-## Phase 6: Confidence Declaration
+## Step 6: Confidence Declaration
 
 End with: `Confidence: HIGH | MEDIUM | LOW — <one-line reason>`.
 
@@ -137,7 +137,7 @@ End with: `Confidence: HIGH | MEDIUM | LOW — <one-line reason>`.
 
 ## Anti-patterns (FORBIDDEN)
 
-- Skipping Phase 1 for non-trivial code changes.
+- Skipping Step 1 for non-trivial code changes.
 - Editing many files without intermediate `typecheck` / `lint` / `test`.
 - Bypassing Brain sync declaration.
 - `../../` imports, raw `console.error(e)` without context, secrets in `EXPO_PUBLIC_*`.
@@ -149,18 +149,18 @@ Green means nothing until you know the gate can go red.
 1. **Capture the exit code without a pipe**: `npm run verify:iter > /tmp/verify.log 2>&1; echo $?`. Piping
    to `tail` returns the PIPE's status, so a failed build reads as a pass.
 2. **Mutation-check the tests**: if mentally reverting your change leaves the suite green, the test is
-   worthless. Writing a test is Phase 3; proving it would have failed is this step.
+   worthless. Writing a test is Step 3; proving it would have failed is this step.
 3. **Prove a new gate gates**: break it on purpose once — an expired entry in
    `scripts/audit-allowlist.json`, a raw hex in a component, a staged `src` logic file with no
    `*.test.*` sibling — and watch it refuse. Then revert the sabotage.
 4. **A check that reports success when it could not run is fail-OPEN.** Ask what it does on a missing
    directory, an empty result, or no network — not only on the failure it was written for.
 5. **Name the condition under which the green would have been RED.** If you cannot name one, the check
-   proved nothing — and a check that cannot fail still gets recorded as evidence. Three real shapes in
-   this repo: a layout measurement taken while i18next still hides the document sees NO element and
-   passes every invariant vacuously; a Playwright `testMatch` that matches nothing collects zero tests
-   and exits 0; and `vitest --coverage` prints `Excluding it from coverage` for a file it could not
-   parse and then exits 0 with a percentage over a smaller set.
+   proved nothing — and a check that cannot fail still gets recorded as evidence. Two real shapes in
+   this repo: `jest --onlyChanged --passWithNoTests` (the iterate tier) exits 0 when the diff reaches no
+   test at all, so a green `verify:iter` on an untested change proves nothing; and `jest --coverage`
+   prints `Failed to collect coverage from <file>` for a file it could not parse and then exits 0 with a
+   percentage over the smaller set — `scripts/check-coverage.mjs` exists for exactly that.
 6. **Check the cases that "cannot happen".** For UI that is: the shortest copy allowed, the longest, one
    unbroken token with nothing to wrap on, zero items, one item, many — plus the OS font scale, which is
    the axis with no web equivalent and the one most often missed. The states are in

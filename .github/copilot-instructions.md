@@ -8,6 +8,7 @@ before style — style is ESLint's and Prettier's job, not a review finding.
 - `npm run verify` is the bar and it is zero-warnings (`eslint --max-warnings 0`,
   `oxlint --deny-warnings`). A change that needs a rule downgraded, a severity lowered, a coverage
   threshold moved, or an `eslint-disable` to pass is a finding, not a fix.
+- The gate's moments and what is never run by hand: `AGENTS.md` § Commands / the gate.
 - **Everything `EXPO_PUBLIC_*` is public.** It is validated in `src/env.ts` and inlined into the JS
   bundle that ships to devices. A secret, key or admin endpoint under that prefix is a leak the moment it
   builds. Reading `process.env` anywhere but `src/env.ts` is blocked by a repo-local lint rule.

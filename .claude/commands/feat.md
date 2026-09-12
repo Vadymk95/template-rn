@@ -7,15 +7,13 @@ actual gate, its actual reuse locations and its actual danger zones, so nothing 
 
 ## 0. Before reading anything: is this still needed, and where does it live?
 
-Two questions, both cheap, both measured on a sibling project as the largest recoverable waste in a
-lane's entry:
+Two questions, both cheap; both measured as the largest recoverable waste in a lane's entry
+(`AGENTS.md` § Entering this repo cheaply):
 
 1. **Is the work still needed?** `git log --oneline -15` and one grep for the thing the task names.
-   Two of five dispatched lanes there returned "already done" after ~430k tokens between them; both
-   were answerable in five minutes. Say what you checked.
+   Say what you checked.
 2. **Where does it live?** `.cursor/brain/READING_INDEX.md` maps the situation to the two or three
-   files that answer it. Open that before sweeping a directory - source exploration is ~93% of a
-   lane's entry, and the index exists to cut it.
+   files that answer it. Open that before sweeping a directory.
 
 ## 1. Discovery
 
@@ -47,8 +45,8 @@ If a blocking requirement is unclear, ask **one** question at a time and propose
 with it. Resolve from the codebase or the brain instead of asking whenever the answer is discoverable
 there.
 
-Wait for approval when the task touches a danger zone, a Zustand store or TanStack Query contract, an API
-payload shape, native config, or the router. Trivial leaf edits proceed with a brief note.
+Wait for approval by risk (the risk list: `.cursor/rules/workflow.mdc` § The Approval Law). Trivial leaf
+edits proceed with a brief note.
 
 **Bigger than a one-sentence diff?** Then the scope lives in `.cursor/<feature-slug>/SPEC.md` and
 `PLAN.md` (templates in `.cursor/templates/`, law in `AGENTS.md` § Before code). Create or update them
@@ -61,7 +59,7 @@ before §3; a plan is approved as a pull-request review, never as a chat reply.
 - **UI**: implement, then cover it with `@testing-library/react-native`. RNTL 14 is async — `render`,
   `renderHook`, `fireEvent`, `act` and `unmount` all return promises and must be awaited. An un-awaited
   `unmount()` poisons the next test's render.
-- Max two files per iteration without an intermediate check — the check is `npm run verify:iter`
+- Batch rule: `.cursor/rules/agent-pipeline.mdc` § Iteration protocol; the check is `npm run verify:iter`
   (seconds). The full chain is the push hook's, never an implementer's.
 - Every `src` logic file needs a co-located `*.test.*` — the pre-commit hook refuses otherwise. Write the
   test because it is worth having, not to satisfy the hook.
@@ -81,8 +79,7 @@ by hand (tier law: `AGENTS.md` § Commands / the gate):
 npm run verify:iter > /tmp/verify.log 2>&1; echo $?
 ```
 
-Exit code **without a pipe**. Then: revert your change mentally and ask which of your new tests would
-still pass. Any that would is worthless — fix it before reporting.
+Exit code **without a pipe**; the rest of the checklist: `.cursor/rules/agent-pipeline.mdc` § 4.1a.
 
 If the gate fails, fix the cause. `npm run fix && git add -u` handles lint and formatting. Do not lower a
 severity, add an `eslint-disable`, move a coverage threshold, or extend an ignore list to get green.
@@ -97,4 +94,4 @@ severity, add an `eslint-disable`, move a coverage threshold, or extend an ignor
 - Anything you flagged instead of forcing.
 - `Confidence: HIGH | MEDIUM | LOW — reason`.
 
-Do not commit. Do not push.
+Hand over for review; the push runs the gate (`AGENTS.md` › Lanes).

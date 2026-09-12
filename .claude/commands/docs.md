@@ -11,7 +11,9 @@ until the operator approves them.**
 - `.cursor/brain/PROJECT_CONTEXT.md` — purpose, stack, layout, the gate, non-goals.
 - `.cursor/brain/MAP.md` — FSD layers, routes, files, responsibilities.
 - `.cursor/brain/SKELETONS.md` — danger zones, with the risk AND the mitigation.
-- `.cursor/brain/VERIFICATION.md` — which checks per change, hook behaviour, OTA vs native rebuild.
+- `.cursor/brain/VERIFICATION.md` — which checks per change, hook behaviour, measured timings, OTA vs
+  native rebuild.
+- `.cursor/brain/READING_INDEX.md` — situations, pointers only.
 - `.cursor/brain/DECISIONS.md` — append an entry when a decision was made and has a rationale that git
   history does not capture.
 - `.cursor/rules/*.mdc` — only where a rule's description no longer matches what the linter enforces.

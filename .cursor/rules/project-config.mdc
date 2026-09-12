@@ -8,20 +8,7 @@ alwaysApply: true
 
 ## Technology stack
 
-| Layer        | Choice |
-| ------------ | ------ |
-| Runtime      | React Native **0.86** (Expo SDK **57**) |
-| Framework    | **Expo** managed workflow |
-| Language     | TypeScript **6.0** strict + extra compiler flags in `tsconfig.json` |
-| Routing      | **Expo Router** (file-based under `src/app/`) |
-| Styling      | **NativeWind 4** + **Tailwind CSS 3** (`className`, `global.css`) |
-| Client state | **Zustand** (+ `createSelectors` helper) |
-| Server state | **TanStack Query** v5 |
-| Env          | **`@t3-oss/env-core`** + Zod — only validated `env` object, never raw `process.env` in app code |
-| Unit tests   | **Jest** + **`jest-expo`** + **Testing Library React Native** |
-| E2E          | **Maestro** flows ship in-repo (`.maestro/`, `npm run maestro`); add **Detox** later for a JS-driven gray-box runner — **not** Playwright (Playwright targets browsers; use it only if you ship **Expo Web** and choose to test that surface). |
-| Lint         | **ESLint 10** flat config: `typescript-eslint` strict type-checked + **Expo** + **TanStack Query strict** + **import-x** + **boundaries v7** + **i18next** + **jest** + repo-local **template** plugin + **React Compiler** + **Prettier**; **oxlint** fast pass on `src/`. Zero-warnings gate: `eslint . --max-warnings 0`, `oxlint --deny-warnings` |
-| Format       | **Prettier** |
+See `AGENTS.md` § Stack; versions are `package.json`. E2E is Maestro (`.maestro/`, `npm run maestro` — `test-driven-development.mdc` § 5), never Playwright, which targets browsers.
 
 ## Path aliases
 

@@ -18,17 +18,15 @@ priority: 90
 **FORBIDDEN**: Starting non-trivial implementation before approval when the table requires it.
 In autonomous agent sessions, this means a written plan + explicit user approval checkpoint before implementation, not skipping straight to code.
 
-## Planning requirements
+For a task bigger than a one-sentence diff the approval is the non-author PR review of `SPEC.md`/`PLAN.md` (`AGENTS.md` › Before code); the table above is the chat-level gate for tasks below that size.
 
-A plan must list: files touched, one-line intent per file, test strategy (TDD vs hybrid), and any **SKELETONS** zones.
+## Planning
+
+A plan is `.cursor/<feature-slug>/PLAN.md`, copied from `.cursor/templates/PLAN.md` (law: `AGENTS.md` › Before code).
 
 ## Post-edit verification
 
-Source of truth: `.cursor/brain/VERIFICATION.md`.
-
-- Typical TS/TSX change: `npm run verify:iter` — oxlint → tsc (incremental) → `jest --onlyChanged` (seconds). Drill into a failure with `npm run typecheck` / `npm run lint` / `npm test -- <path>`.
-- The full chain is NOT run by hand — the pre-push hook and CI own it (tier law: `AGENTS.md` § Commands / the gate, not restated here).
-- Exit code without a pipe, and the rest of the verification-integrity checklist: `.cursor/rules/agent-pipeline.mdc` § 4.1a (single home). The push contract and the superset rule: `AGENTS.md` § Commands / the gate, not restated here.
+After every change: `agent-pipeline.mdc` § 4.1 (the iteration tier) and § 4.1a (the integrity checklist).
 
 ## Git commits
 

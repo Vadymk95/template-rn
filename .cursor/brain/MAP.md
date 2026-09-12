@@ -86,17 +86,17 @@ Imports flow **down-stack only** (app may use shared; shared must not import ent
 
 ## Infrastructure
 
-| What                          | Where                                                                                                                                                        |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Native iOS permissions        | `app.config.ts` → `ios.infoPlist`                                                                                                                            |
-| Native Android permissions    | `app.config.ts` → `android.permissions`                                                                                                                      |
-| Bundle IDs (dev/preview/prod) | `app.config.ts` → `APP_VARIANT` env                                                                                                                          |
-| EAS build profiles            | `eas.json`                                                                                                                                                   |
-| OTA update channel            | `app.config.ts` → `updates.url` + `runtimeVersion`                                                                                                           |
-| CI (GitHub Actions)           | `.github/workflows/ci.yml` — same gates as `ci:local`                                                                                                        |
-| Local E2E smoke (Maestro)     | `.maestro/*.yaml` — not part of default CI; run when adopting flows                                                                                          |
-| Optional bundle metrics       | `scripts/capture-bundle-metrics.mjs`, `npm run perf:*`, `scripts/perf-program.md` — local baseline/check; wire into CI only if the team wants a numeric gate |
-| Path alias `@/*`              | `tsconfig.json` `paths` (single source of truth)                                                                                                             |
+| What                          | Where                                                                                                                                                                            |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Native iOS permissions        | `app.config.ts` → `ios.infoPlist`                                                                                                                                                |
+| Native Android permissions    | `app.config.ts` → `android.permissions`                                                                                                                                          |
+| Bundle IDs (dev/preview/prod) | `app.config.ts` → `APP_VARIANT` env                                                                                                                                              |
+| EAS build profiles            | `eas.json`                                                                                                                                                                       |
+| OTA update channel            | `app.config.ts` → `updates.url` + `runtimeVersion`                                                                                                                               |
+| CI (GitHub Actions)           | `.github/workflows/ci.yml` (one `verify:ci` step + advisory `expo-doctor` + `dependency-review`), `security.yml`, `mutation.yml`; the moments: `AGENTS.md` § Commands / the gate |
+| Local E2E smoke (Maestro)     | `.maestro/*.yaml` — not part of default CI; run when adopting flows                                                                                                              |
+| Optional bundle metrics       | `scripts/capture-bundle-metrics.mjs`, `npm run perf:*`, `scripts/perf-program.md` — local baseline/check; wire into CI only if the team wants a numeric gate                     |
+| Path alias `@/*`              | `tsconfig.json` `paths` (single source of truth)                                                                                                                                 |
 
 ## Content variance
 

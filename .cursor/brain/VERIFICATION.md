@@ -16,14 +16,20 @@ hooks, the tracer and what the absence of a scaffold phase is based on.
 gate is heavy enough to defer, so a phase switch would be machinery gating nothing. Revisit if a
 native build or a Maestro run ever enters the gate.
 
+Measured here (`.gate-trace.log`, 2026-08-30 to 2026-09-11): the push — `verify:ci`, traced under that
+label because the hook runs it directly — 11.7-23.0 s; the first two pushes after the 2026-09-06
+dependency reinstall (`DECISIONS.md` [2026-09]) took 46.3 / 34.3 s and are the only rows over the 30 s
+`push` budget in `gate-tiers.json`, which is unchanged; `verify` alone 8.4-20.2 s; `verify:iter`
+2.5-4.1 s; one `test:one` file 8.3 s; the mutation run 2m02s (`mutation.yml`, outside the gate).
+
 ## The tracer — how it works (the RULES it enforces are the tier law)
 
-Every `verify*` run appends one TSV row to `.gate-trace.log` (gitignored); `npm run trace:report`
-turns rows into findings — a forbidden stage run standalone, a run over its moment's budget, a code
-check against a docs-only change, a push from a linked worktree. Moments, budgets and classes are
-DATA in `scripts/gate-tiers.json`; the analyser names no stage, so the discipline changes by editing
-that JSON. Telemetry sees WHO ran WHAT and HOW LONG — whether a check CAN fail is mutation-proving's
-job.
+Every `verify*` and `test:one` run appends one TSV row to `.gate-trace.log` (gitignored);
+`npm run trace:report` turns rows into findings — a forbidden stage run standalone, a run over its
+moment's budget, a code check against a docs-only change, a push from a linked worktree. Moments,
+budgets and classes are DATA in `scripts/gate-tiers.json`; the analyser names no stage, so the
+discipline changes by editing that JSON. Telemetry sees WHO ran WHAT and HOW LONG — whether a check
+CAN fail is mutation-proving's job.
 
 ## By change type
 
@@ -37,17 +43,15 @@ job.
 | Native config plugin                    | `npx expo prebuild --clean && npm run ios` / `android`      |
 | `package.json` dependency               | `npx expo install --fix && npx expo-doctor`                 |
 | `babel.config.js` / `metro.config.js`   | Restart dev server with `--clear`                           |
-| Test file only                          | `npm run test -- <path>`                                    |
+| Test file only                          | `npm run test:one -- <path>` (through the tracer)           |
 
 ## What the git hooks enforce
 
 - **pre-commit** — `lint-staged` (oxlint --fix → eslint --fix → prettier) on the staged
   files, then the TDD sibling gate (`scripts/check-test-siblings.mjs`, staged-only), then
-  a **repo-wide** `lint:oxlint` + `format:check`. The repo-wide pass exists because
-  `lint-staged` restores the _unstaged_ hunks of a partially staged file after fixing it
-  — that is how "already formatted but never committed" files appear in the tree. Both
-  repo-wide checks run before the hook decides, so one attempt reports everything.
-  Remedy: `npm run fix && git add -u`.
+  a **repo-wide** `lint:oxlint`, `format:check` and `typecheck`, all three run before the
+  hook decides so one attempt reports everything. Why the repo-wide pass exists:
+  `DECISIONS.md` § TDD sibling gate on pre-commit. Remedy: `npm run fix && git add -u`.
 - **commit-msg** — commitlint (Conventional Commits, subject ≤96 chars).
 - **pre-push** — `npm run verify:ci`, the same script CI runs.
 
@@ -63,26 +67,19 @@ Three rungs, and the split is deliberate:
   `jest --onlyChanged --passWithNoTests` (only tests git sees as affected by uncommitted work).
   `--onlyChanged` follows the module graph from changed files, so cross-cutting suites and
   `scripts/**` tests (`test:scripts`) surface at the push chain, not during iteration.
-- **`npm run verify`** — every check that works OFFLINE, in order: `check-hooks` →
-  `lint:oxlint` → `format:check` → `typecheck` → `lint` (cached) → `test:scripts` →
-  `test:coverage` — cheap independent stages first. An implementer with no network can
-  still run the whole thing. **No gate preflight here, deliberately:** this gate has no
-  production build, no e2e port and no required env, so every candidate check would be
-  one that cannot fail — and a check that cannot fail only claims coverage.
+- **`npm run verify`** — every check that works OFFLINE. Stage order: the `verify:inner` script in
+  `package.json` (cheap independent stages first); the superset rule and the push/CI split:
+  `AGENTS.md` § Commands / the gate; why: `DECISIONS.md` § The gate contract. **No gate preflight
+  here, deliberately:** this gate has no production build, no e2e port and no required env, so every
+  candidate check would be one that cannot fail — and a check that cannot fail only claims coverage.
 - **`npm run verify:ci`** — `audit:gate` (needs the registry) + `verify`. This is
   what husky pre-push runs and what the CI job runs, as a single step.
-
-`verify` is a **strict superset of the offline checks CI performs**. The rule that
-keeps it that way: a new check goes into the script, never only into
-`.github/workflows/ci.yml`. A check that lives only in the workflow means a green
-local gate no longer predicts a green pipeline — which is the exact failure this
-contract exists to remove.
 
 `npm run test:mutation` sits on neither rung on purpose: it runs weekly via the
 `mutation.yml` cron, never as part of `verify` — see AGENTS.md § Mutation testing.
 
-Read the exit code without a pipe — `npm run verify:iter > /tmp/verify.log 2>&1; echo $?`.
-Piping to `tail` returns the pipe's status, so a failed run reads as a pass.
+The checklist (exit code without a pipe, prove the gate can go red, name the condition under which a
+green would have been red): `.cursor/rules/agent-pipeline.mdc` § 4.1a — one home.
 
 When it fails: `npm run fix && git add -u` for lint/format findings. Never lower a
 severity, move a coverage threshold, or extend an ignore list to reach green.
@@ -148,26 +145,7 @@ Router v5+) rather than the old route-group redirect pattern (`(auth)`/`(app)` +
 
 ## Content variance
 
-Any component that renders authored copy must be proven against content it has not seen. The states live
-in `src/test/contentStress.ts`: `minimal` / `typical` / `long` / `unbroken` for text, `none` / `one` /
-`many` for collections, plus the OS **font scale** — the axis with no web equivalent, and the one that
-breaks a fixed-height control.
-
-What this template can and cannot check, stated rather than implied:
-
-- **It can assert the PROPS that bound a layout** — `numberOfLines` + `ellipsizeMode` on a summary row,
-  a text column that can shrink, `maxFontSizeMultiplier` on a label inside a fixed-height control.
-- **It cannot assert pixels.** RNTL renders to a tree with no layout engine behind it. There is no
-  browser to measure in, so unlike the web siblings there is no geometry harness here; the device run is
-  `npm run maestro`, and it is not in the gate.
-- **Some props do not survive NativeWind's JSX interop** into what RNTL exposes — measured on the button
-  label, whose rendered props are only `className` and `children`. Where that happens the assertion goes
-  against the module SOURCE with the reason next to it, because a render assertion would be permanently
-  red for a correct component.
-
-Green also means nothing until you have seen the check go red. When you add or change a guard, remove it
-once on purpose and confirm the test refuses, then revert — both guards here were proven that way.
-
-**Before believing a green result, name the concrete condition under which it would have been RED.** If
-you cannot name one, the check proved nothing, and a check that cannot fail still gets recorded as
-evidence.
+The rule and the native axes: `AGENTS.md` § Critical rules › Content variance, and the RNTL limit
+stated right below it. Why, and what was measured: `DECISIONS.md` § Content variance on native: props,
+not pixels. Proving a guard can go red and naming the condition: `.cursor/rules/agent-pipeline.mdc`
+§ 4.1a — one home.

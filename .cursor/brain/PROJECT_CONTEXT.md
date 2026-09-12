@@ -27,8 +27,8 @@ ships the toolchain and the architectural spine.
 | State          | Zustand + devtools + persist                                         | 5                     |
 | Server state   | TanStack Query (+ AppState focus)                                    | 5                     |
 | Env validation | @t3-oss/env-core + zod                                               | 0.13 / 4              |
-| Animation      | react-native-reanimated (+ worklets)                                 | 4.2 / 0.7.4           |
-| Gestures       | react-native-gesture-handler                                         | 2.30                  |
+| Animation      | react-native-reanimated (+ worklets)                                 | 4.5 / 0.10            |
+| Gestures       | react-native-gesture-handler                                         | 2.32                  |
 | Storage        | expo-secure-store (secrets) + AsyncStorage (cache)                   | —                     |
 | Observability  | stub `logger.ts` (wire Sentry/etc in product)                        | —                     |
 | Testing        | Jest + jest-expo + @testing-library/react-native (built-in matchers) | —                     |
