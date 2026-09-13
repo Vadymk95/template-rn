@@ -58,7 +58,7 @@ is last in the list.**
 
 ## What this repo cannot give you, and the honest substitute
 
-The web siblings ship `npm run probe`, which renders a route at several widths and saves a PNG, so an
+The web siblings ship a `probe` script, which renders a route at several widths and saves a PNG, so an
 agent can LOOK instead of inferring. **There is no equivalent here and that is a platform fact, not an
 omission:** RNTL renders to a tree with no layout engine, so nothing in the test stack can measure a
 pixel. The substitutes, in order of cost: assert the PROPS that bound a layout

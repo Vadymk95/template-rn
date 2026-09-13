@@ -106,6 +106,7 @@ npm run fix          # the one remedy: oxlint --fix → eslint --fix → prettie
 npm run ci:local     # verify:ci + expo-doctor (full local parity)
 npm run test:one -- <file> # one jest test file, through the tracer (not around it)
 npm run trace:report # findings from .gate-trace.log (forbidden moments, budgets, worktrees)
+npm run docs:check   # docs class: paths, scripts, sentinels, versions, command table, dead docs (pre-commit when docs are staged; weekly CI adds --weekly)
 npm run bench:verify # per-step timings when the gate feels slow
 npm run test:mutation # StrykerJS strength gate — weekly `mutation.yml` job, NOT in verify (2m per run)
 ```
@@ -141,7 +142,7 @@ that file disagree, the file wins and the prose is fixed in the same commit.
   (the security workflow, the scheduled mutation job, a mandatory dev-smoke job where the repo has one).
 
 **Prohibitions, stated as such.** An implementer or a reviewer NEVER runs `verify`, `verify:ci`,
-`verify:full`, `build` or the e2e suite by hand: the full chain belongs to the push hook and CI, and a
+the fuller `verify:*` variants, `build` or the e2e suite by hand: the full chain belongs to the push hook and CI, and a
 result an agent cannot act on is not worth its minutes. A review round gets the diff plus `verify:iter`;
 acceptance does not re-run the gate, the push does. Parallel lanes never run heavy stages (one machine,
 shared caches): heavy work serialises at the push. Individual scripts (`typecheck`, `lint`, `test`, `fix`)

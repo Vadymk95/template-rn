@@ -11,17 +11,65 @@
             "class": "code",
             "description": "hooks -> oxlint -> format -> tsc -> eslint -> script tests -> coverage"
         },
-        "verify:ci": { "class": "code", "description": "audit:gate -> verify; what pre-push runs" },
-        "verify:native": { "class": "code", "description": "verify -> expo doctor" },
-        "lint": { "class": "code", "description": "eslint (cached)" },
-        "test": { "class": "code", "description": "jest" },
-        "test:coverage": { "class": "code", "description": "coverage with the dropout guard" },
-        "test:one": { "class": "code", "description": "one jest test file, through the tracer" }
+        "verify:ci": {
+            "class": "code",
+            "description": "audit:gate -> verify; what pre-push runs"
+        },
+        "verify:native": {
+            "class": "code",
+            "description": "verify -> expo doctor"
+        },
+        "lint": {
+            "class": "code",
+            "description": "eslint (cached)"
+        },
+        "test": {
+            "class": "code",
+            "description": "jest"
+        },
+        "test:coverage": {
+            "class": "code",
+            "description": "coverage with the dropout guard"
+        },
+        "test:one": {
+            "class": "code",
+            "description": "one jest test file, through the tracer"
+        },
+        "docs:check": {
+            "class": "docs",
+            "description": "mechanical doc drift: paths, scripts, sentinels, versions, command table, dead docs; the push budget vs traced pushes of the same phase (report only)"
+        }
+    },
+    "docs": {
+        "_description": "Data for scripts/docs-check.mjs. sentinels = verbatim fragments of the tier law that may live only in AGENTS.md; versions = doc names -> package names compared with package-lock.json (node -> .nvmrc).",
+        "sentinels": [
+            "never shortened by what the diff touched",
+            "Legal at any time, in any lane, never a violation",
+            "the pre-commit hook owns it",
+            "Parallel lanes never run heavy stages",
+            "A skipped stage is printed, never silent"
+        ],
+        "internalScripts": [":raw$", "^verify:scaffold", "^lint:staged$", ":inner$"],
+        "versions": {
+            "React": "react",
+            "Expo": "expo",
+            "NativeWind": "nativewind",
+            "Jest": "jest",
+            "TypeScript": "typescript",
+            "Tailwind": "tailwindcss",
+            "Zustand": "zustand",
+            "StrykerJS": "@stryker-mutator/core",
+            "Stryker": "@stryker-mutator/core",
+            "ESLint": "eslint",
+            "Prettier": "prettier",
+            "oxlint": "oxlint",
+            "Node": "node"
+        }
     },
     "moments": {
         "iterate": {
             "description": "The desk. Run per change.",
-            "expected": ["verify:iter", "test:one"],
+            "expected": ["verify:iter", "test:one", "docs:check"],
             "forbidden": ["verify", "verify:ci", "verify:native", "lint", "test", "test:coverage"],
             "budgetSeconds": 15,
             "runsRegardlessOfDiff": false,
@@ -29,7 +77,7 @@
         },
         "commit": {
             "description": "Husky pre-commit: staged autofix, TDD sibling gate, repo-wide checks. Those run as direct commands, not traced npm scripts, so this moment is declared for completeness.",
-            "expected": [],
+            "expected": ["docs:check"],
             "forbidden": [],
             "budgetSeconds": 15,
             "runsRegardlessOfDiff": false,

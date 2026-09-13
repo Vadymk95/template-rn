@@ -117,12 +117,12 @@ describe('gate-trace passthrough (the one thing that must not be got wrong)', ()
 });
 
 describe('gate-trace log line shape', () => {
-    it('writes exactly 8 tab-separated fields in the documented order', () => {
+    it('writes exactly 9 tab-separated fields in the documented order', () => {
         const repo = makeRepo();
         cleanupDirs.push(repo);
         runWrapper(repo, ['shape', '--', 'node', '-e', 'process.exit(0)']);
         const fields = readLogLines(repo)[0].split('\t');
-        assert.equal(fields.length, 8);
+        assert.equal(fields.length, 9);
         assert.doesNotThrow(() => new Date(fields[0]).toISOString());
         assert.equal(fields[1], 'shape');
         assert.ok(Number(fields[2]) >= 0);
@@ -256,7 +256,7 @@ describe('classifyChange / parseStatusPath / isDocsPath (pure)', () => {
 });
 
 describe('formatLogLine (pure)', () => {
-    it('joins the 8 fields in the documented order, tab-separated', () => {
+    it('joins the 9 fields in the documented order, tab-separated', () => {
         const line = formatLogLine({
             timestamp: '2026-08-30T00:00:00.000Z',
             label: 'verify:iter',
@@ -266,7 +266,8 @@ describe('formatLogLine (pure)', () => {
                 branch: 'master',
                 toplevel: '/repo',
                 worktreeKind: 'main',
-                changeClass: 'code'
+                changeClass: 'code',
+                phase: '0'
             }
         });
         assert.deepEqual(line.split('\t'), [
@@ -277,7 +278,8 @@ describe('formatLogLine (pure)', () => {
             'master',
             '/repo',
             'main',
-            'code'
+            'code',
+            '0'
         ]);
     });
 

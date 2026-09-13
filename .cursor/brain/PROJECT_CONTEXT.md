@@ -91,7 +91,7 @@ Default `staleTime: 60s`, `gcTime: 5min`, retry skips 4xx errors. The
 | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
 | `networkMode: 'offlineFirst'` + `onlineManager` via `@react-native-community/netinfo` | Default `'online'` mode on mobile with spotty signal looks like a broken app                                        | `src/lib/queryClient.ts` defaultOptions |
 | Query key factory per feature                                                         | Prefix-based invalidation; `queryOptions()` gives type-safe `getQueryData` without generics                         | `src/features/<name>/api/<name>Keys.ts` |
-| `persistQueryClient` with `shouldDehydrateQuery` whitelist                            | Offline reads between sessions; whitelist only "important" queries (profile, settings), never search/infinite lists | new `src/lib/queryPersist.ts`           |
+| `persistQueryClient` with `shouldDehydrateQuery` whitelist                            | Offline reads between sessions; whitelist only "important" queries (profile, settings), never search/infinite lists | new `src/lib/queryClient.ts`            |
 
 **Hard rule:** server state goes in TanStack Query, client/UI state goes in
 Zustand. Never copy API response data into a Zustand store — that creates a

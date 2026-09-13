@@ -189,6 +189,28 @@ checks and will fail the PR the same way.
 
 ```bash
 npm run verify:iter   # the iterate moment: oxlint → tsc (incremental) → jest --onlyChanged, seconds
+npm run docs:check    # mechanical doc drift: paths, scripts, sentinels, versions, command table, dead docs
+```
+
+Drill-downs on a specific failure (none of these is a moment):
+
+```bash
+npm run lint:oxlint              # oxlint alone, repo-wide
+npm run lint:fix                 # eslint --fix
+npm run format                   # prettier --write
+npm run format:check             # prettier --check
+npm run test:watch               # jest --watch
+npm run test:coverage            # coverage thresholds (scripts/check-coverage.mjs)
+npm run test:scripts             # node:test suites of the gate scripts
+npm run verify:native            # verify + expo-doctor
+npm run verify:rc                # react-compiler-healthcheck on src
+npm run bundle:analyze           # Expo Atlas export, iOS
+npm run bundle:analyze:android   # Expo Atlas export, Android
+npm run perf:measure             # bundle metrics from the last export
+npm run perf:capture             # export + metrics, iOS
+npm run perf:capture:all         # export + metrics, both platforms
+npm run perf:baseline            # write scripts/perf-baseline.json
+npm run perf:check               # compare against the baseline
 ```
 
 The full chain belongs to the pre-push hook and CI (`AGENTS.md` § Commands / the gate).
@@ -237,6 +259,12 @@ npm run start:tunnel              # QR/link over the internet (Expo Go / Dev Cli
 npm run start:tunnel:clear        # tunnel + clean Metro cache
 npm run ios                       # Mac only
 npm run android
+npm run ios:dev                   # Metro + the iOS simulator, no Expo Go hint
+npm run android:dev               # Metro + the Android emulator, no Expo Go hint
+npm run start:devclient           # Metro for a Dev Client build (plain expo start)
+npm run start:devclient:clear     # same, resets the Metro cache
+npm run prebuild:preview          # native projects for the preview variant (APP_VARIANT=preview)
+npm run doctor                    # expo-doctor: dependencies match the SDK
 ```
 
 ### Native tooling for local emulators
