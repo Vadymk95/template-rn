@@ -63,18 +63,17 @@ jobs:
               run: npm run doctor
               continue-on-error: true
 
-    dependency-review:
-        name: Dependency review
-        runs-on: ubuntu-latest
-        if: github.event_name == 'pull_request'
-        timeout-minutes: 5
-        permissions:
-            contents: read
-            pull-requests: read
-
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-
-            - name: Review dependency changes for vulnerabilities / license issues
-              uses: actions/dependency-review-action@v5
+    # NO dependency-review job, and this is a measurement rather than an omission. It was here, and
+    # it could never pass: the action answers "Dependency review is not supported on this repository.
+    # Please ensure that Dependency graph is enabled", and the Dependency graph is not available to
+    # this private repository on this plan - enabling it through the API on 2026-09-13 changed
+    # nothing and the rerun failed identically.
+    #
+    # It had been red since the day it was added, and nobody saw it, because every change went
+    # straight to master where pull-request jobs never run. The first pull request this repository
+    # ever opened surfaced it in five seconds. A check that cannot pass is worse than no check: it
+    # trains everyone to read red as normal.
+    #
+    # Bring it back the day the repository becomes public, or the plan gains the Dependency graph.
+    # The job body was four steps and is one `git revert` away; nothing about it was wrong except
+    # that the platform underneath it was not there.
