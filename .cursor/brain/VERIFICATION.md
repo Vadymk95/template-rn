@@ -8,6 +8,7 @@ hooks, the tracer and what the absence of a scaffold phase is based on.
 
 - **Iterate** — `npm run verify:iter`, per change, seconds.
 - **Docs, rules, commands, brain, tier data** (`*.md`, `*.mdc`, `scripts/gate-tiers.json`) — `npm run docs:check` (the pre-commit hook runs it when such files are staged; `--weekly` adds past revisit dates; it also refuses a focused test and an unconditional skip without `quarantine until YYYY-MM-DD` + reason)
+- **Proposing a new Maestro flow** — the suite is counted in invariants, not screens (`AGENTS.md` § the gate); `npm run docs:check` reports the suite against the ceiling in `scripts/gate-tiers.json` § suites
 - **Commit** — the pre-commit hook (below). Nothing by hand.
 - **Push** — the pre-push hook runs `verify:ci`. Never run it, `verify`, or `ci:local` by hand;
   `ci:local` additionally needs local native tooling and takes minutes.

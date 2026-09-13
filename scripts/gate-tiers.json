@@ -66,6 +66,16 @@
             "Node": "node"
         }
     },
+    "suites": {
+        "_description": "Ceilings on the device suite. It is counted in INVARIANTS, not screens (AGENTS.md § the gate): a route earns a Maestro flow only when it brings an invariant the existing specs do not measure. A suite over its ceiling is a finding, and so is a ceiling more than twice the measurement — that high it flags nothing. Raise a number on a measurement plus a DECISIONS.md line, like a size budget.",
+        "maestro": {
+            "dir": ".maestro",
+            "match": "\\.yaml$",
+            "count": "files",
+            "max": 4,
+            "_measured": "2 on 2026-09-13"
+        }
+    },
     "moments": {
         "iterate": {
             "description": "The desk. Run per change.",
@@ -87,6 +97,12 @@
             "description": "Husky pre-push -> verify:ci. Runs unconditionally, never shortened by what the diff touched.",
             "expected": ["verify:ci"],
             "budgetSeconds": 30,
+            "budgetSecondsByPhase": {
+                "0": 20,
+                "1": 20,
+                "full": 20
+            },
+            "_budgetMeasured": "2026-09-13, p90 from .gate-trace.log: phase 0 20s ceiling, phase 1 20s ceiling, phase full 20s ceiling",
             "forbidden": [],
             "runsRegardlessOfDiff": true,
             "requiresMainCheckout": true
