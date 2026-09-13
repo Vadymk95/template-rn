@@ -208,60 +208,129 @@ describe('budget', () => {
         assert.equal(rows[0].phase, '');
         assert.equal(rows[1].phase, '0');
     });
-    it('skips below three runs in the phase, warns above the budget or when the budget is twice the p90', () => {
-        const row = (ms, phase = '0') => ({
-            label: 'verify:push',
-            durationMs: ms,
-            exitCode: '0',
-            phase
+    const row = (durationMs, phase = '0', exitCode = '0') => ({
+        label: 'verify:ci',
+        durationMs,
+        exitCode,
+        phase
+    });
+    const many = (count, ms) => Array.from({ length: count }, () => row(ms));
+
+    it('calibrates to this machine instead of judging it by a number from another', () => {
+        const first = budgetReport({
+            rows: many(10, 24000),
+            label: 'verify:ci',
+            phase: '0',
+            minRuns: 8
         });
-        const report = (rows) =>
-            budgetReport({ rows, label: 'verify:push', budgetSeconds: 60, phase: '0' }).kind;
-        assert.equal(report([row(1000)]), 'skip');
-        assert.equal(report([row(70000), row(75000), row(80000)]), 'warn');
-        assert.equal(report([row(10000), row(11000), row(12000)]), 'warn');
-        assert.equal(report([row(50000), row(55000), row(58000)]), 'ok');
-        assert.equal(report([row(70000, 'full'), row(75000, 'full'), row(80000, 'full')]), 'skip');
+
+        assert.equal(first.kind, 'ok');
+        assert.equal(first.baselineMs, 24000);
+        assert.ok(first.message.includes('calibrated to THIS machine'));
     });
 
-    /*
-     * The window is what lets the budget RECOVER. Without it one bad day stays in the number until
-     * enough good runs dilute it, and the tempting fix is then to raise the budget - which is what a
-     * budget exists to prevent. Observed in a sibling repository on 2026-09-13: the reported p90 rose
-     * through 350.8s, 359.3s and 382.0s in one afternoon while the suite it measures got faster.
-     */
-    it('takes p90 over the last N runs when a window is set, and names the window', () => {
-        const row = (durationMs) => ({
-            label: 'verify:push',
-            durationMs,
-            exitCode: '0',
-            phase: '0'
-        });
-        // Ten slow runs, then twenty fast ones: the window must see only the fast regime.
-        const rows = [
-            ...Array.from({ length: 10 }, () => row(120000)),
-            ...Array.from({ length: 20 }, () => row(40000))
-        ];
-        const args = { rows, label: 'verify:push', budgetSeconds: 60, phase: '0' };
-
-        const unwindowed = budgetReport(args);
-        assert.equal(unwindowed.kind, 'warn');
-        assert.ok(unwindowed.message.includes('30 runs'));
-
-        const windowed = budgetReport({ ...args, budgetWindow: 20 });
-        assert.equal(windowed.kind, 'ok');
-        assert.ok(windowed.message.includes('the last 20 of 30 runs'));
-
-        // Fewer rows than the window uses them all, and the scope line says so plainly.
-        const few = budgetReport({
-            rows: [row(40000), row(41000), row(42000)],
-            label: 'verify:push',
-            budgetSeconds: 60,
+    /* The whole point of the rewrite, and it matters most in a template: the same gate on slower
+       hardware must not read red. Two machines, one three times the other, both fine. */
+    it('reports the same verdict on fast and slow hardware', () => {
+        const fast = budgetReport({
+            rows: many(10, 20000),
+            label: 'verify:ci',
             phase: '0',
+            minRuns: 8
+        });
+        const slow = budgetReport({
+            rows: many(10, 60000),
+            label: 'verify:ci',
+            phase: '0',
+            minRuns: 8
+        });
+
+        assert.equal(fast.kind, 'ok');
+        assert.equal(slow.kind, 'ok');
+        assert.equal(
+            budgetReport({
+                rows: many(10, 60000),
+                label: 'verify:ci',
+                phase: '0',
+                minRuns: 8,
+                baselineMs: slow.baselineMs
+            }).kind,
+            'ok'
+        );
+    });
+
+    it('waits for enough runs of its own before it judges anything', () => {
+        const report = budgetReport({
+            rows: many(7, 24000),
+            label: 'verify:ci',
+            phase: '0',
+            minRuns: 8
+        });
+
+        assert.equal(report.kind, 'skip');
+        assert.ok(report.message.includes('CALIBRATING'));
+    });
+
+    it('finds drift past the ratio and names both numbers, without moving the baseline up', () => {
+        const report = budgetReport({
+            rows: many(10, 40000),
+            label: 'verify:ci',
+            phase: '0',
+            minRuns: 8,
+            driftRatio: 1.3,
+            baselineMs: 24000
+        });
+
+        assert.equal(report.kind, 'warn');
+        assert.ok(report.message.includes('1.67x'));
+        assert.equal(report.baselineMs, 24000);
+    });
+
+    /* Down-only ratchet: a gate that genuinely got faster lowers the bar it is held to next time,
+       with no edit and no decision. */
+    it('lowers the baseline by itself when the gate gets faster', () => {
+        const report = budgetReport({
+            rows: many(10, 15000),
+            label: 'verify:ci',
+            phase: '0',
+            minRuns: 8,
+            baselineMs: 24000
+        });
+
+        assert.equal(report.baselineMs, 15000);
+        assert.ok(report.message.includes('is faster'));
+    });
+
+    it('keeps the phases apart, because a phase-0 push is a different measurement', () => {
+        const rows = [...many(10, 20000), ...many(10, 90000).map((r) => ({ ...r, phase: 'full' }))];
+
+        assert.equal(
+            budgetReport({ rows, label: 'verify:ci', phase: '0', minRuns: 8 }).baselineMs,
+            20000
+        );
+        assert.equal(
+            budgetReport({ rows, label: 'verify:ci', phase: 'full', minRuns: 8 }).baselineMs,
+            90000
+        );
+    });
+
+    it('takes p90 over the last N runs when a window is set, and names the window', () => {
+        const rows = [...many(10, 60000), ...many(20, 24000)];
+
+        assert.equal(
+            budgetReport({ rows, label: 'verify:ci', phase: '0', minRuns: 8 }).baselineMs,
+            60000
+        );
+
+        const windowed = budgetReport({
+            rows,
+            label: 'verify:ci',
+            phase: '0',
+            minRuns: 8,
             budgetWindow: 20
         });
-        assert.equal(few.kind, 'ok');
-        assert.ok(few.message.includes('3 runs'));
+        assert.equal(windowed.baselineMs, 24000);
+        assert.ok(windowed.message.includes('the last 20 of 30 runs'));
     });
 });
 
