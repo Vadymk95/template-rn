@@ -71,7 +71,12 @@ export default tseslint.config(
             'dist/**',
             'ios/**',
             'android/**',
-            'coverage/**'
+            'coverage/**',
+            // An agent worktree created under the repository root is a full SECOND CHECKOUT, and
+            // every ignore above is root-anchored, so its copies walk straight past them. Same
+            // class as the `.stryker-tmp` line above, and measured with a probe file on
+            // 2026-09-13: without this line eslint linted the copy as if it were ours.
+            '.claude/worktrees/**'
         ]
     },
     js.configs.recommended,

@@ -147,6 +147,10 @@
     },
     "jest": {
         "preset": "jest-expo",
+        "testPathIgnorePatterns": [
+            "/node_modules/",
+            "/\\.claude/worktrees/"
+        ],
         "moduleNameMapper": {
             "^@/(.*)$": "<rootDir>/src/$1"
         },
