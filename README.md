@@ -98,13 +98,15 @@ src/
   app/                            # Expo Router route files only
     _layout.tsx                   # providers, splash, ErrorBoundary
     (tabs)/
-      index.tsx                   # thin route -> mounts Todo workspace widget
+      index.tsx                   # Start tab, thin route -> mounts the start-guide widget
+      tasks.tsx                   # Tasks tab, thin route -> mounts the Todo workspace widget
       settings.tsx
     +not-found.tsx
   features/
     todo*/                        # user actions: create/edit/filter/toggle/delete
   widgets/
-    todo-workspace/               # main screen composition for the starter slice
+    start-guide/                  # first screen after a clone: what ships, the gate, commands, first steps
+    todo-workspace/               # Tasks tab composition for the starter slice
   store/
     todo/                         # local Todo domain state
     user/                         # example persisted auth-adjacent state

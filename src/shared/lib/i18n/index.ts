@@ -1,4 +1,4 @@
-// Scale note: all namespaces loaded statically (1 locale × 6 NS today).
+// Scale note: all namespaces loaded statically (1 locale × 7 NS today).
 // When SUPPORTED_LANGUAGES grows past 2, migrate to lazy namespace
 // load via i18next.addResourceBundle on language change. See
 // PROJECT_CONTEXT.md → "Full scope: strengths vs deferred tools".
@@ -20,6 +20,7 @@ import errorsEn from '@/shared/locales/en/errors.json';
 import homeEn from '@/shared/locales/en/home.json';
 import notFoundEn from '@/shared/locales/en/notFound.json';
 import settingsEn from '@/shared/locales/en/settings.json';
+import startEn from '@/shared/locales/en/start.json';
 import todoEn from '@/shared/locales/en/todo.json';
 
 const resolveInitialLanguage = (): SupportedLanguage => {
@@ -37,6 +38,7 @@ const bundledResources = {
         home: homeEn,
         settings: settingsEn,
         notFound: notFoundEn,
+        start: startEn,
         todo: todoEn
     }
 } as const;

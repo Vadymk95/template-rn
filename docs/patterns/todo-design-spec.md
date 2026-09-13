@@ -29,7 +29,7 @@ without rewriting the whole screen architecture.
 
 ## Product Shape
 
-The first tab becomes the main **Todo workspace** and replaces the simplistic
+The Tasks tab (`src/app/(tabs)/tasks.tsx`; the first tab is the start guide since 2026-09-13) is the main **Todo workspace** and replaces the simplistic
 starter surface.
 
 The workspace includes:
@@ -414,7 +414,7 @@ but avoid scattering ad-hoc labels across multiple files.
 
 ## Route Composition
 
-`src/app/(tabs)/index.tsx` should remain thin. The route file should render the
+`src/app/(tabs)/tasks.tsx` should remain thin. The route file should render the
 workspace widget or screen entry rather than contain domain logic.
 
 This is important because the template is meant to teach route composition, not

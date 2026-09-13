@@ -6,8 +6,11 @@ import { COLOR_VALUES } from '@/shared/lib/theme/colors';
 
 // The shared `expo-router` mock renders children and drops props, so `screenOptions`
 // is invisible to it. This file's mock captures them instead — without that, a test
-// asserting the tab tint would pass no matter what the layout passed.
+// asserting the tab tint would pass no matter what the layout passed. The `Screen`
+// mock records each tab in declaration order for the same reason: the order and the
+// titles are the contract a person sees first.
 const capturedScreenOptions: { tabBarActiveTintColor?: string }[] = [];
+const capturedScreens: { name: string; title: string | undefined }[] = [];
 
 jest.mock('expo-router', () => ({
     Tabs: Object.assign(
@@ -23,7 +26,12 @@ jest.mock('expo-router', () => ({
             }
             return children;
         },
-        { Screen: (): null => null }
+        {
+            Screen: ({ name, options }: { name: string; options?: { title?: string } }): null => {
+                capturedScreens.push({ name, title: options?.title });
+                return null;
+            }
+        }
     )
 }));
 
@@ -41,7 +49,28 @@ const renderWithScheme = async (colorScheme: 'light' | 'dark' | null): Promise<v
 describe('TabsLayout', () => {
     beforeEach(() => {
         capturedScreenOptions.length = 0;
+        capturedScreens.length = 0;
         mockUseColorScheme.mockReset();
+    });
+
+    it('declares the tabs as Start, Tasks, Settings — in that order', async () => {
+        await renderWithScheme('light');
+
+        expect(capturedScreens.map((screen) => screen.name)).toEqual([
+            'index',
+            'tasks',
+            'settings'
+        ]);
+    });
+
+    it('titles every tab from the common namespace', async () => {
+        await renderWithScheme('light');
+
+        expect(capturedScreens.map((screen) => screen.title)).toEqual([
+            'common:tabs.startTitle',
+            'common:tabs.tasksTitle',
+            'common:tabs.settingsTitle'
+        ]);
     });
 
     it('tints the active tab with the light foreground under the light scheme', async () => {

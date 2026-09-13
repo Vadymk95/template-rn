@@ -4,7 +4,8 @@ import type { ComponentProps } from 'react';
 type IoniconGlyphName = ComponentProps<typeof IoniconsBase>['name'];
 
 /** Tab route `name` prop → Ionicons glyph (Expo vector-icons contract). */
-export const TAB_SCREEN_IONICONS: Record<'index' | 'settings', IoniconGlyphName> = {
+export const TAB_SCREEN_IONICONS: Record<'index' | 'tasks' | 'settings', IoniconGlyphName> = {
     index: 'home-outline',
+    tasks: 'checkbox-outline',
     settings: 'settings-outline'
 } as const;

@@ -22,10 +22,21 @@ Imports flow **down-stack only** (app may use shared; shared must not import ent
 | Init failure UI (no `t()`)               | `src/shared/lib/i18n/I18nInitErrorFallback.tsx`                                                    |
 | Initial language from device             | `expo-localization` inside `index.ts` (add more `SUPPORTED_LANGUAGES` + JSON when you add locales) |
 
+## Start guide (template seed, the first tab)
+
+| Concern                              | Where                                                                                |
+| ------------------------------------ | ------------------------------------------------------------------------------------ |
+| Route (Start tab)                    | `src/app/(tabs)/index.tsx` — thin, mounts the widget                                 |
+| Screen composition                   | `src/widgets/start-guide/StartGuideScreen.tsx`                                       |
+| Section + rows (list, grouped rows)  | `src/widgets/start-guide/StartGuideSection.tsx`                                      |
+| Commands, paths, package names, keys | `src/widgets/start-guide/constants.ts` — the tests prove each one exists in the tree |
+| Copy namespace                       | `src/shared/locales/en/start.json`                                                   |
+
 ## Todo vertical slice (reference implementation)
 
 | Concern                 | Where                                                   |
 | ----------------------- | ------------------------------------------------------- |
+| Route (Tasks tab)       | `src/app/(tabs)/tasks.tsx` — thin, mounts the widget    |
 | Screen orchestration    | `src/widgets/todo-workspace/TodoWorkspaceScreen.tsx`    |
 | Feature actions/dialogs | `src/features/todo-*/` + `src/features/todo/`           |
 | Client state            | `src/store/todo/todoStore.ts` + helpers in `store/todo` |
@@ -49,7 +60,8 @@ Imports flow **down-stack only** (app may use shared; shared must not import ent
 | App entry                              | `expo-router/entry` (via `package.json` `main`) |
 | Root layout (providers, ErrorBoundary) | `src/app/_layout.tsx`                           |
 | Root stack & modal presentation        | `src/app/_RootStack.tsx`                        |
-| First visible screen                   | `src/app/(tabs)/index.tsx`                      |
+| First visible screen (Start tab)       | `src/app/(tabs)/index.tsx`                      |
+| Tabs, in order: Start, Tasks, Settings | `src/app/(tabs)/_layout.tsx`                    |
 | Expo runtime config                    | `app.config.ts` (dynamic, env-driven)           |
 | Env validation                         | `src/env.ts`                                    |
 

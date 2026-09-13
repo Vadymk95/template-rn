@@ -11,7 +11,8 @@
         "generic": "Something went wrong"
     },
     "tabs": {
-        "homeTitle": "Tasks",
+        "startTitle": "Start",
+        "tasksTitle": "Tasks",
         "settingsTitle": "Settings"
     }
 }

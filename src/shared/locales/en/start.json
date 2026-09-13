@@ -1,0 +1,63 @@
+{
+    "title": "A React Native foundation with the gate already wired",
+    "description": "Expo with Expo Router, React Native, TypeScript strict, NativeWind on Tailwind, Jest with Testing Library — plus the hooks, CI and agent flow that keep a fork honest from the first commit.",
+    "seed": "This screen is the template seed: replace it with the first real screen and keep the sections you still need.",
+    "inside": {
+        "title": "What's inside",
+        "expo": "Expo with file-based routing, typed routes and Continuous Native Generation",
+        "react": "React Native with the React Compiler on, so manual memoisation stays out",
+        "typescript": "TypeScript strict with type-aware ESLint and an oxlint pre-pass",
+        "styling": "NativeWind on Tailwind tokens: className only, no StyleSheet",
+        "state": "Zustand for client state, TanStack Query for server state",
+        "env": "Zod-validated env: nothing reads process.env directly",
+        "i18n": "i18next with bundled namespaces and typed keys",
+        "testing": "Jest with Testing Library, StrykerJS on a weekly schedule, Maestro flows for native pixels"
+    },
+    "flow": {
+        "title": "How work flows",
+        "iterate": {
+            "title": "Iterate",
+            "text": "Per change, seconds: oxlint, tsc and the changed tests. Nothing heavier."
+        },
+        "commit": {
+            "title": "Commit",
+            "text": "The pre-commit hook does the work: staged autofix, the TDD sibling gate, the repo-wide cheap checks, the docs check when docs are staged."
+        },
+        "push": {
+            "title": "Push",
+            "text": "The pre-push hook runs the gate once: the audit gate plus every offline check. No build and no e2e stage sit in this gate."
+        },
+        "ci": {
+            "title": "CI",
+            "text": "The same chain, plus what only CI can do: the security workflow, dependency review, the weekly docs check and the weekly mutation score."
+        }
+    },
+    "agents": {
+        "title": "Agent flow",
+        "lead": "One file every tool reads. Cursor, Claude Code and Copilot all start from it; the brain files it points at hold the depth.",
+        "commands": {
+            "onboard": "read the brain, verify it against the code, report drift, stop",
+            "feat": "reuse check, scope, plan, test-first, gate, report",
+            "test": "tests that hunt corner cases at the seams, not the happy path",
+            "review": "senior review of the diff: leaks, security, bug hunt",
+            "docs": "bring the guide and the brain back in line with the code"
+        },
+        "spec": "Anything bigger than a one-sentence diff starts with a spec and a plan, copied from the templates folder, reviewed before the first edit."
+    },
+    "reading": {
+        "title": "Where to read",
+        "index": "a situation mapped to the two or three files that answer it",
+        "map": "entry points, state boundaries, the route table",
+        "skeletons": "danger zones: files where a wrong edit breaks the app silently or in production only",
+        "verification": "what to run per kind of change",
+        "decisions": "why the stack is the way it is, with dates and revisit triggers",
+        "security": "the static security review: scope, findings, what must stay out of the bundle"
+    },
+    "steps": {
+        "title": "First steps",
+        "prepare": "installs the git hooks; lifecycle scripts are off by design",
+        "dev": "starts the Expo dev server; scan the QR with Expo Go",
+        "iter": "the iteration tier, run per change",
+        "graduate": "replace this screen with the first real screen and keep the Tasks demo until a real feature exists"
+    }
+}

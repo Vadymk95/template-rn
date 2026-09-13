@@ -1,7 +1,7 @@
 import type { ReactElement } from 'react';
 
-import { TodoWorkspaceScreen } from '@/widgets/todo-workspace/TodoWorkspaceScreen';
+import { StartGuideScreen } from '@/widgets/start-guide/StartGuideScreen';
 
-const HomeScreen = (): ReactElement => <TodoWorkspaceScreen />;
+const StartScreen = (): ReactElement => <StartGuideScreen />;
 
-export default HomeScreen;
+export default StartScreen;

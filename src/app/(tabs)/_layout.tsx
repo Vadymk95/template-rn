@@ -13,8 +13,12 @@ interface TabIconProps {
     size: number;
 }
 
-const HomeTabIcon = ({ color, size }: TabIconProps): ReactElement => (
+const StartTabIcon = ({ color, size }: TabIconProps): ReactElement => (
     <Ionicons name={TAB_SCREEN_IONICONS.index} color={color} size={size} />
+);
+
+const TasksTabIcon = ({ color, size }: TabIconProps): ReactElement => (
+    <Ionicons name={TAB_SCREEN_IONICONS.tasks} color={color} size={size} />
 );
 
 const SettingsTabIcon = ({ color, size }: TabIconProps): ReactElement => (
@@ -37,8 +41,15 @@ const TabsLayout = (): ReactElement => {
             <Tabs.Screen
                 name="index"
                 options={{
-                    title: t('tabs.homeTitle'),
-                    tabBarIcon: HomeTabIcon
+                    title: t('tabs.startTitle'),
+                    tabBarIcon: StartTabIcon
+                }}
+            />
+            <Tabs.Screen
+                name="tasks"
+                options={{
+                    title: t('tabs.tasksTitle'),
+                    tabBarIcon: TasksTabIcon
                 }}
             />
             <Tabs.Screen

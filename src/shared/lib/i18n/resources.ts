@@ -6,6 +6,7 @@ import type errorsEn from '@/shared/locales/en/errors.json';
 import type homeEn from '@/shared/locales/en/home.json';
 import type notFoundEn from '@/shared/locales/en/notFound.json';
 import type settingsEn from '@/shared/locales/en/settings.json';
+import type startEn from '@/shared/locales/en/start.json';
 import type todoEn from '@/shared/locales/en/todo.json';
 
 declare module 'i18next' {
@@ -17,6 +18,7 @@ declare module 'i18next' {
             home: typeof homeEn;
             settings: typeof settingsEn;
             notFound: typeof notFoundEn;
+            start: typeof startEn;
             todo: typeof todoEn;
         };
     }

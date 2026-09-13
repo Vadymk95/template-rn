@@ -526,7 +526,7 @@ Expected: PASS with boundaries respected: app → widgets → features → store
 
 **Files:**
 
-- Modify: `src/app/(tabs)/index.tsx`
+- Modify: `src/app/(tabs)/tasks.tsx` (the Todo route; `index.tsx` is the start guide since 2026-09-13)
 - Modify: `src/app/(tabs)/_layout.tsx`
 - Modify: `src/shared/locales/en/common.json`
 - Modify: `src/shared/locales/en/home.json`
@@ -538,7 +538,7 @@ Expected: PASS with boundaries respected: app → widgets → features → store
 Update the home route to stay thin:
 
 ```tsx
-// src/app/(tabs)/index.tsx
+// src/app/(tabs)/tasks.tsx
 import type { ReactElement } from 'react';
 
 import { TodoWorkspaceScreen } from '@/widgets/todo-workspace/TodoWorkspaceScreen';
@@ -602,7 +602,7 @@ Create `docs/template-reset.md` with a concise guide covering:
 
 ## Suggested Order
 
-1. Replace `src/app/(tabs)/index.tsx` composition with the real product's first screen.
+1. Replace the start guide in `src/app/(tabs)/index.tsx` with the real product's first screen, and the Tasks tab with a real feature.
 2. Remove todo domain/features/widgets.
 3. Keep building on `src/shared/ui/**` and `src/shared/lib/theme/**`.
 ```

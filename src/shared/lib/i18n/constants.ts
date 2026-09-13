@@ -11,6 +11,7 @@ export const DEFAULT_NAMESPACES = [
     'home',
     'settings',
     'notFound',
+    'start',
     'todo'
 ] as const;
 

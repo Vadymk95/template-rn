@@ -1,4 +1,4 @@
-# Smoke: launch → overview → toggle first todo complete → Active filter hides it.
+# Smoke: launch → Tasks tab → overview → toggle first todo complete → Active filter hides it.
 # Run all flows in folder: maestro test .maestro
 # Single file: maestro test .maestro/smoke.yaml
 # Requires MAESTRO_APP_ID (bundle id, e.g. com.example.templatern) and Maestro CLI.
@@ -7,6 +7,7 @@
 appId: ${MAESTRO_APP_ID}
 ---
 - launchApp
+- tapOn: 'Tasks'
 - assertVisible: 'Overview'
 - assertVisible: 'Review onboarding copy'
 - tapOn:

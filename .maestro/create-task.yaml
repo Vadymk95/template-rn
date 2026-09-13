@@ -5,6 +5,7 @@
 appId: ${MAESTRO_APP_ID}
 ---
 - launchApp
+- tapOn: 'Tasks'
 - assertVisible: 'Overview'
 - tapOn: 'New task'
 - assertVisible: 'Create task'
