@@ -102,7 +102,7 @@
                 "1": 20,
                 "full": 20
             },
-            "_budgetMeasured": "2026-09-13, p90 from .gate-trace.log: phase 0 20s ceiling, phase 1 20s ceiling, phase full 20s ceiling",
+            "_budgetMeasured": "20s, and DO NOT raise it on the red the window reports today. The reading is p90 23.7s over 6 runs, but the spread in the tracer is 9.7s to 46.3s and the most recent successful run is 16.4s - comfortably inside. The tail is machine load, not gate growth. The window flushes those runs as newer ones accumulate. Re-measure and move the number only when a QUIET run is itself above it.",
             "forbidden": [],
             "runsRegardlessOfDiff": true,
             "requiresMainCheckout": true,
