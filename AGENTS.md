@@ -106,7 +106,7 @@ npm run fix          # the one remedy: oxlint --fix → eslint --fix → prettie
 npm run ci:local     # verify:ci + expo-doctor (full local parity)
 npm run test:one -- <file> # one jest test file, through the tracer (not around it)
 npm run trace:report # findings from .gate-trace.log (forbidden moments, budgets, worktrees)
-npm run docs:check   # docs class: paths, scripts, sentinels, versions, command table, dead docs (pre-commit when docs are staged; weekly CI adds --weekly)
+npm run docs:check   # docs class: paths, scripts, sentinels, versions, command table, dead docs, test quarantines (pre-commit when docs are staged; weekly CI adds --weekly)
 npm run bench:verify # per-step timings when the gate feels slow
 npm run test:mutation # StrykerJS strength gate — weekly `mutation.yml` job, NOT in verify (2m per run)
 ```
