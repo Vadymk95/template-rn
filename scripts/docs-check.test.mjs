@@ -223,6 +223,46 @@ describe('budget', () => {
         assert.equal(report([row(50000), row(55000), row(58000)]), 'ok');
         assert.equal(report([row(70000, 'full'), row(75000, 'full'), row(80000, 'full')]), 'skip');
     });
+
+    /*
+     * The window is what lets the budget RECOVER. Without it one bad day stays in the number until
+     * enough good runs dilute it, and the tempting fix is then to raise the budget - which is what a
+     * budget exists to prevent. Observed in a sibling repository on 2026-09-13: the reported p90 rose
+     * through 350.8s, 359.3s and 382.0s in one afternoon while the suite it measures got faster.
+     */
+    it('takes p90 over the last N runs when a window is set, and names the window', () => {
+        const row = (durationMs) => ({
+            label: 'verify:push',
+            durationMs,
+            exitCode: '0',
+            phase: '0'
+        });
+        // Ten slow runs, then twenty fast ones: the window must see only the fast regime.
+        const rows = [
+            ...Array.from({ length: 10 }, () => row(120000)),
+            ...Array.from({ length: 20 }, () => row(40000))
+        ];
+        const args = { rows, label: 'verify:push', budgetSeconds: 60, phase: '0' };
+
+        const unwindowed = budgetReport(args);
+        assert.equal(unwindowed.kind, 'warn');
+        assert.ok(unwindowed.message.includes('30 runs'));
+
+        const windowed = budgetReport({ ...args, budgetWindow: 20 });
+        assert.equal(windowed.kind, 'ok');
+        assert.ok(windowed.message.includes('the last 20 of 30 runs'));
+
+        // Fewer rows than the window uses them all, and the scope line says so plainly.
+        const few = budgetReport({
+            rows: [row(40000), row(41000), row(42000)],
+            label: 'verify:push',
+            budgetSeconds: 60,
+            phase: '0',
+            budgetWindow: 20
+        });
+        assert.equal(few.kind, 'ok');
+        assert.ok(few.message.includes('3 runs'));
+    });
 });
 
 describe('checkRevisitDates', () => {
