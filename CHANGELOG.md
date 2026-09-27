@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.2](https://github.com/Vadymk95/template-rn/compare/v0.2.1...v0.2.2) (2026-09-27)
+
+
+### Maintenance
+
+* **deps:** bump the development-dependencies group across 1 directory with 7 updates ([#30](https://github.com/Vadymk95/template-rn/issues/30)) ([d0538d3](https://github.com/Vadymk95/template-rn/commit/d0538d391e64479dea6c5d1e094d7a9b82c55456))
+* **deps:** bump the production-dependencies group with 4 updates ([#27](https://github.com/Vadymk95/template-rn/issues/27)) ([48e1a1d](https://github.com/Vadymk95/template-rn/commit/48e1a1d8234c0f88177793f825fcbd01895cde7c))
+
+
+### CI
+
+* **deps:** bump googleapis/release-please-action in the actions group ([#26](https://github.com/Vadymk95/template-rn/issues/26)) ([68855af](https://github.com/Vadymk95/template-rn/commit/68855af466403b73bead8835680adc0624c4df36))
+
 ## [0.2.1](https://github.com/Vadymk95/template-rn/compare/v0.2.0...v0.2.1) (2026-09-13)
 
 
