@@ -44,12 +44,13 @@ CLAUDE.local.md
 # .claude/commands/ holds the repo's own agent commands and IS tracked. The
 # directory itself has to be re-included first: `.claude/` is ignored above (and
 # globally), and git will not descend into an ignored directory to see a negation
-# inside it. Machine-local settings stay untracked.
+# inside it. `.claude/settings.json` is tracked too: it carries the agent limits
+# every clone shares (AGENTS.md § Lanes). Machine-local settings stay untracked in settings.local.json.
 !.claude/
 !.claude/commands/
 !.claude/commands/**
+!.claude/settings.json
 .claude/settings.local.json
-.claude/settings.json
 .claude/worktrees/
 
 # Metro / Jest
