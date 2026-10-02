@@ -2,6 +2,30 @@
 
 Short record of non-obvious trade-offs. Update when reversing a decision.
 
+## [2026-10] `brace-expansion` floor raised; `node-forge` allowed until 2026-11-02 (2026-10-02)
+
+**`brace-expansion` floor raised, same entry, same cap.** `"brace-expansion": ">=5.0.9 <6"` aged into
+three new high advisories published after it was written: `GHSA-q2hr-2g5m-vwhr` (quadratic-time
+`{a},b}` expansion, fixed 5.0.12), `GHSA-qhr7-859c-m2p7` (unbounded recursion on nested brace groups,
+fixed 5.0.11), `GHSA-6j4f-fj2g-mc7p` (unbounded recursion in `parseCommaParts`, fixed 5.0.10). Raised
+to `">=5.0.12 <6"`, which clears all three; `npm ls brace-expansion` shows 5.0.12 everywhere.
+
+**`node-forge` (`GHSA-86w9-cpqp-85rv`, high — RSA PKCS#1 v1.5 signature verification accepts extra
+nested `DigestAlgorithm` elements) is allowed until 2026-11-02, not closed by a floor.**
+`first_patched_version` on the advisory is `null`; the vulnerable range is `<=1.4.0` and 1.4.0 is the
+newest version published to npm — there is no fixed release to float a floor to. Reaches this tree via
+`expo-updates → @expo/code-signing-certificates → node-forge` and `expo → @expo/cli → node-forge`,
+neither of which parses attacker-supplied RSA signatures at runtime in a shipped app. `npm`'s own
+`fixAvailable` proposes downgrading `expo` to `44.0.6` (`isSemVerMajor: true`) — the exact wrong
+remediation shape the override doctrine above warns about; not taken. This is the case the dated
+allowance exists for (precedent: the `extract-zip` allowances in the sibling web templates, added
+2026-08-25 for the same reason — no fixed release in any line). `scripts/audit-allowlist.json` carries
+one entry, `id`/`expires`/`reason`/`upstream` matching that precedent's shape; `audit:gate` passes
+(exit 0) and prints the allowance's reason and expiry on every run, so the gap stays visible rather
+than silent. **Recheck at expiry (2026-11-02):** `npm view node-forge versions` for a release past
+1.4.0, or an `expo-updates` / `@expo/code-signing-certificates` release that drops the dependency —
+re-date with a fresh reading if neither exists.
+
 ## [2026-09] Agent limits in a committed `.claude/settings.json`; one Dependabot group; release token wired
 
 **Decision**: `.claude/settings.json` is tracked and denies, in every permission mode: reading .env files
