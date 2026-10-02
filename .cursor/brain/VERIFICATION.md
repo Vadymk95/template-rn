@@ -86,6 +86,10 @@ green would have been red): `.cursor/rules/agent-pipeline.mdc` § 4.1a — one h
 When it fails: `npm run fix && git add -u` for lint/format findings. Never lower a
 severity, move a coverage threshold, or extend an ignore list to reach green.
 
+**After a red push**: fix the cause, then re-run only the failures with `npx jest --onlyFailures`
+(the repo's test command is bare `jest`, so the flag needs no extra wiring) until green, then push
+again — see `AGENTS.md` § the gate.
+
 ## Native / machine parity
 
 Run `npm run ci:local` when:
