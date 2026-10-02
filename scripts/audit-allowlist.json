@@ -1,1 +1,8 @@
-[]
+[
+    {
+        "id": "GHSA-86w9-cpqp-85rv",
+        "expires": "2026-11-02",
+        "reason": "node-forge RSA PKCS#1 v1.5 signature verification accepts extra nested DigestAlgorithm elements, and no fixed release exists in any line as of 2026-10-02 - the advisory's first_patched_version is null and 1.4.0 is both the vulnerable ceiling and the newest version published to npm. It reaches this tree only through expo-updates -> @expo/code-signing-certificates (code-signing certificate parsing for OTA updates) and expo -> @expo/cli (the Expo CLI), neither of which parses attacker-supplied RSA signatures at runtime in a shipped app.",
+        "upstream": "npm's suggested remediation is expo@44.0.6, a semver-major DOWNGRADE, rejected per the capped-floor doctrine. Re-check at expiry: npm view node-forge versions for a release past 1.4.0, or an expo-updates / @expo/code-signing-certificates release that drops the dependency. If neither exists, re-date with a fresh reading."
+    }
+]
