@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.3.0](https://github.com/Vadymk95/template-rn/compare/v0.2.2...v0.3.0) (2026-10-02)
+
+
+### Features
+
+* **agents:** committed limits deny force pushes, skipped hooks and env reads in every mode ([e05f975](https://github.com/Vadymk95/template-rn/commit/e05f9757d9d3b2bb7e6190c9bc47a9af5cf3b6a5))
+
+
+### Bug fixes
+
+* **deps:** raise the brace-expansion floor and date-allow node-forge, which has no fix ([1f90e46](https://github.com/Vadymk95/template-rn/commit/1f90e469025f92e1bcbbd544017af59b9d42a0fc))
+
+
+### Maintenance
+
+* **deps:** bump the minor-and-patch group with 2 updates ([#33](https://github.com/Vadymk95/template-rn/issues/33)) ([4d31cf8](https://github.com/Vadymk95/template-rn/commit/4d31cf870f9b73e8ed8698c6053c74b4b2431975))
+
+
+### Documentation
+
+* **agents:** a red push re-runs only what failed, then pushes again ([ff0a2fc](https://github.com/Vadymk95/template-rn/commit/ff0a2fc6633e3da39edc79b6d4871b81b6633d39))
+
+
+### CI
+
+* **deps:** one weekly Dependabot PR for minor and patch, so the lock file stops conflicting ([268bd6e](https://github.com/Vadymk95/template-rn/commit/268bd6e3cc8f4c79884b30174c58ac65797ce7b1))
+* **release:** release-please prefers a RELEASE_PLEASE_TOKEN secret when one is set ([1ea8ee4](https://github.com/Vadymk95/template-rn/commit/1ea8ee40c401d0373cc15986119547259ccc7376))
+
 ## [0.2.2](https://github.com/Vadymk95/template-rn/compare/v0.2.1...v0.2.2) (2026-09-27)
 
 
