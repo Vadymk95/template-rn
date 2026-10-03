@@ -2,6 +2,44 @@
 
 Short record of non-obvious trade-offs. Update when reversing a decision.
 
+## [2026-10] guard audit fixes
+
+An audit sabotaged 73 guards in the sibling `template-1` and 53 caught the injected defect. F1 and
+F2 apply here too (F3–F7 are web/t1/spa-specific and out of scope for this RN repo).
+
+**F1 — `docs:check` flags a CI step that bypasses the gate.** New check derives every `run:` step
+in a PR-triggered workflow — a single line or every non-empty line inside a `run: |`/`run: >`
+block scalar, each reported at its OWN line — and compares it against `gate-tiers.json` §
+`ci.allowedRunSteps`; anything else names the file:line and asks for it to move into `verify` or
+be listed with a reason. `ci.allowedRunSteps` lists the two install steps, `verify:ci` itself, and
+the advisory `npm run doctor` step (`continue-on-error: true`, Expo doctor, never blocks).
+Replayed: an unlisted `npm run lint:extra` step, both on its own and inside a block scalar
+alongside an allowed line, turned `docs:check` red on exactly that line; the current workflow
+measures clean. (Review finding R1, 2026-10-03: the first cut skipped block scalars outright, the
+most common way to write a multi-line step. Fixed by reading the block's own lines instead of
+skipping them.)
+
+**F2 — `docs:check` flags a ruleset context no workflow produces.** New check derives each job's
+required-status-check name (its `name:` or id, plus matrix values from an inline `[a, b]` list or
+a block `- value` list) from every workflow and compares it against `.github/ruleset.json`'s
+`required_status_checks`; a mismatch names the file:line and asks for the job to be renamed back
+or the context listed in `ci.rulesetContextAllowlist` with a reason. A job whose exact context
+GitHub renders only at runtime (a matrix `include:`/`exclude:` key, or a `name:` carrying a
+`${{ }}` expression) prints one loud, non-failing line instead, and only ruleset contexts starting
+with that job's static base name are exempted from the strict comparison — not applicable to this
+repo's single job, which has neither shape. This repo's `ci.yml` has one job, `verify`, named
+`Typecheck, lint, test` — the ruleset context matches that `name:`, not the job id. Replayed:
+renaming the job turned `docs:check` red; all three current contexts (the job, `Secret scan
+(gitleaks)`, `CodeQL (JavaScript / TypeScript) (javascript-typescript)`) resolve to a real job.
+(Review finding R2, 2026-10-03, shared with the sibling templates: the first cut read only an
+inline matrix and had no notion of either undecidable shape — moot for this repo's one static job,
+fixed for the siblings that do use matrices.)
+
+`scripts/docs-check.mjs` stays byte-identical with `template-1`, `template-spa-pwa` and
+`template-next-seo` (shared-file rule); the test file is `node:test`, not vitest, like the rest of
+this repo's script tests, and `scripts/gate-tiers.json` § `ci` carries this repo's own
+`allowedRunSteps` data.
+
 ## [2026-10] `brace-expansion` floor raised; `node-forge` allowed until 2026-11-02 (2026-10-02)
 
 **`brace-expansion` floor raised, same entry, same cap.** `"brace-expansion": ">=5.0.9 <6"` aged into
