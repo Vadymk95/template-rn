@@ -23,7 +23,7 @@ export const COLOR_VALUES = {
         textSecondary: '#71717A',
         accent: '#18181B',
         accentForeground: '#FAFAFA',
-        danger: '#E11D48',
+        danger: '#EF4444',
         dangerForeground: '#FAFAFA',
         backdrop: 'rgba(9, 9, 11, 0.45)'
     },
@@ -35,9 +35,9 @@ export const COLOR_VALUES = {
         textPrimary: '#FAFAFA',
         textSecondary: '#A1A1AA',
         accent: '#FAFAFA',
-        accentForeground: '#09090B',
-        danger: '#FB7185',
-        dangerForeground: '#09090B',
+        accentForeground: '#18181B',
+        danger: '#7F1D1D',
+        dangerForeground: '#18181B',
         backdrop: 'rgba(9, 9, 11, 0.65)'
     }
 } as const;

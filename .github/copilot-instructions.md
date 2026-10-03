@@ -66,7 +66,9 @@ before style — style is ESLint's and Prettier's job, not a review finding.
   the two drift.
 - Icon-only controls need `accessibilityLabel`; interactive elements need `accessibilityRole` and, where
   relevant, `accessibilityState`. Touch targets come from `src/shared/lib/theme/controlSizes.ts`.
-- A list that can grow needs `FlatList` with `keyExtractor`, not `.map()`.
+- A list with no practical ceiling (a paginated feed, chat history) needs `FlatList` with
+  `keyExtractor`, not `.map()` — `.map()` is fine for a small, fixed-size list like the bundled
+  `TodoList`, which renders that way today.
 - Say whether the change is OTA-safe or needs a native rebuild. Any `expo-*` dependency change or
   `app.config.ts` native field means a rebuild plus a `version` bump.
 

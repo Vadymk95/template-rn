@@ -228,13 +228,12 @@ npm run ci:local
 
 ## Pipelines — and which ones survive a private fork
 
-| Workflow                       | What it does                                                                       | Works in a private fork?                                                            |
-| ------------------------------ | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `ci.yml` → `verify`            | One step over `npm run verify:ci`, plus advisory `expo-doctor`                     | Yes                                                                                 |
-| `ci.yml` → `dependency-review` | Flags vulnerable or badly-licensed dependencies added by a PR                      | Yes                                                                                 |
-| `security.yml` → `gitleaks`    | Secret scan across full commit history; runs its own scanner                       | Yes (a licence key is asked for only when the repo is owned by an **organisation**) |
-| `security.yml` → `codeql`      | Static analysis, `security-extended` query pack, plus a weekly cron                | **No** — needs GitHub code scanning                                                 |
-| `mutation.yml` → `mutation`    | Weekly StrykerJS run; fails only below the measured floor in `stryker.config.json` | Yes                                                                                 |
+| Workflow                    | What it does                                                                       | Works in a private fork?                                                            |
+| --------------------------- | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `ci.yml` → `verify`         | One step over `npm run verify:ci`, plus advisory `expo-doctor`                     | Yes                                                                                 |
+| `security.yml` → `gitleaks` | Secret scan across full commit history; runs its own scanner                       | Yes (a licence key is asked for only when the repo is owned by an **organisation**) |
+| `security.yml` → `codeql`   | Static analysis, `security-extended` query pack, plus a weekly cron                | **No** — needs GitHub code scanning                                                 |
+| `mutation.yml` → `mutation` | Weekly StrykerJS run; fails only below the measured floor in `stryker.config.json` | Yes                                                                                 |
 
 GitHub **code scanning** is free on public repositories and a paid add-on on private
 ones. This repository is public, so CodeQL works as written. A private fork gets

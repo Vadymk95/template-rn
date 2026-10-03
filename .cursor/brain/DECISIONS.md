@@ -2,6 +2,58 @@
 
 Short record of non-obvious trade-offs. Update when reversing a decision.
 
+## [2026-10] delta audit fixes
+
+A second audit round closed three silent holes and fixed three real doc ↔ code contradictions.
+
+**`no-empty` was not enabled** — `eslint.config.mjs` had no rule for a swallowed catch. Added
+`'no-empty': ['error', { allowEmptyCatch: false }]` next to `no-console`. Proven: a probe file
+with an empty `catch {}` turns `error` red; `src/**` had no existing empty catch to fix (the five
+real `catch` sites are either `.catch()` promise handlers or `safeFetch.ts`'s documented
+graceful-degradation fallback). Checked and ported the same rule to `template-1`,
+`template-spa-pwa` and `template-next-seo`, all of which were missing it too.
+
+**The pre-commit `docs:check` trigger (`.husky/pre-commit`) missed the checker's own files** — the
+`grep -qE` regex matched doc/rule/workflow paths but not `scripts/docs-check.*` or `package.json`,
+so a broken checker or a renamed npm script could commit clean and surface only on the weekly CI
+run. Added `|^scripts/docs-check\.|^package\.json$`. Proven: `scripts/docs-check.mjs` does not
+match the old pattern (exit 1) and matches the new one (exit 0); same for `package.json`. Ported
+to all four templates.
+
+**`COLOR_VALUES` (`src/shared/lib/theme/colors.ts`) had drifted from `global.css`'s CSS
+variables** — the two are hand-maintained in different files and different colour formats (HSL vs
+hex), with no guard keeping them equal. Added `colors.test.ts` coverage that converts every
+duplicated CSS variable to hex (the CSS Color 4 HSL→sRGB algorithm, not a hand-rolled
+approximation) and asserts it against the matching `COLOR_VALUES` entry, light and dark. Proven:
+mutating one role's hex turns that case red; restoring it is green.
+**Writing the test surfaced three values that had already drifted, not hypothetically but today**:
+`light.danger` (`#E11D48`, a rose) vs. the CSS `--destructive` (`#EF4444`, computed) — real, because
+`COLOR_TOKENS.danger` is literally `'bg-destructive'`, i.e. the className and the native-value
+tables were meant to be the SAME colour; `dark.danger` (`#FB7185`) vs. computed `#7F1D1D`, same
+class of bug; and `dark.accentForeground` / `dark.dangerForeground` (`#09090B`, identical to
+`dark.background` — a plausible copy-paste of the wrong token) vs. computed `#18181B` from
+`--primary-foreground`. All three corrected to the CSS-derived hex, on the assumption that
+`global.css` (the unmodified shadcn/ui default palette) is the source of truth and `COLOR_VALUES`
+is the mirror that drifted — flagged for review rather than assumed silently. Visible effect: a
+destructive `IconButton` no longer renders a rose icon on a red background/border.
+
+**Doc fixes, no behaviour change:**
+
+- `.cursor/brain/SKELETONS.md`'s `src/lib/queryClient.ts` entry claimed the `AppState` listener
+  "must register at module load" and that moving it into a hook breaks foreground refetch. The
+  code (and its own header comment) does the opposite by design: the subscription lives in
+  `QueryClientAppStateBridge`, a component mounted once from `src/app/_layout.tsx`, specifically so
+  it is NOT registered at module load and cleans up on unmount. Reworded to name the real risk
+  (the bridge never mounting, or unmounting without remounting).
+- `README.md`'s pipelines table listed `ci.yml → dependency-review` as a working check. No such
+  job exists — `ci.yml`'s own comment records why it was removed (Dependency graph unavailable on
+  this plan; the job could never pass). Removed the row.
+- `.github/copilot-instructions.md` said "a list that can grow needs `FlatList` ..., not `.map()`"
+  unconditionally, while the bundled `src/widgets/todo-workspace/TodoList.tsx` renders with
+  `.map()`. Chose the smaller change: reworded the doc to scope the rule to lists with no
+  practical ceiling, naming `TodoList` as the accepted `.map()` case, rather than rewriting
+  `TodoList` onto `FlatList` (a real refactor touching its tests too).
+
 ## [2026-10] guard audit fixes
 
 An audit sabotaged 73 guards in the sibling `template-1` and 53 caught the injected defect. F1 and
