@@ -131,6 +131,11 @@ export default tseslint.config(
             ...prettierConfig.rules,
             'prettier/prettier': 'error',
             'no-console': 'error',
+
+            // ─── Empty catch ─────────────────────────────────────────────────
+            // A swallowed error ships silently. Every catch needs real handling or a
+            // comment stating why doing nothing is the deliberate disposition.
+            'no-empty': ['error', { allowEmptyCatch: false }],
             'no-restricted-imports': [
                 'error',
                 {

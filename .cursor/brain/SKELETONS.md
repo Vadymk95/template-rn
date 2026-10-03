@@ -30,8 +30,10 @@ Touch with intent; re-verify via the commands in `VERIFICATION.md`.
 
 ## `src/lib/queryClient.ts`
 
-- `AppState` listener must register at module load. Moving it into a hook =
-  queries never refetch on foreground in production.
+- The `AppState` listener is registered by `QueryClientAppStateBridge`, a component
+  mounted once from `src/app/_layout.tsx` — NOT at module load. Moving the mount point
+  so the bridge never renders (or unmounts and never remounts) = queries never refetch
+  on foreground in production.
 
 ## `src/lib/secureToken.ts`
 
