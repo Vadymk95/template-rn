@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.1](https://github.com/Vadymk95/template-rn/compare/v0.3.0...v0.3.1) (2026-10-03)
+
+
+### Bug fixes
+
+* **gate:** docs:check flags CI steps that bypass the gate and ruleset drift ([#36](https://github.com/Vadymk95/template-rn/issues/36)) ([bb1584c](https://github.com/Vadymk95/template-rn/commit/bb1584cf34159215f632d0aaca082b777f765101))
+* **theme:** native colours match global.css, enable no-empty, fix stale docs ([#38](https://github.com/Vadymk95/template-rn/issues/38)) ([4ae66e3](https://github.com/Vadymk95/template-rn/commit/4ae66e3ea29c62069ceeb3cf5d4530f4f906fcf5))
+
 ## [0.3.0](https://github.com/Vadymk95/template-rn/compare/v0.2.2...v0.3.0) (2026-10-02)
 
 
