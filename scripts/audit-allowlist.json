@@ -4,5 +4,17 @@
         "expires": "2026-11-02",
         "reason": "node-forge RSA PKCS#1 v1.5 signature verification accepts extra nested DigestAlgorithm elements, and no fixed release exists in any line as of 2026-10-02 - the advisory's first_patched_version is null and 1.4.0 is both the vulnerable ceiling and the newest version published to npm. It reaches this tree only through expo-updates -> @expo/code-signing-certificates (code-signing certificate parsing for OTA updates) and expo -> @expo/cli (the Expo CLI), neither of which parses attacker-supplied RSA signatures at runtime in a shipped app.",
         "upstream": "npm's suggested remediation is expo@44.0.6, a semver-major DOWNGRADE, rejected per the capped-floor doctrine. Re-check at expiry: npm view node-forge versions for a release past 1.4.0, or an expo-updates / @expo/code-signing-certificates release that drops the dependency. If neither exists, re-date with a fresh reading."
+    },
+    {
+        "id": "GHSA-vfj7-8cjw-p6xm",
+        "expires": "2026-11-02",
+        "reason": "braces stack-exhaustion denial of service through deeply nested patterns; no fixed release exists as of 2026-10-03 - 3.0.3 is both the vulnerable ceiling and the newest version on npm. It reaches this tree only through dev tooling that expands the repo's own glob patterns (eslint-plugin-boundaries -> micromatch and tailwindcss -> chokidar), never attacker-supplied input in a shipped app.",
+        "upstream": "Re-check at expiry: npm view braces versions for a release past 3.0.3, or a micromatch release that drops it. If neither exists, re-date with a fresh reading."
+    },
+    {
+        "id": "GHSA-ch52-4w7c-c8xp",
+        "expires": "2026-11-02",
+        "reason": "http-cache-semantics max-stale handling can disclose cross-user cached responses; no fixed release exists as of 2026-10-03 - 4.2.0 is both the vulnerable ceiling and the newest version on npm. It reaches this tree only through @expo/ngrok -> got -> cacheable-request, the optional dev tunnel of the Expo CLI, which caches nothing shared between users of a shipped app.",
+        "upstream": "Re-check at expiry: npm view http-cache-semantics versions for a release past 4.2.0, or an @expo/ngrok release that drops got. If neither exists, re-date with a fresh reading."
     }
 ]
