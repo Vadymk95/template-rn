@@ -1,6 +1,8 @@
+import { QueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
 import { safeFetch, safeFetchQueryFn, SchemaValidationError } from '@/lib/api/safeFetch';
+import { queryClient } from '@/lib/queryClient';
 
 const TestSchema = z.object({
     id: z.string(),
@@ -58,6 +60,16 @@ describe('safeFetch', () => {
         await expect(safeFetch(TEST_URL, TestSchema)).rejects.toThrow(
             `HTTP 500 Server Error (${TEST_URL})`
         );
+    });
+
+    it('throws an error carrying the numeric status and url on non-2xx', async () => {
+        global.fetch = jest.fn().mockResolvedValueOnce(errorResponse(404, 'Not Found'));
+
+        await expect(safeFetch(TEST_URL, TestSchema)).rejects.toMatchObject({
+            name: 'HttpError',
+            status: 404,
+            url: TEST_URL
+        });
     });
 
     it('throws SchemaValidationError with url + issues on shape drift', async () => {
@@ -128,5 +140,56 @@ describe('safeFetchQueryFn', () => {
                 client: {} as never
             })
         ).rejects.toBeInstanceOf(SchemaValidationError);
+    });
+});
+
+describe('safeFetchQueryFn through the default retry rule', () => {
+    const originalFetch = global.fetch;
+
+    // The app's own default `retry` predicate, with the backoff delay zeroed so the
+    // 5xx case does not wait; nothing else differs from `queryClient`.
+    let client: QueryClient;
+
+    beforeEach(() => {
+        client = new QueryClient({
+            defaultOptions: {
+                queries: { ...queryClient.getDefaultOptions().queries, retryDelay: 0 }
+            }
+        });
+    });
+
+    afterEach(() => {
+        // Drops the query's 5-minute gc timer, which would hold the jest process open.
+        client.clear();
+        global.fetch = originalFetch;
+        jest.restoreAllMocks();
+    });
+
+    it('does not retry a 404: the request is wrong and repeating it cannot help', async () => {
+        const fetchMock = jest.fn().mockResolvedValue(errorResponse(404, 'Not Found'));
+        global.fetch = fetchMock;
+
+        await expect(
+            client.query({
+                queryKey: ['not-found'],
+                queryFn: safeFetchQueryFn(TEST_URL, TestSchema)
+            })
+        ).rejects.toThrow(`HTTP 404 Not Found (${TEST_URL})`);
+
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('still retries a 503 up to the default cap of two retries', async () => {
+        const fetchMock = jest.fn().mockResolvedValue(errorResponse(503, 'Service Unavailable'));
+        global.fetch = fetchMock;
+
+        await expect(
+            client.query({
+                queryKey: ['unavailable'],
+                queryFn: safeFetchQueryFn(TEST_URL, TestSchema)
+            })
+        ).rejects.toThrow(`HTTP 503 Service Unavailable (${TEST_URL})`);
+
+        expect(fetchMock).toHaveBeenCalledTimes(3);
     });
 });
