@@ -2,6 +2,47 @@
 
 Short record of non-obvious trade-offs. Update when reversing a decision.
 
+## [2026-10] zizmor audits the workflow files in CI (2026-10-04)
+
+`security.yml` gained a third job, `zizmor` (check name `Workflow audit (zizmor)`): the official
+`zizmorcore/zizmor-action`, SHA-pinned at v0.6.4, in one step with `version: 1.30.1`,
+`inputs: .github/workflows`, `config: .github/zizmor.yml`, `min-severity: medium`, `advanced-security: false`
+and `annotations: true`. It runs on every pull request, every push to the default branch and the weekly cron,
+like the other two jobs, and fails on a finding of medium severity or above. The action runs zizmor from a
+container image pinned by digest, and `version` is the pin: Dependabot moves the action SHA, and a newer zizmor
+is a deliberate edit of `version`. Findings stay in the job log: there is no SARIF upload, so a private fork
+needs no code scanning. The job audits only this repository's workflow files; the online audits (the action's
+default) also query the GitHub API about the actions those files reference, with the job's read-only token.
+
+**This closes the 2026-07-17 zizmor watch item.** Its recorded trigger, "workflows grow beyond ~2 files per
+repo", has fired: this repo carries five workflow files.
+
+**Findings fixed at the source.** Before, on the workflows at the base commit, `zizmor 1.30.1 --offline` reported
+5 medium (`artipacked`, one per `actions/checkout`) and 1 low (`adhoc-packages`). Every checkout now sets
+`persist-credentials: false`; no job pushes with the checkout credentials (`release.yml` has no checkout).
+After: 0 findings at medium or above, online and offline. The `adhoc-packages` finding is the pinned
+`npm install -g npm@^11.14.0` step in `ci.yml`, deliberate (the comment above it says why); it is the one entry in
+`.github/zizmor.yml`, which ignores `adhoc-packages` for the whole of `ci.yml` and so also lets a later ad-hoc
+install in that file through. Any other deliberate exception goes into the same file with a one-line reason,
+never a blanket ignore.
+
+**Measured: the online grade differs from the offline one, and a remap is the answer.** On a scratch copy with
+one `actions/checkout` (v7.0.1) stripped of `persist-credentials: false`, zizmor 1.30.1 grades the finding
+`artipacked` Low when run online, as the action runs it with `github.token`, and Medium offline; the workflows
+at the base commit read 5 `artipacked` at low online (6 low with `adhoc-packages`) against 5 medium and 1 low
+offline. So `min-severity: medium` alone let that checkout through in CI while the local offline run refused it. `rules.artipacked.remap.severity:
+medium` in `.github/zizmor.yml` makes both runs exit 13 on that mutant, so one pass and one config give the same
+verdict locally and in CI. A floating `actions/setup-node@v4` seeded into a scratch copy exits 14
+(`unpinned-uses`, high), online and offline; the real tree exits 0 both ways.
+
+**A required status check.** `.github/ruleset.json` lists the context `Workflow audit (zizmor)`, so once the live
+ruleset carries it a pull request cannot merge past a red audit. The file is the written-down form of the ruleset;
+the live ruleset is a repository setting that is updated separately (README, "What your fork does not inherit"),
+and the context must have reported once before it is required.
+
+The local command is `uvx zizmor@1.30.1 .github/workflows`; zizmor discovers `.github/zizmor.yml` by itself, so it
+reproduces the gate online or offline.
+
 ## [2026-10] External-lens fixes: SHA-pinned actions, scoped tokens, a cleartext guard (2026-10-04)
 
 **Every GitHub Action is SHA-pinned since 2026-10-04.** Each `uses:` in the workflows names a full

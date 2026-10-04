@@ -29,7 +29,7 @@
         },
         "ci": {
             "title": "CI",
-            "text": "The same chain, plus what only CI can do: the security workflow, dependency review, the weekly docs check and the weekly mutation score."
+            "text": "The same chain, plus what only CI can do: the security workflow, the weekly docs check and the weekly mutation score."
         }
     },
     "agents": {

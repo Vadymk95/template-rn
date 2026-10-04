@@ -30,7 +30,8 @@
                 "required_status_checks": [
                     { "context": "Typecheck, lint, test" },
                     { "context": "Secret scan (gitleaks)" },
-                    { "context": "CodeQL (JavaScript / TypeScript) (javascript-typescript)" }
+                    { "context": "CodeQL (JavaScript / TypeScript) (javascript-typescript)" },
+                    { "context": "Workflow audit (zizmor)" }
                 ]
             }
         }

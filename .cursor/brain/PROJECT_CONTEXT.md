@@ -155,7 +155,7 @@ This section is the **single narrative** for “what we optimize for” vs “wh
 
 ### Where the scaffold is intentionally strong
 
-- **Compliance defaults** — iOS privacy manifest (required-reason APIs), least-privilege permissions (empty until a feature needs them), workflow tokens default to `contents: read`, every GitHub Action SHA-pinned, and a script test that reads the text of `app.config.ts` and of the files directly under a local `plugins/` directory (subdirectories are not scanned) and fails on any line naming a cleartext-HTTP key other than as a plain `<key>: false`, unless the key has a reasoned allowlist entry (`scripts/native-config.test.mjs`; a comment mention counts, deliberate obfuscation is out of scope).
+- **Compliance defaults** — iOS privacy manifest (required-reason APIs), least-privilege permissions (empty until a feature needs them), workflow tokens default to `contents: read`, every GitHub Action SHA-pinned, a zizmor job that fails CI on a medium-or-worse workflow finding, and a script test that reads the text of `app.config.ts` and of the files directly under a local `plugins/` directory (subdirectories are not scanned) and fails on any line naming a cleartext-HTTP key other than as a plain `<key>: false`, unless the key has a reasoned allowlist entry (`scripts/native-config.test.mjs`; a comment mention counts, deliberate obfuscation is out of scope).
 - **Type safety** — strict TS with `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, and type-aware ESLint on `src/**`.
 - **Lint pipeline** — Oxlint pre-pass, ESLint as source of truth, FSD boundaries, `i18next/no-literal-string` on routes.
 - **React Compiler** enabled by default in `app.config.ts` (escape hatches when needed).
