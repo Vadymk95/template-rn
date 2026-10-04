@@ -1,0 +1,12 @@
+# Config for the zizmor job in .github/workflows/security.yml. The local command in README.md,
+# `uvx zizmor@1.30.1 .github/workflows`, reads it too, so a local run and the CI job give the same verdict.
+rules:
+    artipacked:
+        # Run online, as the CI job does, zizmor grades a checkout that leaves credentials on disk as Low
+        # for actions/checkout v6 and later; offline it is Medium. The remap keeps it at the medium gate.
+        remap:
+            severity: medium
+    adhoc-packages:
+        # ci.yml upgrades npm on purpose, pinned to a range; the comment above that step says why.
+        ignore:
+            - ci.yml

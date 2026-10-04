@@ -233,7 +233,12 @@ npm run ci:local
 | `ci.yml` → `verify`         | One step over `npm run verify:ci`, plus advisory `expo-doctor`                     | Yes                                                                                 |
 | `security.yml` → `gitleaks` | Secret scan across full commit history; runs its own scanner                       | Yes (a licence key is asked for only when the repo is owned by an **organisation**) |
 | `security.yml` → `codeql`   | Static analysis, `security-extended` query pack, plus a weekly cron                | **No** — needs GitHub code scanning                                                 |
+| `security.yml` → `zizmor`   | Audits the workflow files; fails on medium and above; a required check             | Yes (audits this repository's workflow files only; results stay in the job log)     |
 | `mutation.yml` → `mutation` | Weekly StrykerJS run; fails only below the measured floor in `stryker.config.json` | Yes                                                                                 |
+
+`zizmor` is a required check (`.github/ruleset.json` lists it) and reads its config from `.github/zizmor.yml`.
+Run it locally with `uvx zizmor@1.30.1 .github/workflows`: the version is the one the job pins and the config is
+the same, so it reproduces the gate, online with `GH_TOKEN` set or offline without it.
 
 GitHub **code scanning** is free on public repositories and a paid add-on on private
 ones. This repository is public, so CodeQL works as written. A private fork gets
