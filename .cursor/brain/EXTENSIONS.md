@@ -6,7 +6,7 @@ Companion docs: [`PROJECT_CONTEXT.md`](./PROJECT_CONTEXT.md) (the stack you exte
 
 **How to read a recipe.** Every recipe lists a doc source for its commands and config keys. The stack is Expo SDK 57 with React Native 0.86: a recipe that targets a newer SDK says so, and nothing here assumes a newer API. An item marked **(unverified)** was not confirmed against the vendor docs when this file was written; confirm it on the page named in the recipe before relying on it. An item marked **(opinion)** is a recommendation with no vendor source.
 
-**Priority order when the fork becomes a real product** (the phases are the detail): the HTTP layer and the typed error the retry rule needs (Phase 1) → auth on `<Stack.Protected>` plus the token rules (Phase 2) → crash reporting through the existing `logger.ts` plug-in point (Phase 3) → build-profile environments and the OTA path (Phase 5) → offline persistence only when the product needs it (Phase 4) → push and deep links (Phase 6) → UI extras as screens demand them (Phase 7).
+**Priority order when the fork becomes a real product** (the phases are the detail): the HTTP layer and its retry rules (Phase 1) → auth on `<Stack.Protected>` plus the token rules (Phase 2) → crash reporting through the existing `logger.ts` plug-in point (Phase 3) → build-profile environments and the OTA path (Phase 5) → offline persistence only when the product needs it (Phase 4) → push and deep links (Phase 6) → UI extras as screens demand them (Phase 7).
 
 ---
 
@@ -38,16 +38,16 @@ TanStack Query, Zod and `safeFetch` ship wired, but with no real API behind them
 
 **Doc sources:** TanStack Query docs, [`queryOptions`](https://tanstack.com/query/latest/docs/framework/react/guides/query-options) and the `useQuery` option reference (checked via context7: `retry` defaults to 3 on the client, `retryDelay` is exponential backoff capped at 30 seconds, `staleTime` defaults to 0).
 
-### 1.1 Typed HTTP error, so the retry rule fires
+### 1.1 HTTP errors and the retry rule
 
 - **Trigger:** the first real endpoint.
 - **Install:** nothing.
-- **Where it plugs in:** `src/lib/api/safeFetch.ts` throws a plain `Error` whose message holds status, status text and URL, with no `status` property. The retry predicate in `src/lib/queryClient.ts` skips retries for 4xx only when `error.status` is a number, so today it never skips anything. Add an `HttpError` class (a `status` field plus the request URL) next to `safeFetch`, throw it for every non-2xx response, and keep `SchemaValidationError` separate.
+- **Where it plugs in:** shipped. `src/lib/api/safeFetch.ts` throws `HttpError` (a numeric `status`, the request `url`, and the message `HTTP <status> <statusText> (<url>)`) for every non-2xx response, and the retry predicate in `src/lib/queryClient.ts` skips retries for 4xx because `error.status` is a number. Extend `HttpError` when your API returns an error body worth keeping; do not add a second HTTP error class. `SchemaValidationError` stays separate.
 - **Config and why:**
     - Keep the predicate: no retry on 4xx (the request itself is wrong and repeating it only spends battery), at most 2 retries otherwise. The library default is 3 retries; the template lowers it for mobile latency (opinion).
-    - Treat `SchemaValidationError` as non-retryable (opinion): a response that violates the contract will violate it again, and retrying only delays the error report.
+    - Treat `SchemaValidationError` as non-retryable (opinion): a response that violates the contract will violate it again, and retrying only delays the error report. Not shipped: the predicate retries it twice today, because it carries no `status`.
     - Leave `retryDelay` at the library default.
-- **Guard:** colocated unit tests that call the real default `retry` function from `src/lib/queryClient.ts` with a 404 `HttpError` (no retry), a 500 (retried, stops at the cap) and a `SchemaValidationError` (not retried). Without a test, the typed error can regress to a plain `Error` and the 4xx rule silently stops working again.
+- **Guard:** shipped in `src/lib/api/safeFetch.test.ts` (`safeFetchQueryFn through the default retry rule`): a real `QueryClient` built from the app's default options fetches a 404 once and a 503 three times. Without it, `safeFetch` can regress to a plain `Error` and the 4xx rule silently stops working. When you add the `SchemaValidationError` rule, add its case beside these two.
 - **Security:** the current message embeds the full URL. A query string with a token or an email would then reach the crash reporter (Phase 3). Build the message from origin and path only (opinion).
 - **Do NOT:** catch and swallow errors inside a `queryFn` (the query never enters its error state), or retry non-idempotent mutations by default (the `useMutation` `retry` option defaults to `0`: TanStack `UseMutationOptions` reference, checked via context7).
 

@@ -64,9 +64,26 @@ export class SchemaValidationError extends Error {
 }
 
 /**
+ * Thrown on an HTTP non-2xx response. Carries the numeric `status` because the
+ * retry predicate in `src/lib/queryClient.ts` skips 4xx only when the error has
+ * one: a plain `Error` would put a 404 through the retry loop.
+ */
+export class HttpError extends Error {
+    readonly status: number;
+    readonly url: string;
+
+    constructor(url: string, status: number, statusText: string) {
+        super(`HTTP ${status.toString()} ${statusText} (${url})`);
+        this.name = 'HttpError';
+        this.status = status;
+        this.url = url;
+    }
+}
+
+/**
  * Fetches `url` and validates the JSON response against `schema`.
  *
- * - Throws `Error` on HTTP non-2xx (`HTTP <status> <statusText> (<url>)`).
+ * - Throws `HttpError` on HTTP non-2xx (`HTTP <status> <statusText> (<url>)`).
  * - Throws `SchemaValidationError` if the response body fails `schema.safeParse`.
  * - Forwards `init.signal` to `fetch` so callers can cancel in-flight requests.
  *
@@ -91,7 +108,7 @@ export const safeFetch = async <Schema extends z.ZodType>(
     const response = await fetch(url, init);
 
     if (!response.ok) {
-        throw new Error(`HTTP ${response.status.toString()} ${response.statusText} (${url})`);
+        throw new HttpError(url, response.status, response.statusText);
     }
 
     const raw: unknown = await response.json();

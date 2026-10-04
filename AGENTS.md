@@ -10,7 +10,7 @@ Production-ready React Native + Expo starter — Expo SDK 57, file-based routing
 
 ## Source of truth (tiebreaker)
 
-- **This file is the canonical guide for every tool.** Cursor and Codex load it natively; Claude Code loads it through the one-line `@AGENTS.md` import in `CLAUDE.md`. Edit THIS file; never grow the shim.
+- **This file is the canonical guide for every tool.** Cursor and Codex load it natively; Claude Code loads it through the one-line import in `CLAUDE.md`. Edit THIS file; never grow the shim.
 - **Code is ground truth; this file is a verifiable pointer.** If a line here conflicts with the code, follow the CODE and fix or flag the stale line in the same session.
 
 ## Stack
@@ -106,7 +106,7 @@ npm run fix          # the one remedy: oxlint --fix → eslint --fix → prettie
 npm run ci:local     # verify:ci + expo-doctor (full local parity)
 npm run test:one -- <file> # one jest test file, through the tracer (not around it)
 npm run trace:report # findings from .gate-trace.log (forbidden moments, budgets, worktrees)
-npm run docs:check   # docs class: paths, scripts, sentinels, versions, command table, dead docs, test quarantines (pre-commit when docs are staged; weekly CI adds --weekly)
+npm run docs:check   # docs class: paths, scripts, sentinels, versions, command table, dead docs, test quarantines, agent-memory imports (pre-commit when docs are staged; weekly CI adds --weekly)
 npm run bench:verify # per-step timings when the gate feels slow
 npm run test:mutation # StrykerJS strength gate — weekly `mutation.yml` job, NOT in verify (2m per run)
 ```

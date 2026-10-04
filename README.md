@@ -191,7 +191,7 @@ checks and will fail the PR the same way.
 
 ```bash
 npm run verify:iter   # the iterate moment: oxlint → tsc (incremental) → jest --onlyChanged, seconds
-npm run docs:check    # mechanical doc drift: paths, scripts, sentinels, versions, command table, dead docs
+npm run docs:check    # mechanical doc drift: paths, scripts, sentinels, versions, command table, dead docs, agent-memory imports
 ```
 
 Drill-downs on a specific failure (none of these is a moment):
