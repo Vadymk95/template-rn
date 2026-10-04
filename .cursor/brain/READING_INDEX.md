@@ -34,6 +34,10 @@ Why it exists: `AGENTS.md` § Entering this repo cheaply.
 - `.cursor/brain/VERIFICATION.md` "Native / machine parity" and "Before first EAS build" — what to run
   and in which order.
 - `.cursor/brain/DECISIONS.md` — the SDK pins and why bumping past `expo install --fix` breaks things.
+- `scripts/native-config.test.mjs` and `scripts/native-config-allowlist.json` — the guard that reads the
+  text of `app.config.ts` and of the files directly under `plugins/` (subdirectories are not scanned) for
+  cleartext-HTTP keys; a line naming one other than as a plain `<key>: false` needs the key and a reason in
+  the allowlist. Its header lists what is out of scope.
 
 ## 5. About to touch a gate, a hook, or CI
 
@@ -42,6 +46,10 @@ Why it exists: `AGENTS.md` § Entering this repo cheaply.
 - `.cursor/brain/VERIFICATION.md` — the mechanics: the per-change table, the hooks, the tracer.
 - `scripts/gate-tiers.json` — the moments and budgets as DATA, plus the measured reason this repo has
   no scaffold phase.
+- `scripts/native-config.test.mjs` and `scripts/native-config-allowlist.json` — the guard that reads the
+  text of `app.config.ts` and of the files directly under `plugins/` (subdirectories are not scanned) for
+  cleartext-HTTP keys; a line naming one other than as a plain `<key>: false` needs the key and a reason in
+  the allowlist. Its header lists what is out of scope.
 
 ## 6. About to add a dependency, or an advisory went red
 
