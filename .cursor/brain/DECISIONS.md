@@ -90,8 +90,8 @@ under `plugins/` turned the real-file test red.
 `optionalDependencies` entry naming the first three. For `react-native-svg` the scan found two mentions
 that need nothing installed: `react-native-css-interop` lists it only in `peerDependenciesMeta` as
 optional (not a declared peer, and its `dist` never references it), and `react-native-reanimated` lists it
-in `devDependencies`, which consumers do not install. Add one back with `npx expo install <name>` the day
-a feature needs it.
+in `devDependencies`, which consumers do not install. The install, wiring, config and guards for each
+live in `.cursor/brain/EXTENSIONS.md`.
 
 ## [2026-10] delta audit fixes
 

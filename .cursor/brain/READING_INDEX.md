@@ -57,7 +57,18 @@ Why it exists: `AGENTS.md` § Entering this repo cheaply.
   `npm outdated`; floors carry a major cap; an allowance expires, and a stale one fails the gate.
 - `scripts/audit-allowlist.json` — the current allowances and their expiry.
 
-## 7. Wondering whether the work is still needed
+## 7. About to add a capability the template does not ship
+
+A real backend, auth, crash reporting, push, OTA operations, offline persistence, deep links, SVG icons.
+
+- `.cursor/brain/EXTENSIONS.md` — WINS for the recipe: the trigger, the install, where it plugs in, the
+  config with the reason for each value, the guard and the security note.
+- `AGENTS.md` § Critical rules and § Version holds — WINS for the rules a recipe must not break (env,
+  stores, CNG, SDK-pinned packages).
+- `.cursor/brain/VERIFICATION.md` — WINS for native parity and OTA discipline: a native change means a
+  rebuild and a `version` bump.
+
+## 8. Wondering whether the work is still needed
 
 Before reading anything else: `git log --oneline -15`, then grep for the thing the task names. On the
 sibling project two of five dispatched lanes returned "already done" after ~430k tokens between them,

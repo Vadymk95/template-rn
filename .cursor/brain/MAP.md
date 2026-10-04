@@ -108,6 +108,7 @@ Imports flow **down-stack only** (app may use shared; shared must not import ent
 | CI (GitHub Actions)           | `.github/workflows/ci.yml` (one `verify:ci` step + advisory `expo-doctor`), `security.yml` (gitleaks, CodeQL, zizmor), `mutation.yml`; the moments: `AGENTS.md` § Commands / the gate |
 | Local E2E smoke (Maestro)     | `.maestro/*.yaml` — not part of default CI; run when adopting flows                                                                                                                   |
 | Optional bundle metrics       | `scripts/capture-bundle-metrics.mjs`, `npm run perf:*`, `scripts/perf-program.md` — local baseline/check; wire into CI only if the team wants a numeric gate                          |
+| Extending past the template   | `.cursor/brain/EXTENSIONS.md` — phased recipes: backend, auth, crash reporting, offline, OTA, push, deep links, SVG icons                                                             |
 | Path alias `@/*`              | `tsconfig.json` `paths` (single source of truth)                                                                                                                                      |
 
 ## Content variance
