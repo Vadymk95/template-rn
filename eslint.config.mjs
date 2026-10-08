@@ -1,3 +1,4 @@
+import eslintComments from '@eslint-community/eslint-plugin-eslint-comments';
 import js from '@eslint/js';
 import pluginQuery from '@tanstack/eslint-plugin-query';
 import expoConfig from 'eslint-config-expo/flat.js';
@@ -81,6 +82,26 @@ export default tseslint.config(
     },
     js.configs.recommended,
     ...expoConfig,
+    // ─── A suppression must carry its reason ────────────────────────────────
+    // `// eslint-disable-next-line <rule>` with no `-- reason` used to pass the gate. No `files`
+    // key: it covers every linted file. Unused directives need no rule of their own: ESLint 10
+    // reports them as warnings by default and `eslint . --max-warnings 0` turns those into errors.
+    // oxlint has no rule that asks a directive for its reason, and the eslint-comments plugin does
+    // not read `oxlint-disable*`, so a reasonless `// oxlint-disable-next-line <rule>` passed the
+    // whole gate (and an `eslint-disable` naming an oxlint-only rule fails here with "Definition
+    // for rule not found"). The directive is banned instead; a rule that is wrong for a class of
+    // files gets a documented `overrides` entry in `.oxlintrc.json`.
+    {
+        plugins: { '@eslint-community/eslint-comments': eslintComments },
+        rules: {
+            '@eslint-community/eslint-comments/require-description': 'error',
+            '@eslint-community/eslint-comments/no-unlimited-disable': 'error',
+            'no-warning-comments': [
+                'error',
+                { terms: ['oxlint-disable', 'oxlint-enable'], location: 'start' }
+            ]
+        }
+    },
     {
         rules: {
             'import/no-unresolved': 'off',
@@ -350,6 +371,12 @@ export default tseslint.config(
         ...jestPlugin.configs['flat/recommended'],
         rules: {
             ...jestPlugin.configs['flat/recommended'].rules,
+            // `expectAccessibleControl` (src/test/a11y.ts) is an assertion: it throws when a control
+            // loses its role or name, so a test that only calls it does assert something.
+            'jest/expect-expect': [
+                'warn',
+                { assertFunctionNames: ['expect', 'expectAccessibleControl'] }
+            ],
             // Test helpers/fixtures don't need declared return contracts.
             '@typescript-eslint/explicit-function-return-type': 'off',
             // A test asserting a constant must spell the value out. Importing the

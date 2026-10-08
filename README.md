@@ -231,6 +231,7 @@ npm run ci:local
 | Workflow                    | What it does                                                                       | Works in a private fork?                                                            |
 | --------------------------- | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | `ci.yml` → `verify`         | One step over `npm run verify:ci`, plus advisory `expo-doctor`                     | Yes                                                                                 |
+| `ci.yml` → `bundle-budget`  | `npm run perf:check`: Hermes bundle bytes vs `scripts/perf-baseline.json` (+5%)    | Yes                                                                                 |
 | `security.yml` → `gitleaks` | Secret scan across full commit history; runs its own scanner                       | Yes (a licence key is asked for only when the repo is owned by an **organisation**) |
 | `security.yml` → `codeql`   | Static analysis, `security-extended` query pack, plus a weekly cron                | **No** — needs GitHub code scanning                                                 |
 | `security.yml` → `zizmor`   | Audits the workflow files; fails on medium and above; a required check             | Yes (audits this repository's workflow files only; results stay in the job log)     |

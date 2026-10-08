@@ -65,6 +65,41 @@ jobs:
               run: npm run doctor
               continue-on-error: true
 
+    # The Hermes bundle budget (`perf:check`: a full `expo export` for both platforms, compared
+    # with scripts/perf-baseline.json) used to run only when someone remembered to. It lives in
+    # its own job rather than in `verify` because the export is the heaviest single stage the
+    # repo has and the tier law keeps heavy stages out of the push gate; the job is listed in
+    # scripts/gate-tiers.json ci.allowedRunSteps with that reason. Run the same script locally
+    # with `npm run perf:check`. Not a required status check in .github/ruleset.json.
+    bundle-budget:
+        name: Hermes bundle budget
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        permissions:
+            contents: read
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  persist-credentials: false
+
+            - name: Setup Node
+              uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+              with:
+                  node-version-file: .nvmrc
+                  cache: npm
+
+            # Same npm pin and reason as the `verify` job above.
+            - name: Upgrade npm to ^11.14 (cross-platform optional binaries fix)
+              run: npm install -g npm@^11.14.0
+
+            - name: Install
+              run: npm ci --ignore-scripts
+
+            - name: Bundle budget (Hermes bytecode, both platforms)
+              run: npm run perf:check
+
     # NO dependency-review job, and this is a measurement rather than an omission. It was here, and
     # it could never pass: the action answers "Dependency review is not supported on this repository.
     # Please ensure that Dependency graph is enabled", and the Dependency graph is not available to

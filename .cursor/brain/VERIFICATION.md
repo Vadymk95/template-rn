@@ -78,7 +78,9 @@ Three rungs, and the split is deliberate:
   what husky pre-push runs and what the CI job runs, as a single step.
 
 `npm run test:mutation` sits on neither rung on purpose: it runs weekly via the
-`mutation.yml` cron, never as part of `verify` — see AGENTS.md § Mutation testing.
+`mutation.yml` cron, never as part of `verify` — see AGENTS.md § Mutation testing. `npm run perf:check`
+(the Hermes bundle budget) is the same kind of lane: the `bundle-budget` job in `ci.yml` runs it on every
+pull request and push, and `scripts/gate-tiers.json` § ci.allowedRunSteps records why it is outside `verify`.
 
 The checklist (exit code without a pipe, prove the gate can go red, name the condition under which a
 green would have been red): `.cursor/rules/agent-pipeline.mdc` § 4.1a — one home.

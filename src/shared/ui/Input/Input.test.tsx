@@ -3,8 +3,16 @@ import { createRef } from 'react';
 import type { TextInput } from 'react-native';
 
 import { Input } from '@/shared/ui/Input/Input';
+import { expectAccessibleControl, TEXT_FIELD_ROLE } from '@/test/a11y';
 
 describe('Input', () => {
+    it('exposes the text field under its label', async () => {
+        await expectAccessibleControl(<Input label="Task title" />, {
+            role: TEXT_FIELD_ROLE,
+            name: 'Task title'
+        });
+    });
+
     it('forwards its ref to the underlying text input', async () => {
         const inputRef = createRef<TextInput>();
 

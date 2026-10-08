@@ -7,9 +7,26 @@ import { Text } from 'react-native';
 
 import { MAX_FONT_SCALE_IN_FIXED_CONTROL } from '@/shared/lib/theme/controlSizes';
 import { Button } from '@/shared/ui/Button/Button';
+import { expectAccessibleControl } from '@/test/a11y';
 import { STRESS_FONT_SCALE } from '@/test/contentStress';
 
 describe('Button', () => {
+    it('exposes a button role and its label to assistive technology', async () => {
+        await expectAccessibleControl(<Button label="Create task" />, {
+            role: 'button',
+            name: 'Create task'
+        });
+    });
+
+    it('takes its name from accessibilityLabel when it renders custom content', async () => {
+        await expectAccessibleControl(
+            <Button accessibilityLabel="Open menu">
+                <Text>...</Text>
+            </Button>,
+            { role: 'button', name: 'Open menu' }
+        );
+    });
+
     it('renders the label and calls onPress', async () => {
         const onPress = jest.fn();
         const { getByRole, getByText } = await render(

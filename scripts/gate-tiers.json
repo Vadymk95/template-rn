@@ -52,6 +52,10 @@
             {
                 "run": "npm run doctor",
                 "reason": "Expo doctor, advisory only (continue-on-error), never blocks a PR"
+            },
+            {
+                "run": "npm run perf:check",
+                "reason": "Hermes bundle budget: a full expo export of both platforms, the heaviest stage the repo has, so a CI-only lane (job bundle-budget) like the weekly mutation run; the same script runs locally"
             }
         ],
         "rulesetContextAllowlist": []
