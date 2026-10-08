@@ -2,6 +2,103 @@
 
 Short record of non-obvious trade-offs. Update when reversing a decision.
 
+## [2026-10] Dependency pass: every major is a measured hold, the newest compatible patches are in (2026-10-07)
+
+**Decision**: take every dependency to its newest release that is compatible and stable, with native versions
+decided by the installed `expo`'s `bundledNativeModules.json`, not by `npm outdated`. `.npmrc` is unchanged
+(`min-release-age=3` and `ignore-scripts=true` stay; `--legacy-peer-deps` and `--force` were never used). The
+operator asked on 2026-10-07 for a one-off bypass of the age cooldown so that `npx expo install --check` and
+`npx expo-doctor` come out green, so every compatible version held back only by its age was installed with
+`--min-release-age=0`; the record is below. **No major was taken**: each one that `npm outdated` lists was tried
+against the evidence in the holds table, and each fails a measured compatibility or stability test. The brief was
+"everything, as long as it is compatible"; compatible is the test, and these are the cases where it is not.
+
+**What moved** (all inside their existing ranges except where a range was edited): `expo` `~57.0.22` →
+`~57.0.27`, `expo-constants` → `~57.0.21`, `expo-font` → `~57.0.4`, `expo-linking` → `~57.0.12`,
+`expo-router` → `~57.0.25`, `expo-updates` → `~57.0.25`, `babel-preset-expo` → `~57.0.14`, `jest-expo` →
+`~57.0.5`, `eslint-config-expo` → `~57.0.2`, `@tanstack/react-query` and `@tanstack/eslint-plugin-query` →
+`^5.104.1`, `react-hook-form` → `^7.89.0`, `react-i18next` → `^17.0.16`, `react-native-web` → `^0.21.3`,
+`eslint` → `^10.12.0`, `lint-staged` → `^17.6.0`, `oxlint` → `~1.87.0`, `prettier` → `^3.9.9`,
+`typescript-eslint` → `^8.71.1`, `react-native-screens` `4.26.0` → `~4.26.0` (the SDK range, locked at
+`4.26.2`), `test-renderer` `~1.3.0` → `~1.2.0` (hold below), plus the `yaml` devDependency (below) and an
+update of the transitive tree (no direct major; `obug` 2.2.1 → 3.0.0 and `verkit` 0.3.2 → 0.5.0 follow the
+`@babel/*` 8.0.7 patches nested under the Stryker instrumenter, and the top-level `yaml` 1.10.3 → 2.9.1 is the
+hoisting change described below). Online `npx expo install --check` and `npx expo-doctor` exit 0,
+and so does `npm ls --all`.
+
+**Installed under the one-off cooldown bypass** (`--min-release-age=0`, 2026-10-07; every version below was
+younger than three days when installed; publish times are UTC from `npm view <pkg>@<version> time`, provenance
+from `npm view <pkg>@<version> dist.attestations`). Nothing was installed under the bypass that is not in
+this record, and the bypass is spent: `.npmrc` still refuses a young release on the next resolution.
+
+| Direct dependency   | Version | Published        | npm provenance |
+| ------------------- | ------- | ---------------- | -------------- |
+| `expo`              | 57.0.27 | 2026-10-06 12:10 | no             |
+| `expo-constants`    | 57.0.21 | 2026-10-06 12:10 | no             |
+| `expo-linking`      | 57.0.12 | 2026-10-06 12:09 | no             |
+| `expo-router`       | 57.0.25 | 2026-10-06 12:10 | no             |
+| `expo-updates`      | 57.0.25 | 2026-10-06 12:07 | no             |
+| `babel-preset-expo` | 57.0.14 | 2026-10-06 12:09 | no             |
+| `react-i18next`     | 17.0.16 | 2026-10-06 12:19 | no             |
+| `oxlint`            | 1.87.0  | 2026-10-05 11:05 | yes            |
+| `typescript-eslint` | 8.71.1  | 2026-10-05 17:08 | yes            |
+
+The transitive tree came along with it: 79 further versions younger than three days, published between
+2026-10-05 08:43 and 2026-10-07 18:04. Without provenance (19): `@expo/cli` 57.0.28, `@expo/config` 57.0.10,
+`@expo/config-plugins` 57.0.10, `@expo/image-utils` 0.11.6, `@expo/metro-config` 57.0.13,
+`@expo/metro-file-map` 57.0.4, `@expo/prebuild-config` 57.0.17, `@expo/require-utils` 57.0.6,
+`@expo/router-server` 57.0.12, `@expo/ui` 57.0.22, `@expo-google-fonts/material-symbols` 0.4.49, `expo-asset`
+57.0.19, `expo-dev-menu` 57.0.19, `expo-eas-client` 57.0.5, `expo-modules-autolinking` 57.0.14,
+`expo-modules-core` 57.0.21 (all 2026-10-06 11:45 to 12:15), `acorn` 8.19.0 (2026-10-05 12:51), `regjsparser`
+0.13.4 (2026-10-06 11:52) and `resolve` 1.22.13 (2026-10-06 22:20). With provenance (60): 19 `@oxlint/binding-*`
+1.87.0 (2026-10-05 10:55 to 11:01), 10 `@typescript-eslint/*` 8.71.1 (2026-10-05 17:08 to 17:09), 11 `@radix-ui/*`
+(2026-10-05 23:08 to 23:10), `@babel/runtime`, `@babel/traverse`, `@babel/helpers` and
+`@babel/helper-create-regexp-features-plugin` 7.29.10 (2026-10-07 09:50 to 09:52), 7 `@babel/*` 8.0.7 (2026-10-07
+09:59 to 10:02; they sit under the Stryker instrumenter, not under the app's `@babel/core` 7),
+`@conventional-changelog/git-client` 3.2.0, `conventional-changelog-conventionalcommits` 10.4.1 and
+`conventional-commits-parser` 7.1.3 (2026-10-05 18:13 to 18:18), `@napi-rs/wasm-runtime` 1.2.5 (2026-10-05
+08:43), `nanoid` 3.3.20 (09:44), `postcss` 8.5.29 (09:28), `regexpu-core` 6.5.3 (2026-10-05 21:33),
+`caniuse-lite` 1.0.30001815 (2026-10-07 09:19) and `electron-to-chromium` 1.5.450 (2026-10-07 18:04). The Expo
+packages publish without npm provenance as a rule: the earlier releases (`expo@57.0.22`) carry none either.
+
+**Holds, each with the measurement that keeps it** (2026-10-07):
+
+| Package                                                                                                                                                                                                                               | Held at                                                                                | Why (measured)                                                                                                                                                                                                                                                                                                                                          | Lift when                                             |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Expo SDK 58 (`expo@58`, `expo-*@58`, `babel-preset-expo@58`)                                                                                                                                                                          | SDK 57                                                                                 | `expo`'s `latest` tag is `57.0.27`; the 58 line is on `next` (`58.0.6`). Expo's versions API lists 58 on `react-native@0.88.0-rc.3`, with no release notes, and Expo Go (`expoGoSdkVersion`) at 57.0.0. `start` uses `--go`                                                                                                                             | `latest` moves to the 58 line and Expo Go supports it |
+| `react-native@0.87`, `react-native-gesture-handler@3`, `@react-native-async-storage/async-storage@3`, `react-native-reanimated@4.7`, `react-native-worklets@0.13`, `react-native-screens@4.28`, `react-native-safe-area-context@5.10` | the SDK 57 list (`0.86.3`, `~2.32.0`, `2.2.0`, `4.5.1`, `0.10.1`, `~4.26.0`, `~5.7.0`) | none is in the installed `expo`'s `bundledNativeModules.json`; the pins are the SDK's                                                                                                                                                                                                                                                                   | the SDK upgrade above                                 |
+| `react`, `react-dom` `19.3`                                                                                                                                                                                                           | `19.2.3`                                                                               | Expo's versions API pins `facebookReactVersion` 19.2.3 for SDK 57 and 19.3.0 only for the 58 line                                                                                                                                                                                                                                                       | the SDK upgrade above                                 |
+| `test-renderer@1.3`                                                                                                                                                                                                                   | `~1.2.0`                                                                               | `test-renderer@1.3.0` depends on `react-reconciler@0.34`, which peers `react ^19.3.0` (the `1.3.0` manifest itself still says `react ^19.0.0`); the SDK pins `react@19.2.3`, so `1.3` makes `npm install` print ERESOLVE and `npm ls --all` exit 1. `1.2.x` depends on `react-reconciler@0.33`, which peers `react ^19.2.0`                             | the SDK that pins `react@19.3`                        |
+| `@types/react@19.3.0`                                                                                                                                                                                                                 | `~19.2.x` (installs 19.2.18)                                                           | typecheck, lint and 144 tests pass with it, but its stable `index.d.ts` declares `ViewTransition` and `FragmentInstance`; `react@19.2.3` exports no `ViewTransition` (`'ViewTransition' in require('react')` is `false`), so code could compile and be `undefined` on a device. `react-native@0.86.3` peers `@types/react ^19.1.1` and does not need it | the SDK that pins `react@19.3`                        |
+| `jest@30`, `@types/jest@30`                                                                                                                                                                                                           | `jest@~29.7.0`, `@types/jest@^29.5.14`                                                 | `jest-expo@57.0.5` depends on `babel-jest ^29.2.1`                                                                                                                                                                                                                                                                                                      | a `jest-expo` release on `babel-jest@30`              |
+| `@babel/core@8`                                                                                                                                                                                                                       | `^7.29.7`                                                                              | `babel-jest@29` peers `@babel/core ^7.8.0`; `babel-preset-expo@57` uses `@babel/plugin-*` `^7`                                                                                                                                                                                                                                                          | with the jest line above                              |
+| `tailwindcss@4`                                                                                                                                                                                                                       | `^3.4.19`                                                                              | `nativewind@4.2.7` (still `latest`; v5 is only `5.0.0-rc.0`) calls `tailwindcss/lib/...` modules; `tailwindcss@4.3.3` publishes 27 files under `dist/` and none under `lib/`. Its peer range `>3.3.0` does not say so                                                                                                                                   | a stable NativeWind v5                                |
+| `typescript@7`                                                                                                                                                                                                                        | `~6.0.3`                                                                               | `typescript-eslint@8.71.1` (the newest) peers `typescript >=4.8.4 <6.1.0`; `typescript@7.0.2` is `latest`                                                                                                                                                                                                                                               | a `typescript-eslint` release that admits it          |
+| `eslint@11`                                                                                                                                                                                                                           | `^10.12.0`                                                                             | none exists: `eslint` `latest` is `10.12.0` and `@eslint/js` `latest` is `10.0.1`; `eslint-plugin-react@7.37.5`, itself the newest release, peers `eslint ^9.7` and is already run on 10 through the `$eslint` override                                                                                                                                 | an `eslint@11` release and plugin peers that admit it |
+
+**`yaml` is a devDependency only to satisfy `postcss-load-config`'s optional peer.** `tailwindcss`'s
+`postcss-load-config@6.0.1` declares the optional peer `yaml ^2.4.2`, and the hoisted top-level `yaml` was
+`1.10.3` (from `@expo/ngrok`), so `npm ls --all` exited 1 on that "invalid" line. The root `yaml ^2.9.1` puts
+`2.9.1` at the top level and moves `1.10.3` under `@expo/ngrok`. Nothing in this repo imports `yaml`; drop it when
+that peer goes.
+
+**The `js-yaml` security floors are keyed by major, not scoped by parent.** The four parent-scoped entries
+(`cosmiconfig`, `@eslint/eslintrc`, `@expo/xcpretty` at `>=4.3.1 <5`; `@istanbuljs/load-nyc-config` at
+`>=3.15.1 <4`) made `npm ls --all` non-deterministic on the installed tree: it exited 1 on `argparse@1.0.10
+invalid: "^1.0.7"` in 5 of 8 runs. `"js-yaml@^3": ">=3.15.1 <4"` and
+`"js-yaml@^4": ">=4.3.1 <5"` keep the same floors and major caps; the lockfile did not change, and `npm ls --all`
+exited 0 in 30 of 30 runs. Every other `overrides` entry names a package that is in the tree.
+
+**Settings that stay as they are.** `eslint-config-expo@57.0.2` still sets `settings.react.version: 'detect'`
+(`utils/react.js:20`), so the trailing literal-version block in `eslint.config.mjs` is still load-bearing.
+`no-unsafe-enum-assignment` does not fire on `createSelectors.ts` with `typescript-eslint@8.71.1` here (lint
+passes with `--no-cache`), so no files-scoped `'off'` block was added.
+
+**Allowances.** `GHSA-ch52-4w7c-c8xp` (`http-cache-semantics`) left `scripts/audit-allowlist.json`: the tree
+now holds `4.3.0`, and the gate fails a stale entry by design. `GHSA-86w9-cpqp-85rv` (`node-forge`, still
+`1.4.0`, still the newest on npm) and `GHSA-vfj7-8cjw-p6xm` (`braces`, still `3.0.3`, still the newest) were
+read again today and re-dated to 2026-10-07; both expire 2026-11-02 as before. `audit:gate` exits 0.
+
 ## [2026-10] zizmor audits the workflow files in CI (2026-10-04)
 
 `security.yml` gained a third job, `zizmor` (check name `Workflow audit (zizmor)`): the official
@@ -14,8 +111,8 @@ is a deliberate edit of `version`. Findings stay in the job log: there is no SAR
 needs no code scanning. The job audits only this repository's workflow files; the online audits (the action's
 default) also query the GitHub API about the actions those files reference, with the job's read-only token.
 
-**This closes the 2026-07-17 zizmor watch item.** Its recorded trigger, "workflows grow beyond ~2 files per
-repo", has fired: this repo carries five workflow files.
+**This closes the zizmor watch item opened 2026-07-17.** Re-checked 2026-10-07 against its recorded condition,
+"workflows grow beyond ~2 files per repo": it holds, this repo carries five workflow files.
 
 **Findings fixed at the source.** Before, on the workflows at the base commit, `zizmor 1.30.1 --offline` reported
 5 medium (`artipacked`, one per `actions/checkout`) and 1 low (`adhoc-packages`). Every checkout now sets
@@ -824,9 +921,11 @@ ever carries a high advisory, the remedy is an override floor with a major cap, 
 
 Fresh high advisories landed on the existing tree at once. Floors (all with major caps): `js-yaml`
 
-> =4.3.1 <5 scoped under cosmiconfig / @eslint/eslintrc / @expo/xcpretty, and >=3.15.1 <4 scoped under
-> @istanbuljs/load-nyc-config (two majors need two floors — a top-level pin would force the 3.x consumer
-> onto 4.x, which removed `safeLoad`); `nanoid` >=3.3.17 <4 scoped under expo-router; `brace-expansion`
+> =4.3.1 <5 keyed `js-yaml@^4` and >=3.15.1 <4 keyed `js-yaml@^3` (two majors need two floors — a top-level
+> pin would force the 3.x consumer onto 4.x, which removed `safeLoad`; until 2026-10-08 they were scoped under
+> cosmiconfig / @eslint/eslintrc / @expo/xcpretty and @istanbuljs/load-nyc-config, and on an installed tree
+> `npm ls --all` then exited 1 on `argparse@1.0.10 invalid` in 5 of 8 runs, and in none of 30 runs once keyed by major);
+> `nanoid` >=3.3.17 <4 scoped under expo-router; `brace-expansion`
 > =5.0.9 <6 and `fast-uri` >=4.1.2 <5 — both were OUR OWN uncapped floors that aged into the vulnerable
 > ranges, the exact class the sibling ADRs predicted; `uuid` capped at <15 in the same pass.
 > **`image-size` (two DoS advisories, ICNS and JXL/HEIF infinite loops) is allowlisted, not floored,**
