@@ -57,6 +57,8 @@ Expo SDK 57 · React Native 0.86 · React 19.2 · TypeScript 6.0 strict · Expo 
 
 **Testing** — Jest + jest-expo + RNTL 14: `render`/`renderHook`/`fireEvent`/`act`/`unmount` are **async — always `await` them** (an un-awaited `unmount()` poisons the next test's render). Queries skip accessibility-hidden elements by default — pass `{ includeHiddenElements: true }` to reach intentionally hidden nodes (e.g. dialog backdrop). Native E2E: Maestro flows under `.maestro/` (`npm run maestro`).
 
+**Accessibility** — every interactive primitive in `src/shared/ui` applies `expectAccessibleControl` (`src/test/a11y.ts`) in its own test: it fails unless the control exposes its role and accessible name, and `src/test/uiA11yCoverage.test.ts` fails a new Pressable or TextInput primitive whose test omits it. `eslint-plugin-react-native-a11y` peers eslint ≤8, so the check lives in tests (hold: `DECISIONS.md`).
+
 **Reuse first** — before creating any function/util/component/constant, search for an existing equivalent and extend it. Duplicate utilities are a violation, not a style choice.
 
 **Consistency beats preference** — match the surrounding file's style and patterns.
@@ -243,7 +245,7 @@ verify gate fails loudly if hooks are missing. Dependency cooldown is also on
 (`.npmrc` `min-release-age=3`, DAYS): a brand-new package or urgent patch needs
 `npm install <pkg> --min-release-age=0`.
 
-The gate is **zero-warnings**: `eslint --max-warnings 0`, `oxlint --deny-warnings`. If it fails, fix the cause — do **not** downgrade rules, silence warnings, or sprinkle `eslint-disable`. If a rule is genuinely wrong for a class of files, add a documented file-scoped override in `eslint.config.mjs` stating why.
+The gate is **zero-warnings**: `eslint --max-warnings 0`, `oxlint --deny-warnings`. If it fails, fix the cause — do **not** downgrade rules, silence warnings, or sprinkle `eslint-disable`. A directive that must stay needs a `-- reason` and names its rules (`@eslint-community/eslint-comments`: `require-description`, `no-unlimited-disable`); an unused one is a warning, so the gate rejects it. `oxlint-disable*` comments are banned (`no-warning-comments`): oxlint cannot ask a directive for its reason, so a rule that is wrong for a class of files gets a documented `overrides` entry in `.oxlintrc.json`. If an ESLint rule is genuinely wrong for a class of files, add a documented file-scoped override in `eslint.config.mjs` stating why.
 
 **Complexity ratchet** — `complexity` 15 / `max-depth` 3 / `max-params` 4 / `max-lines-per-function` 120 / `max-lines` 200 over `src/**`, tests exempt. Thresholds sit above the measured ceiling (see `DECISIONS.md`), so a hit means new drift: split the function first; raising a number needs a fresh measurement and a `DECISIONS.md` line.
 

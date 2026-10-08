@@ -330,7 +330,7 @@ Re-add the package only if a documented SDK 57 limitation names it. Doc source: 
 - **Install:** `npx expo install expo-image`.
 - **Where it plugs in:** a shared `Image` wrapper in `src/shared/ui` that fixes the defaults.
 - **Config and why:** `cachePolicy` defaults to disk caching; use `memory-disk` for images a list scrolls back to. Give every remote image a `placeholder` (a blurhash or thumbhash) and `contentFit`, add a short `transition`, and `Image.prefetch` the next screen's hero image. In a recycling list (FlashList) set `recyclingKey` to the item id, so a recycled cell shows the placeholder instead of the previous item's image while loading.
-- **Guard:** a wrapper test that the defaults are applied. `npm run perf:check` is a local check of the Hermes JavaScript bundle bytes only (`scripts/capture-bundle-metrics.mjs`, not in CI): it shows the JavaScript side of the package, not its native binary size.
+- **Guard:** a wrapper test that the defaults are applied. `npm run perf:check` checks the Hermes JavaScript bundle bytes only (`scripts/capture-bundle-metrics.mjs`, run in CI by the `bundle-budget` job): it shows the JavaScript side of the package, not its native binary size.
 - **Security:** only fetch images over https and from hosts you expect; user-supplied URLs go through an allowlist.
 - **Do NOT:** use it for icons (7.1) or for local assets that `require` serves.
 - **Native:** a native module: rebuild, bump `version`.

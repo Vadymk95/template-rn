@@ -2,6 +2,7 @@ import { fireEvent, render } from '@testing-library/react-native';
 import { Text } from 'react-native';
 
 import { Dialog } from '@/shared/ui/Dialog/Dialog';
+import { expectAccessibleControl } from '@/test/a11y';
 
 jest.mock('@expo/vector-icons/Ionicons', () => ({
     __esModule: true,
@@ -9,6 +10,15 @@ jest.mock('@expo/vector-icons/Ionicons', () => ({
 }));
 
 describe('Dialog', () => {
+    it('exposes its close control with a button role and a label', async () => {
+        await expectAccessibleControl(
+            <Dialog visible title="Create task" onClose={jest.fn()}>
+                <Text>Dialog content</Text>
+            </Dialog>,
+            { role: 'button', name: 'common:button.close' }
+        );
+    });
+
     it('keeps the backdrop out of the accessibility tree', async () => {
         const { getByTestId } = await render(
             <Dialog visible title="Create task" onClose={jest.fn()}>

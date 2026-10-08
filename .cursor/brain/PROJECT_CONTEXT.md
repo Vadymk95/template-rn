@@ -135,7 +135,7 @@ Single source of truth: `tsconfig.json` `paths`. Metro reads this directly
 - `npm run fix` — the one remedy command: oxlint --fix → eslint --fix → prettier --write
 - **The gate, its moments and its scripts** — `AGENTS.md` § Commands / the gate is the only definition (which script belongs to which moment, what is never run by hand). Stage timings: `.cursor/brain/VERIFICATION.md`. The full script list: `package.json`. Nothing about the gate is repeated in this file.
 - `npm run ci:local` — `verify:ci` + expo-doctor (full local parity, a human check)
-- `npm run perf:*` — optional Hermes bundle export + metric capture against `scripts/perf-baseline.json` (see `scripts/perf-program.md`)
+- `npm run perf:*` — Hermes bundle export + metric capture against `scripts/perf-baseline.json`; `perf:check` runs in CI as the `bundle-budget` job (see `scripts/perf-program.md`)
 - `npx expo prebuild --clean` — regenerate `ios/` and `android/` from config
 - `eas build` — cloud build (no Mac required for iOS)
 - `eas update` — OTA JS/asset push (no App Store review)

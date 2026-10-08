@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import { ErrorBoundary } from '@/shared/ui/ErrorBoundary/ErrorBoundary';
+import { expectAccessibleControl } from '@/test/a11y';
 
 describe('ErrorBoundary', () => {
     let consoleErrorSpy: jest.SpyInstance;
@@ -19,6 +20,16 @@ describe('ErrorBoundary', () => {
         expect(screen.getByRole('alert')).toBeOnTheScreen();
         expect(screen.getByText(/something went wrong/i)).toBeOnTheScreen();
         expect(consoleErrorSpy).toHaveBeenCalled();
+    });
+
+    it('exposes the retry control with a button role and its text as the name', async () => {
+        await expectAccessibleControl(
+            <ErrorBoundary error={new Error('boom')} retry={jest.fn()} />,
+            {
+                role: 'button',
+                name: 'Try again'
+            }
+        );
     });
 
     it('invokes retry when the button is pressed', async () => {
