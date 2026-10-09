@@ -308,5 +308,6 @@ Read before proposing a tool that was already considered.
 | react-native-flipper                | sunset         | deprecated in RN 0.73 and removed from the boilerplate in 0.74; React Native DevTools replaces it                              |
 | `@shopify/react-native-performance` | deprecated     | archived upstream 2025-11-26 with no named successor; see the observability entry                                              |
 | Zstd compression plugin             | not applicable | Metro and Hermes ship JS, not an HTTP origin; Brotli stays the web default                                                     |
+| `react-native-accessibility-engine` | skip           | last release 2022-11-15, and it peers `react-test-renderer`, which React 19 deprecates; evaluated 2026-10-09                   |
 
 - **Status**: in force. **Evidence**: [31a9d36](https://github.com/Vadymk95/template-rn/commit/31a9d36).
