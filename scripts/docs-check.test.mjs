@@ -214,6 +214,23 @@ describe('normalizeHeading', () => {
         assert.equal(normalizeHeading('Version holds (do not "fix" by bumping)'), 'version holds');
         assert.equal(normalizeHeading('[link text](./x.md) — note'), 'link text - note');
     });
+
+    it('strips an inline HTML tag and keeps the words around it', () => {
+        assert.equal(normalizeHeading('The <code>tier</code> law'), 'the tier law');
+        assert.equal(normalizeHeading('<b>Bold</b> heading:'), 'bold heading');
+    });
+
+    it('leaves no angle bracket behind for nested or unclosed tags', () => {
+        for (const raw of [
+            'A <<b>b> B',
+            '<<script>script>x',
+            '<scr<script>ipt>x',
+            'A <b B',
+            'x <!-- y'
+        ]) {
+            assert.doesNotMatch(normalizeHeading(raw), /[<>]/);
+        }
+    });
 });
 
 describe('checkSectionPointers', () => {
