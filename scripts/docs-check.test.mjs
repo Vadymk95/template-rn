@@ -13,8 +13,8 @@ import {
     checkMemoryImports,
     checkQuarantine,
     checkPathsAndScripts,
-    checkRevisitDates,
     checkRulesetContexts,
+    checkSectionPointers,
     checkSuiteBudgets,
     checkSentinels,
     checkVersions,
@@ -24,10 +24,13 @@ import {
     extractRunSteps,
     extractTokens,
     isPullRequestTriggered,
+    listMarkdownFiles,
     listTestFiles,
+    normalizeHeading,
     parseTraceRows,
     pathExists,
     percentile90,
+    run,
     scriptFamilies
 } from './docs-check.mjs';
 
@@ -204,6 +207,209 @@ describe('checkDeadDocs', () => {
     });
 });
 
+describe('normalizeHeading', () => {
+    it('drops markdown, emphasis, one trailing parenthetical and end punctuation', () => {
+        assert.equal(normalizeHeading('**The `tier` law**:'), 'the tier law');
+        assert.equal(normalizeHeading('_Two tools, one file_.'), 'two tools, one file');
+        assert.equal(normalizeHeading('Version holds (do not "fix" by bumping)'), 'version holds');
+        assert.equal(normalizeHeading('[link text](./x.md) — note'), 'link text - note');
+    });
+});
+
+describe('checkSectionPointers', () => {
+    const agents = [
+        '# Guide',
+        '',
+        '## Commands / the gate',
+        '',
+        'The table.',
+        '',
+        '### The tier law - this section is the ONLY place it lives',
+        '',
+        '**Content variance**: authored copy is proven against content it has not seen.',
+        '',
+        '## Version holds (do not "fix" by bumping)',
+        '',
+        '## Playwright `maxFailures: 10` on the gate run',
+        '',
+        '## 🔒 Security contract',
+        '',
+        '## [2026-07] Pre-commit is repo-scoped',
+        '',
+        '## 4.1a Iteration tier',
+        ''
+    ].join('\n');
+    const pointers = (...lines) =>
+        checkSectionPointers({
+            docs: [
+                ['AGENTS.md', agents],
+                ['README.md', lines.join('\n')]
+            ]
+        });
+
+    it('is red on a pointer whose heading is gone and names file, line, pointer and target', () => {
+        assert.deepEqual(pointers('intro', 'See `AGENTS.md` § Removed section.'), [
+            'README.md:2: "AGENTS.md § Removed section" — no heading in AGENTS.md matches'
+        ]);
+    });
+
+    it('is green on a heading that exists, whatever the case, emphasis or trailing punctuation', () => {
+        assert.deepEqual(pointers('`AGENTS.md` § Commands / the gate'), []);
+        assert.deepEqual(pointers('`AGENTS.md` § COMMANDS / THE GATE.'), []);
+        assert.deepEqual(pointers('`AGENTS.md` § **Version holds**'), []);
+        assert.deepEqual(pointers('[the guide](AGENTS.md) § Version holds, then the rest'), []);
+        assert.deepEqual(pointers('AGENTS.md § Version holds is the list'), []);
+    });
+
+    it('is green on headings that carry backticks, punctuation, emoji, a date prefix or a parenthetical', () => {
+        assert.deepEqual(
+            pointers('`AGENTS.md` § Playwright `maxFailures: 10` on the gate run'),
+            []
+        );
+        assert.deepEqual(pointers('`AGENTS.md` § Playwright `maxFailures: 10`'), []);
+        assert.deepEqual(pointers('`AGENTS.md` § Security contract'), []);
+        assert.deepEqual(pointers('`AGENTS.md` § Pre-commit is repo-scoped'), []);
+        assert.deepEqual(pointers('`AGENTS.md` § Version holds (do not "fix" by bumping)'), []);
+        assert.deepEqual(pointers('`AGENTS.md` § do not "fix" by bumping'), []);
+    });
+
+    it('answers to the parts of a heading: the number alone, the title, each side of a slash or a dash', () => {
+        assert.deepEqual(pointers('`AGENTS.md` § 4.1a'), []);
+        assert.deepEqual(pointers('`AGENTS.md` § Iteration tier'), []);
+        assert.deepEqual(pointers('`AGENTS.md` § the gate'), []);
+        assert.deepEqual(pointers('`AGENTS.md` § The tier law'), []);
+        assert.equal(pointers('`AGENTS.md` § 4.1').length, 1);
+    });
+
+    it('resolves a `A › B` chain only when B sits under A', () => {
+        assert.deepEqual(pointers('`AGENTS.md` § Commands / the gate › _The tier law_'), []);
+        assert.deepEqual(pointers('`AGENTS.md` § Commands / the gate › Content variance'), []);
+        assert.equal(pointers('`AGENTS.md` § Version holds › The tier law').length, 1);
+        assert.equal(pointers('`AGENTS.md` § Nope › The tier law').length, 1);
+    });
+
+    it('checks every `§` of an "and §" chain against the one path', () => {
+        const docs = [
+            ['api.mdc', '## 2. Errors\n\n## 4. Retries\n'],
+            ['README.md', 'Read `api.mdc` § 2 and § 4, or § 9.']
+        ];
+        assert.deepEqual(checkSectionPointers({ docs }), [
+            'README.md:1: "api.mdc § 9" — no heading in api.mdc matches'
+        ]);
+    });
+
+    it('joins a path at the end of one line with the `§` that opens the next', () => {
+        assert.deepEqual(pointers('read `AGENTS.md`', '§ Version holds'), []);
+        assert.equal(pointers('read `AGENTS.md`', '§ Removed section').length, 1);
+        assert.deepEqual(pointers('read `AGENTS.md` §', 'Version holds'), []);
+    });
+
+    it('resolves a bare file name by basename, with or without the extension', () => {
+        const docs = [
+            ['.cursor/brain/MAP.md', '## Layout\n'],
+            ['AGENTS.md', 'MAP.md § Layout, `MAP` § Layout, and MAP.md § Gone.']
+        ];
+        assert.deepEqual(checkSectionPointers({ docs }), [
+            'AGENTS.md:1: "MAP.md § Gone" — no heading in .cursor/brain/MAP.md matches'
+        ]);
+    });
+
+    it('does not judge a bare `§`, a non-markdown target, a placeholder or anything inside a fence', () => {
+        const docs = [
+            ['AGENTS.md', '## Real\n'],
+            [
+                'README.md',
+                [
+                    'Within this file, see § 4.1a.',
+                    '`scripts/gate-tiers.json` § `suites` holds the budget.',
+                    '`<file>` § <Heading> is the form.',
+                    '```',
+                    '`AGENTS.md` § Gone',
+                    '```'
+                ].join('\n')
+            ]
+        ];
+        assert.deepEqual(checkSectionPointers({ docs }), []);
+    });
+
+    it('reports a pointer to a markdown file that is not tracked, when it is a bare name or sits in DECISIONS.md', () => {
+        const docs = [
+            ['AGENTS.md', 'See `GONE.md` § Anything. Or `docs/gone.md` § Anything.'],
+            ['.cursor/brain/DECISIONS.md', 'Evidence: `docs/gone.md` § Anything.']
+        ];
+        assert.deepEqual(checkSectionPointers({ docs }), [
+            'AGENTS.md:1: "GONE.md § Anything" — GONE.md is not a tracked markdown file',
+            '.cursor/brain/DECISIONS.md:1: "docs/gone.md § Anything" — docs/gone.md is not a tracked markdown file'
+        ]);
+    });
+
+    it('checks DECISIONS.md like every other file', () => {
+        const docs = [
+            ['AGENTS.md', '## Lanes\n'],
+            [
+                '.cursor/brain/DECISIONS.md',
+                '## Entry\n\nSee `AGENTS.md` § Lanes and `AGENTS.md` § Maintaining.'
+            ]
+        ];
+        assert.deepEqual(checkSectionPointers({ docs }), [
+            '.cursor/brain/DECISIONS.md:3: "AGENTS.md § Maintaining" — no heading in AGENTS.md matches'
+        ]);
+    });
+
+    it('ignores a heading-looking line inside a fence when it resolves a pointer', () => {
+        const docs = [
+            ['AGENTS.md', '## Real\n\n```md\n## Only in a fence\n```\n'],
+            ['README.md', '`AGENTS.md` § Only in a fence']
+        ];
+        assert.equal(checkSectionPointers({ docs }).length, 1);
+    });
+});
+
+describe('listMarkdownFiles', () => {
+    it('falls back to the known doc locations when the root is not a git checkout', () => {
+        const root = mkdtempSync(path.join(tmpdir(), 'docs-check-list-'));
+        try {
+            mkdirSync(path.join(root, '.cursor/brain'), { recursive: true });
+            writeFileSync(path.join(root, 'AGENTS.md'), '# A\n');
+            writeFileSync(path.join(root, '.cursor/brain/MAP.md'), '# M\n');
+            assert.deepEqual(listMarkdownFiles(root).sort(), ['.cursor/brain/MAP.md', 'AGENTS.md']);
+        } finally {
+            rmSync(root, { recursive: true, force: true });
+        }
+    });
+});
+
+describe('run: section pointers', () => {
+    const withRepo = (agents, check) => {
+        const root = mkdtempSync(path.join(tmpdir(), 'docs-check-run-'));
+        try {
+            mkdirSync(path.join(root, 'scripts'));
+            writeFileSync(path.join(root, 'scripts/gate-tiers.json'), '{}');
+            writeFileSync(path.join(root, 'package.json'), '{"scripts":{}}');
+            writeFileSync(path.join(root, 'package-lock.json'), '{"packages":{}}');
+            writeFileSync(path.join(root, 'AGENTS.md'), agents);
+            writeFileSync(path.join(root, 'README.md'), '# Readme\n\n## Setup\n');
+            check(run({ root, weekly: true, today: '2026-10-09' }).findings);
+        } finally {
+            rmSync(root, { recursive: true, force: true });
+        }
+    };
+
+    it('fails the check on a dangling section pointer', () => {
+        withRepo('See `README.md` § Gone.\n', (findings) => {
+            assert.deepEqual(findings, [
+                'AGENTS.md:1: "README.md § Gone" — no heading in README.md matches'
+            ]);
+        });
+    });
+
+    it('passes when every section pointer resolves', () => {
+        withRepo('See `README.md` § Setup.\n', (findings) => {
+            assert.deepEqual(findings, []);
+        });
+    });
+});
+
 describe('budget', () => {
     it('computes a nearest-rank p90', () => {
         assert.equal(percentile90([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), 9);
@@ -343,18 +549,23 @@ describe('budget', () => {
     });
 });
 
-describe('checkRevisitDates', () => {
-    it('flags only revisit lines whose latest date is past', () => {
-        const docs = [
-            [
-                'x.md',
-                'Revisit trigger 2026-08-23; missed, re-armed 2026-10-28\nrevisit 2026-01-01\nplain date 2026-01-01'
-            ]
-        ];
-        const findings = checkRevisitDates({ docs, today: '2026-09-12' });
-        assert.deepEqual(findings, [
-            'x.md:2: revisit/trigger dated 2026-01-01 is in the past — act on it or re-date it'
-        ]);
+describe('run: dates in prose', () => {
+    it('reads no deadline out of a revisit line, however far past the date is', () => {
+        const root = mkdtempSync(path.join(tmpdir(), 'docs-check-run-'));
+        try {
+            mkdirSync(path.join(root, 'scripts'));
+            writeFileSync(path.join(root, 'scripts/gate-tiers.json'), '{}');
+            writeFileSync(path.join(root, 'package.json'), '{"scripts":{}}');
+            writeFileSync(path.join(root, 'package-lock.json'), '{"packages":{}}');
+            writeFileSync(
+                path.join(root, 'AGENTS.md'),
+                'Revisit trigger 2020-01-01\nre-check on 2020-02-02\ncheckpoint 2020-03-03\n'
+            );
+            const { findings } = run({ root, weekly: true, today: '2026-10-09' });
+            assert.deepEqual(findings, []);
+        } finally {
+            rmSync(root, { recursive: true, force: true });
+        }
     });
 });
 

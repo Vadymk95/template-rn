@@ -2,177 +2,71 @@
 
 ## Purpose
 
-Production-ready React Native + Expo foundation. Mirrors the philosophy of
-`template-1` (React SPA) — strict types, validated env, declarative pipeline —
-adapted for mobile: file-based routing, native dependencies via config plugins,
-OTA updates, cloud builds.
+Production-ready React Native + Expo foundation, the mobile sibling of `template-1` (React SPA): strict types, validated env, a declarative pipeline, adapted for file-based routing, native dependencies via config plugins, OTA updates and cloud builds.
 
-This is a **generic MVP template**. No vendor auth, analytics, or crash
-reporting — wire those when the product needs them. **i18next** (bundled JSON +
-typed keys) and **react-hook-form** with Zod resolvers ship as defaults; remote
-translation delivery and heavier form stacks stay product-specific. The template
-ships the toolchain and the architectural spine.
+A **generic MVP template**: no vendor auth, analytics or crash reporting; wire those when the product needs them. It ships the toolchain and the architectural spine.
 
 ## Tech Stack (July 2026)
 
-| Layer          | Choice                                                               | Version               |
-| -------------- | -------------------------------------------------------------------- | --------------------- |
-| Runtime        | React Native                                                         | 0.86 (Expo SDK 57)    |
-| Framework      | Expo                                                                 | 57                    |
-| Language       | TypeScript                                                           | 6.0 strict            |
-| Bundler        | Metro                                                                | bundled with Expo     |
-| Routing        | Expo Router                                                          | v57                   |
-| Styling        | NativeWind + Tailwind                                                | 4.2 + 3.4             |
-| Icons          | @expo/vector-icons                                                   | ships with Expo       |
-| State          | Zustand + devtools + persist                                         | 5                     |
-| Server state   | TanStack Query (+ AppState focus)                                    | 5                     |
-| Env validation | @t3-oss/env-core + zod                                               | 0.13 / 4              |
-| Animation      | react-native-reanimated (+ worklets)                                 | 4.5 / 0.10            |
-| Gestures       | react-native-gesture-handler                                         | 2.32                  |
-| Storage        | expo-secure-store (secrets) + AsyncStorage (cache)                   | —                     |
-| Observability  | stub `logger.ts` (wire Sentry/etc in product)                        | —                     |
-| Testing        | Jest + jest-expo + @testing-library/react-native (built-in matchers) | —                     |
-| Linting        | ESLint 10 flat + eslint-config-expo + import-x + oxlint pre-pass     | —                     |
-| Formatting     | Prettier                                                             | 3                     |
-| Git hooks      | Husky + commitlint + lint-staged                                     | —                     |
-| Compiler       | React Compiler (enabled via `experiments.reactCompiler`)             | stable                |
-| i18n           | i18next + react-i18next + `src/shared/locales/` + expo-localization  | typed `t()` keys      |
-| Forms          | react-hook-form + @hookform/resolvers (Zod)                          | simple inputs default |
+The one place for the stack. Exact versions are `package.json`; every package held below a newer release is in `scripts/version-holds.json`.
 
-`expo-localization` supplies the initial language; catalogs live next to the app
-in JSON (see `MAP.md` → i18n).
+- **Runtime**: React Native 0.86 on Expo SDK 57, React 19.2, TypeScript 6.0 strict, Metro (bundled with Expo), React Compiler (`experiments.reactCompiler`).
+- **Routing and styling**: Expo Router v57; NativeWind 4.2 on Tailwind 3.4; `@expo/vector-icons` (ships with Expo); Reanimated 4 with worklets; gesture-handler.
+- **State and data**: Zustand 5 (devtools + persist); TanStack Query 5 with AppState focus; `@t3-oss/env-core` + Zod for env; `expo-secure-store` for secrets, AsyncStorage for cache.
+- **i18n and forms**: i18next + react-i18next, typed `t()` keys, bundled JSON in `src/shared/locales/`, expo-localization; react-hook-form + `@hookform/resolvers` (Zod).
+- **Quality**: Jest + jest-expo + `@testing-library/react-native` (built-in matchers); ESLint 10 flat + eslint-config-expo + import-x behind an oxlint pre-pass; Prettier 3; Husky + commitlint + lint-staged.
+- **Observability**: stub `logger.ts`; wire Sentry or similar in the product.
 
 ## Architecture
 
-**Shipped under `src/` today:** `app/` (Expo Router root layout with i18n + store
-hydration gate, `_RootStack` for stack/modal composition, tabs, not-found), `widgets/start-guide` (the first tab: the start guide), `widgets/todo-workspace` (the Tasks tab
-composition), `features/todo-*` and `features/todo` (workspace actions,
-dialogs, filtering, and derived logic), `store/todo` + `store/user` + `store/utils`
-(Zustand slices and selector helpers), `shared/ui/` (cross-app UI primitives),
-`shared/lib/theme/` (tokenized spacing/color/typography), `shared/locales/` +
-`shared/lib/i18n/` (bundled translations + init), `lib/` (query client with AppState
-focus, logger stub, `secureToken`, utility helpers), `test/setup.ts`, and `env.ts`.
+**Shipped under `src/`**: `app/` (root layout with the i18n and store hydration gate, `_RootStack`, tabs, not-found), the `widgets/` + `features/` + `store/` slices of the start guide and the todo sample, `shared/` (ui primitives, tokenized theme, locales and i18n init), `lib/` (query client with AppState focus, logger stub, `secureToken`), `test/setup.ts` and `env.ts`. File map: `MAP.md`; layer rules: `.cursor/rules/fsd-layers.mdc`.
 
-**Extension points (add when the product needs them):** API clients per feature,
-offline query persistence (`NetInfo` + `persistQueryClient`), product auth provider,
-and vendor observability adapter behind `logger.ts`.
+**Extension points** (add when the product needs them): API clients per feature, offline query persistence, a product auth provider, a vendor observability adapter behind `logger.ts`. Recipes: `EXTENSIONS.md`.
 
 ### Expo Router (file-based)
 
-- Route groups: `(tabs)` → tabs, no URL segment
-- Typed routes: `experiments.typedRoutes: true` generates type-safe `href`
-- Deep links: `scheme: 'templatern'` in `app.config.ts` → `templatern://` URLs (align with your product scheme before shipping)
-- Root layout wraps providers once; subsequent layouts compose
-
-### NativeWind (className-first)
-
-Prefer utility classes on native primitives over `StyleSheet.create` unless
-inline dynamic styles are required. Dark mode is driven by `.dark` on the root
-with `useColorScheme` / NativeWind color scheme APIs. Web-only modifiers such as
-`hover:` do not apply on native; use press/active patterns instead.
-
-### Stores: Zustand + createSelectors
-
-Selectors are composed via the `createSelectors` helper so call sites can use
-fine-grained subscriptions. Tokens belong in `expo-secure-store`, not in
-Zustand `persist` / AsyncStorage; the sample user store uses `partialize` for
-non-sensitive fields only.
+- Route groups: `(tabs)` → tabs, no URL segment. Typed routes (`experiments.typedRoutes: true`) generate type-safe `href`.
+- Deep links: `scheme: 'templatern'` in `app.config.ts`; align it with your product scheme before shipping.
+- The root layout wraps providers once; subsequent layouts compose.
 
 ### TanStack Query: AppState focus + extension points
 
-**Currently wired:** `src/lib/queryClient.ts` wires `AppState` → `focusManager`
-so queries refetch on foreground return (native apps do not emit `window focus`).
-Default `staleTime: 60s`, `gcTime: 5min`, retry skips 4xx errors. The
-`QueryClientProvider` is mounted in `src/app/_layout.tsx`.
+**Wired:** `src/lib/queryClient.ts` maps `AppState` to `focusManager`, so queries refetch on foreground return (native apps emit no `window focus`). Defaults: `staleTime` 60 s, `gcTime` 5 min, retry skips 4xx. `QueryClientProvider` is mounted in `src/app/_layout.tsx`.
 
-**Not yet wired (add when the product has real API calls):**
+**Not yet wired** (add when the product has real API calls; inline snippets in `src/lib/queryClient.ts`):
 
-| What                                                                                  | Why                                                                                                                 | Where                                   |
-| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
-| `networkMode: 'offlineFirst'` + `onlineManager` via `@react-native-community/netinfo` | Default `'online'` mode on mobile with spotty signal looks like a broken app                                        | `src/lib/queryClient.ts` defaultOptions |
-| Query key factory per feature                                                         | Prefix-based invalidation; `queryOptions()` gives type-safe `getQueryData` without generics                         | `src/features/<name>/api/<name>Keys.ts` |
-| `persistQueryClient` with `shouldDehydrateQuery` whitelist                            | Offline reads between sessions; whitelist only "important" queries (profile, settings), never search/infinite lists | new `src/lib/queryClient.ts`            |
+- `networkMode: 'offlineFirst'` + `onlineManager` via `@react-native-community/netinfo`: the default `'online'` mode looks like a broken app on spotty mobile signal.
+- A query key factory per feature (`src/features/<name>/api/<name>Keys.ts`): prefix invalidation, and `queryOptions()` gives type-safe `getQueryData`.
+- `persistQueryClient` with a `shouldDehydrateQuery` whitelist: offline reads between sessions for "important" queries (profile, settings), never search or infinite lists.
 
-**Hard rule:** server state goes in TanStack Query, client/UI state goes in
-Zustand. Never copy API response data into a Zustand store — that creates a
-second source of truth and invalidation bugs.
+**Hard rule:** server state in TanStack Query, client/UI state in Zustand; never copy API response data into a store (a second source of truth).
 
-See `src/lib/queryClient.ts` for inline code snippets of each extension point.
+## Commands
 
-### Env: fail fast
-
-Import the validated `env` object from `@/env`; missing or malformed
-`EXPO_PUBLIC_*` values throw before first render.
-
-### Logger
-
-Avoid raw `console.error` for product-level diagnostics; use the stable
-`logger.*` API in `src/lib/logger.ts` so a future Sentry or Datadog adapter can
-plug in without rewiring call sites. The default stub reduces noise in
-production builds.
-
-### React Compiler (auto-memoization)
-
-Enabled via `experiments.reactCompiler: true` in `app.config.ts`. Most manual
-memoization becomes unnecessary; if a component misbehaves under compilation,
-opt out with the compiler’s escape hatch directive documented in React 19
-release notes.
-
-### Path alias `@/*`
-
-Single source of truth: `tsconfig.json` `paths`. Metro reads this directly
-(SDK 55+), no Babel plugin needed.
-
-## Dev Tooling
-
-- `npm start` — Expo dev server (QR → Expo Go / Dev Client)
-- `npm run ios` / `npm run android` — simulator / emulator
-- `npm run typecheck` — `tsc --noEmit`
-- `npm run lint` — ESLint flat
-- `npm run lint:oxlint` — fast pre-pass (Rust-based, `src` scope)
-- `npm run test` — Jest
-- `npm run test:scripts` — gate-script specs (`node:test`, not Jest — see DECISIONS)
-- `npm run fix` — the one remedy command: oxlint --fix → eslint --fix → prettier --write
-- **The gate, its moments and its scripts** — `AGENTS.md` § Commands / the gate is the only definition (which script belongs to which moment, what is never run by hand). Stage timings: `.cursor/brain/VERIFICATION.md`. The full script list: `package.json`. Nothing about the gate is repeated in this file.
-- `npm run ci:local` — `verify:ci` + expo-doctor (full local parity, a human check)
-- `npm run perf:*` — Hermes bundle export + metric capture against `scripts/perf-baseline.json`; `perf:check` runs in CI as the `bundle-budget` job (see `scripts/perf-program.md`)
-- `npx expo prebuild --clean` — regenerate `ios/` and `android/` from config
-- `eas build` — cloud build (no Mac required for iOS)
-- `eas update` — OTA JS/asset push (no App Store review)
+The gate, its moments and its scripts: `AGENTS.md` § Commands / the gate is the only definition. Stage timings: `VERIFICATION.md`. Every script: `package.json` and the README command tables. Native: `npx expo prebuild --clean` regenerates `ios/` and `android/`; `eas build` / `eas update`: README § Build profiles. Bundle metrics: `npm run perf:*` against `scripts/perf-baseline.json` (`scripts/perf-program.md`).
 
 ## Non-goals for template
 
-- Web support (dropped — `app.config.ts` has no web block)
-- Full E2E stack in CI (a local Maestro smoke skeleton may exist, but CI-grade E2E remains product-specific)
-- Remote-only translation delivery (Phrase/Lokalise HTTP backend, etc.) without JSON in-repo
-- TanStack Form or heavy form codegen as the default abstraction (template uses RHF + Zod resolvers for typical inputs)
+- Web support (dropped; `app.config.ts` has no web block)
+- Full E2E stack in CI (a local Maestro smoke skeleton exists; CI-grade E2E stays product-specific)
+- Remote-only translation delivery (Phrase/Lokalise HTTP backend) without JSON in-repo
+- TanStack Form or heavy form codegen as the default (RHF + Zod resolvers for typical inputs)
 - Crash reporting (wire Sentry/Bugsnag per product into `logger.ts`)
 - Auth (pick Clerk/Supabase/Auth0/Firebase per product)
 
 ## Full scope: strengths vs deferred tools (when to adopt)
 
-This section is the **single narrative** for “what we optimize for” vs “what stays out until the product needs it.” Per-item tiering and Adopt/Defer flags live in `DECISIONS.md` (audit backlog).
+The single narrative for what we optimize for versus what stays out until the product needs it. The decision record is `DECISIONS.md`; the guard behind each strength is named there.
 
-### Where the scaffold is intentionally strong
+**Strong by default:** compliance (iOS privacy manifest, empty permissions until a feature needs them, `contents: read` workflow tokens, SHA-pinned actions, zizmor, the cleartext-traffic guard); strict TypeScript (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, type-aware ESLint on `src/**`); the lint pipeline (oxlint pre-pass, ESLint as source of truth, FSD boundaries, `i18next/no-literal-string` on routes); the React Compiler; secrets hygiene (`expo-secure-store` via `src/lib/secureToken.ts`, Zustand persist for non-sensitive fields only).
 
-- **Compliance defaults** — iOS privacy manifest (required-reason APIs), least-privilege permissions (empty until a feature needs them), workflow tokens default to `contents: read`, every GitHub Action SHA-pinned, a zizmor job that fails CI on a medium-or-worse workflow finding, and a script test that reads the text of `app.config.ts` and of the files directly under a local `plugins/` directory (subdirectories are not scanned) and fails on any line naming a cleartext-HTTP key other than as a plain `<key>: false`, unless the key has a reasoned allowlist entry (`scripts/native-config.test.mjs`; a comment mention counts, deliberate obfuscation is out of scope).
-- **Type safety** — strict TS with `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, and type-aware ESLint on `src/**`.
-- **Lint pipeline** — Oxlint pre-pass, ESLint as source of truth, FSD boundaries, `i18next/no-literal-string` on routes.
-- **React Compiler** enabled by default in `app.config.ts` (escape hatches when needed).
-- **Secrets hygiene** — auth token via `expo-secure-store` (`src/lib/secureToken.ts`), not AsyncStorage; Zustand persist only for non-sensitive fields.
+**Deferred, with the trigger that adopts each:**
 
-### What is deferred and typical adoption triggers
-
-| Area                                 | Deferred in-repo                                                                | When to add                                                                                       |
-| ------------------------------------ | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| **MMKV / sync KV**                   | AsyncStorage + Jest mock                                                        | Measured slow hydration, sync read before first paint, Zustand/Query persist with strict perf SLA |
-| **Sentry / crash + source maps**     | `logger` stub + optional `EXPO_PUBLIC_SENTRY_DSN`                               | Production crash visibility, release health, or org requires upload in CI                         |
-| **Maestro (or Detox) E2E in CI**     | Local Maestro smoke flows in `.maestro/` (`npm run maestro`), not wired into CI | Regression policy on critical flows, first release candidate, or post–EAS Update smoke            |
-| **expo-image**                       | Plain `Image` / no image                                                        | Remote images, caching, placeholders, CDN                                                         |
-| **FlashList**                        | `FlatList` / short lists                                                        | Long virtualized lists, scroll jank                                                               |
-| **TanStack Query persist + NetInfo** | Foreground refetch only                                                         | Offline-first product requirement                                                                 |
-| **HTTP client layer**                | `fetch` + Query                                                                 | Auth refresh, uniform error taxonomy, interceptors                                                |
-
-### Comparison to opinionated product starters
-
-Some public starters (e.g. **Obytes**-style) ship **MMKV, Sentry, Maestro**, and more **out of the box** — faster path to a “batteries included” product, at the cost of vendor choices and extra native/CI surface. **template-rn** stays **vendor-free** by default: stricter types, compliance baselines, and Oxlint/FSD are in-repo; runtime observability and native perf stores are **fork decisions** once requirements exist. Neither approach is universally “better” — they optimize for different first steps.
+- **MMKV / sync KV** (now AsyncStorage + Jest mock): measured slow hydration, a sync read before first paint, or a strict persist perf SLA.
+- **Sentry / crash + source maps** (now the `logger` stub + optional `EXPO_PUBLIC_SENTRY_DSN`): production crash visibility, release health, or CI upload required.
+- **Maestro (or Detox) E2E in CI** (now local flows in `.maestro/`, `npm run maestro`): a regression policy on critical flows, a first release candidate, or a post-EAS-Update smoke.
+- **expo-image**: remote images, caching, placeholders, CDN. **FlashList**: long virtualized lists, scroll jank.
+- **TanStack Query persist + NetInfo** (now foreground refetch only): an offline-first requirement. **HTTP client layer** (now `fetch` + Query): auth refresh, a uniform error taxonomy, interceptors.
+- **keyboard-controller**: forms hit keyboard overlap. **Notifications, universal links**: product and domain decisions.
+- **Preview EAS builds per PR**: the cost and the EAS secrets in CI are accepted. **actions/cache for npm and Metro**: CI runtime hurts.
+- **Storybook RN, jailbreak detection**: a design-system team; a finance or high-assurance product. **tailwind-variants / CVA**: a second styling abstraction is justified.

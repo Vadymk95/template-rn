@@ -26,11 +26,7 @@ A plan is `.cursor/<feature-slug>/PLAN.md`, copied from `.cursor/templates/PLAN.
 
 ## Post-edit verification
 
-After every change: `agent-pipeline.mdc` § 4.1 (the iteration tier) and § 4.1a (the integrity checklist).
-
-## Git commits
-
-`type(scope): description` — English, imperative, **max 96** characters. Types: `feat` `fix` `chore` `docs` `style` `refactor` `perf` `test` `revert` `build` `ci`. No `Co-authored-by`.
+After every change: `agent-pipeline.mdc` Step 4 (the iteration tier) and `.cursor/brain/VERIFICATION.md` § Verification integrity. Commit format: `AGENTS.md` § Commit format (enforced by the commit-msg hook).
 
 ## Hook vs utility (mandatory split)
 

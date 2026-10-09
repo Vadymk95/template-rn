@@ -2,7 +2,7 @@
 
 This file is the **single source of truth** for "what to add when forking this template into a real product". The template ships without the libraries a typical app needs on day one (a backend client wiring, SVG icons, device info, crash reporting, push, offline persistence) because unused dependencies cost audit surface, native build time and review attention. Each phase below says when to add a capability, the exact install, where it plugs in, a professional default with the reason for every value, the guard to add with it, the security note and what not to do.
 
-Companion docs: [`PROJECT_CONTEXT.md`](./PROJECT_CONTEXT.md) (the stack you extend, and the tables of what is not wired yet), [`SKELETONS.md`](./SKELETONS.md) (danger zones), [`VERIFICATION.md`](./VERIFICATION.md) (native parity and OTA discipline), [`DECISIONS.md`](./DECISIONS.md) (why each tool was kept or removed), [`SECURITY_REVIEW.md`](./SECURITY_REVIEW.md), `AGENTS.md` (rules and the gate), `docs/template-reset.md` (fork identity).
+Companion docs: [`PROJECT_CONTEXT.md`](./PROJECT_CONTEXT.md) (the stack you extend, and the lists of what is not wired yet), [`SKELETONS.md`](./SKELETONS.md) (danger zones), [`VERIFICATION.md`](./VERIFICATION.md) (native parity and OTA discipline), [`DECISIONS.md`](./DECISIONS.md) (why each tool was kept or removed), [`SECURITY_REVIEW.md`](./SECURITY_REVIEW.md), `AGENTS.md` (rules and the gate), `docs/template-reset.md` (fork identity).
 
 **How to read a recipe.** Every recipe lists a doc source for its commands and config keys. The stack is Expo SDK 57 with React Native 0.86: a recipe that targets a newer SDK says so, and nothing here assumes a newer API. An item marked **(unverified)** was not confirmed against the vendor docs when this file was written; confirm it on the page named in the recipe before relying on it. An item marked **(opinion)** is a recommendation with no vendor source.
 
@@ -12,7 +12,7 @@ Companion docs: [`PROJECT_CONTEXT.md`](./PROJECT_CONTEXT.md) (the stack you exte
 
 ## Rules every recipe inherits (one home, linked, not restated)
 
-- **A native dependency or native config change** needs a dev-client rebuild and a `version` bump so `runtimeVersion` changes: [`VERIFICATION.md`](./VERIFICATION.md) § OTA discipline. Install Expo and native packages with `npx expo install <name>` (it picks the version for the installed SDK); a plain `npm install` of such a package ignores the SDK list (`AGENTS.md` § Version holds). A brand-new release is held back by the dependency cooldown (`AGENTS.md` § Commands / the gate › Bootstrap after clone).
+- **A native dependency or native config change** needs a dev-client rebuild and a `version` bump so `runtimeVersion` changes: [`VERIFICATION.md`](./VERIFICATION.md) § OTA discipline. Install Expo and native packages with `npx expo install <name>` (it picks the version for the installed SDK); a plain `npm install` of such a package ignores the SDK list (`AGENTS.md` § Version holds). A brand-new release is held back by the dependency cooldown (`AGENTS.md` § Working agreements › Bootstrap after clone).
 - **A new `plugins` entry in `app.config.ts`** needs `npx expo prebuild --clean` ([`SKELETONS.md`](./SKELETONS.md)); never hand-edit `ios/` or `android/`.
 - **A new native module needs a Jest mock** in `src/test/setup.ts` (or a `transformIgnorePatterns` entry in `package.json` when the package ships untranspiled source), otherwise every suite that imports it fails.
 - **Every staged `src/**` logic file needs a co-located test** (the pre-commit sibling gate; the exempt paths, `src/app/**` among them, are listed in `scripts/check-test-siblings.mjs`). Write the guard named in the recipe in the same commit as the code, including for an exempt file.
@@ -301,7 +301,7 @@ The template ships the storage half: `src/lib/secureToken.ts` (`setAuthToken` / 
 
 ### 7.1 SVG icons (`react-native-svg`)
 
-- **Trigger:** a design needs icons that Ionicons (the bundled set) does not have: a brand mark, a custom pictogram, an icon set such as lucide. [`DECISIONS.md`](./DECISIONS.md) § Icons records why the template stays on `@expo/vector-icons`, and that a lucide set adds a dependency plus `react-native-svg`.
+- **Trigger:** a design needs icons that Ionicons (the bundled set) does not have: a brand mark, a custom pictogram, an icon set such as lucide. [`DECISIONS.md`](./DECISIONS.md) § "Icons" records why the template stays on `@expo/vector-icons`, and that a lucide set adds a dependency plus `react-native-svg`.
 - **Install:** `npx expo install react-native-svg`.
 - **Where it plugs in:** today `IconButton` (`src/shared/ui/IconButton`) takes an Ionicons glyph name as `icon`, and `Button` (`src/shared/ui/Button`) has no icon slot; tab icons are Ionicons names in `src/shared/lib/constants/tabBarIcons.ts`. Add one `Icon` primitive in the shared UI layer that renders either an Ionicons name or an SVG component, then let `IconButton` accept the same value and give `Button` an optional leading icon. Colour and size come from the primitive's callers through the existing tokens (`getThemeColorValue`, `CONTROL_SIZE_TOKENS`), never from a hex literal.
 - **Config and why:**
@@ -343,7 +343,7 @@ Re-add the package only if a documented SDK 57 limitation names it. Doc source: 
 | Long lists             | `@shopify/flash-list` (`npx expo install`)    | A list over a few hundred rows or with heavy rows. v2 needs the New Architecture (mandatory here), drops `estimatedItemSize` and takes `getItemType` for mixed row shapes. Checked via context7 in an earlier pass; keep `FlatList` for short lists.    |
 | Keyboard handling      | `react-native-keyboard-controller`            | Forms with sticky footers or chat inputs. `npx expo install`, needs a dev build, wrap the app in its `KeyboardProvider`. It replaces ad hoc `KeyboardAvoidingView` code; do not run both.                                                               |
 | Fast encrypted storage | `react-native-mmkv`                           | AsyncStorage became a bottleneck, or a persisted store needs encryption at rest. `npx expo install react-native-mmkv react-native-nitro-modules`, `createMMKV` with an `encryptionKey` (the key itself belongs in `expo-secure-store`). Dev build only. |
-| i18n growth            | `react-i18next` (already installed)           | More than one locale, plural rules or interpolation. See [`DECISIONS.md`](./DECISIONS.md) § i18n for why the setup is minimal; add locale JSON under `src/shared/locales`, keep keys typed, and test missing keys.                                      |
+| i18n growth            | `react-i18next` (already installed)           | More than one locale, plural rules or interpolation. See [`DECISIONS.md`](./DECISIONS.md) § "i18n and forms" for why the setup is minimal; add locale JSON under `src/shared/locales`, keep keys typed, and test missing keys.                          |
 | Forms at scale         | `react-hook-form` + `zodResolver` (installed) | Already the documented default for non-trivial forms (`AGENTS.md`).                                                                                                                                                                                     |
 | ATT prompt             | `expo-tracking-transparency`                  | Only if you track across apps or sites (3.3).                                                                                                                                                                                                           |
 | Social / OAuth sign-in | `expo-auth-session`, `expo-web-browser`       | Not researched for this file; read the Expo docs page and the scheme note in 2.3 first.                                                                                                                                                                 |
@@ -378,11 +378,11 @@ For each row: native module means rebuild plus a `version` bump; add a Jest mock
 
 When you graduate any phase, update these in the same PR so the brain does not drift:
 
-- [`PROJECT_CONTEXT.md`](./PROJECT_CONTEXT.md): the stack table row, and the "Not yet wired" and adoption tables (remove the row that became real).
+- [`PROJECT_CONTEXT.md`](./PROJECT_CONTEXT.md): the § Tech Stack line, and the § Full scope "Deferred" bullet that became real (remove it).
 - [`MAP.md`](./MAP.md): entry points, the state boundaries and the route table.
 - [`SKELETONS.md`](./SKELETONS.md): a new danger zone if the addition introduces one (for example, crash-reporter init must not hide render errors).
 - [`VERIFICATION.md`](./VERIFICATION.md): a new check to run when touching the new domain.
-- [`DECISIONS.md`](./DECISIONS.md): a dated entry for a choice with alternatives (a runtime version policy, a vendor).
+- [`DECISIONS.md`](./DECISIONS.md): a short entry (≤30 lines, evidence link) for a choice with alternatives (a runtime version policy, a vendor).
 - `README.md`: only when developer-facing scripts or setup change.
 - `.env.example` and `src/env.ts`: every new variable.
 

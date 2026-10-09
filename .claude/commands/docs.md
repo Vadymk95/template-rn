@@ -7,15 +7,15 @@ until the operator approves them.**
 
 ## Scope — these files only
 
-- `AGENTS.md` — invariants, stack table, the command list, version holds, out-of-scope list.
+- `AGENTS.md` — invariants, the command list, one-line pointers to the version holds, the "Ask before" bullet.
 - `.cursor/brain/PROJECT_CONTEXT.md` — purpose, stack, layout, the gate, non-goals.
 - `.cursor/brain/MAP.md` — FSD layers, routes, files, responsibilities.
 - `.cursor/brain/SKELETONS.md` — danger zones, with the risk AND the mitigation.
 - `.cursor/brain/VERIFICATION.md` — which checks per change, hook behaviour, measured timings, OTA vs
   native rebuild.
 - `.cursor/brain/READING_INDEX.md` — situations, pointers only.
-- `.cursor/brain/DECISIONS.md` — append an entry when a decision was made and has a rationale that git
-  history does not capture.
+- `.cursor/brain/DECISIONS.md` — add or rewrite an entry (≤30 lines, evidence link) when a decision was made and has a rationale that git
+  history does not capture; delete an entry a later decision made wrong.
 - `.cursor/rules/*.mdc` — only where a rule's description no longer matches what the linter enforces.
 - `README.md` and `docs/*.md` — only when the setup, the commands or the fork checklist changed.
 
@@ -45,7 +45,7 @@ For every claim already in those files, verify it against the repo before keepin
 - A named script must exist in `package.json`. Diff the documented command list against the real one in
   both directions: documented-but-missing, and existing-but-undocumented.
 - A named file, directory, rule or config key must exist. Grep or read it.
-- A version must match `package.json`. Stack tables rot first. Remember which versions are **holds** and
+- A version must match `package.json`. The stack list rots first. Remember which versions are **holds** and
   why — native and Expo packages come from `npx expo install --fix`, and a version hold with a stale reason
   is worse than no hold at all.
 - A claim about what the linter enforces must match `eslint.config.mjs` / `.oxlintrc.json`. A rule

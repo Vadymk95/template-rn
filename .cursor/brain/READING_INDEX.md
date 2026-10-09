@@ -6,7 +6,11 @@ job: the trigger, not the content. **It points and never restates** — a line s
 the moment that doc changes; a line naming the doc and its section does not. Where two files could
 answer, the entry says which one WINS.
 
-Why it exists: `AGENTS.md` § Entering this repo cheaply.
+Why it exists: an agent's entry is mostly READING SOURCE to find where things are and whether the task
+is still needed (measured on a sibling project, 2026-08-30: ~93% source against ~7% auto-loaded
+documents; two of five lanes returned "already done" after ~430k tokens, each five minutes of grep). So
+point, then look: this index first, then `git log --oneline -15` plus one grep, and name the files when
+you dispatch work to another agent.
 
 ## 1. Picking this repo up cold
 
@@ -33,7 +37,7 @@ Why it exists: `AGENTS.md` § Entering this repo cheaply.
   `android/` are generated; never hand-edit them.
 - `.cursor/brain/VERIFICATION.md` "Native / machine parity" and "Before first EAS build" — what to run
   and in which order.
-- `.cursor/brain/DECISIONS.md` — the SDK pins and why bumping past `expo install --fix` breaks things.
+- `.cursor/brain/DECISIONS.md` — why the SDK list is the authority; `scripts/version-holds.json` — each held package and its lift condition.
 - `scripts/native-config.test.mjs` and `scripts/native-config-allowlist.json` — the guard that reads the
   text of `app.config.ts` and of the files directly under `plugins/` (subdirectories are not scanned) for
   cleartext-HTTP keys; a line naming one other than as a plain `<key>: false` needs the key and a reason in

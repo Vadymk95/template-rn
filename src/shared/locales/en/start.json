@@ -50,7 +50,7 @@
         "map": "entry points, state boundaries, the route table",
         "skeletons": "danger zones: files where a wrong edit breaks the app silently or in production only",
         "verification": "what to run per kind of change",
-        "decisions": "why the stack is the way it is, with dates and revisit triggers",
+        "decisions": "why the stack is the way it is, with status and evidence",
         "security": "the static security review: scope, findings, what must stay out of the bundle"
     },
     "steps": {

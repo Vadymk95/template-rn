@@ -1,0 +1,163 @@
+[
+    {
+        "package": "expo",
+        "held": ">=57.0.0 <58",
+        "reason": "The Expo SDK 57 list (the installed expo bundledNativeModules.json) owns this version; a newer line from npm outdated is not in it and breaks the Expo Go / jest-expo pairing.",
+        "lift": "The SDK upgrade, once the expo `latest` tag moves to the next SDK line.",
+        "evidence": "https://github.com/Vadymk95/template-rn/pull/44"
+    },
+    {
+        "package": "expo-router",
+        "held": ">=57.0.0 <58",
+        "reason": "The Expo SDK 57 list (the installed expo bundledNativeModules.json) owns this version; a newer line from npm outdated is not in it and breaks the Expo Go / jest-expo pairing.",
+        "lift": "The SDK upgrade, once the expo `latest` tag moves to the next SDK line.",
+        "evidence": "https://github.com/Vadymk95/template-rn/pull/44"
+    },
+    {
+        "package": "babel-preset-expo",
+        "held": ">=57.0.0 <58",
+        "reason": "The Expo SDK 57 list (the installed expo bundledNativeModules.json) owns this version; a newer line from npm outdated is not in it and breaks the Expo Go / jest-expo pairing.",
+        "lift": "The SDK upgrade, once the expo `latest` tag moves to the next SDK line.",
+        "evidence": "https://github.com/Vadymk95/template-rn/pull/44"
+    },
+    {
+        "package": "jest-expo",
+        "held": ">=57.0.0 <58",
+        "reason": "The Expo SDK 57 list (the installed expo bundledNativeModules.json) owns this version; a newer line from npm outdated is not in it and breaks the Expo Go / jest-expo pairing.",
+        "lift": "The SDK upgrade, once the expo `latest` tag moves to the next SDK line.",
+        "evidence": "https://github.com/Vadymk95/template-rn/pull/44"
+    },
+    {
+        "package": "eslint-config-expo",
+        "held": ">=57.0.0 <58",
+        "reason": "The Expo SDK 57 list (the installed expo bundledNativeModules.json) owns this version; a newer line from npm outdated is not in it and breaks the Expo Go / jest-expo pairing.",
+        "lift": "The SDK upgrade, once the expo `latest` tag moves to the next SDK line.",
+        "evidence": "https://github.com/Vadymk95/template-rn/pull/44"
+    },
+    {
+        "package": "react",
+        "held": ">=19.2.3 <19.3",
+        "reason": "The Expo SDK 57 list (the installed expo bundledNativeModules.json) owns this version; a newer line from npm outdated is not in it and breaks the Expo Go / jest-expo pairing.",
+        "lift": "The SDK upgrade, once the expo `latest` tag moves to the next SDK line.",
+        "evidence": "https://github.com/Vadymk95/template-rn/pull/44"
+    },
+    {
+        "package": "react-dom",
+        "held": ">=19.2.3 <19.3",
+        "reason": "The Expo SDK 57 list (the installed expo bundledNativeModules.json) owns this version; a newer line from npm outdated is not in it and breaks the Expo Go / jest-expo pairing.",
+        "lift": "The SDK upgrade, once the expo `latest` tag moves to the next SDK line.",
+        "evidence": "https://github.com/Vadymk95/template-rn/pull/44"
+    },
+    {
+        "package": "react-native",
+        "held": ">=0.86.3 <0.87",
+        "reason": "The Expo SDK 57 list (the installed expo bundledNativeModules.json) owns this version; a newer line from npm outdated is not in it and breaks the Expo Go / jest-expo pairing.",
+        "lift": "The SDK upgrade, once the expo `latest` tag moves to the next SDK line.",
+        "evidence": "https://github.com/Vadymk95/template-rn/pull/44"
+    },
+    {
+        "package": "react-native-reanimated",
+        "held": ">=4.5.1 <4.6",
+        "reason": "The Expo SDK 57 list (the installed expo bundledNativeModules.json) owns this version; a newer line from npm outdated is not in it and breaks the Expo Go / jest-expo pairing.",
+        "lift": "The SDK upgrade, once the expo `latest` tag moves to the next SDK line.",
+        "evidence": "https://github.com/Vadymk95/template-rn/pull/44"
+    },
+    {
+        "package": "react-native-worklets",
+        "held": ">=0.10.1 <0.11",
+        "reason": "The Expo SDK 57 list (the installed expo bundledNativeModules.json) owns this version; a newer line from npm outdated is not in it and breaks the Expo Go / jest-expo pairing.",
+        "lift": "The SDK upgrade, once the expo `latest` tag moves to the next SDK line.",
+        "evidence": "https://github.com/Vadymk95/template-rn/pull/44"
+    },
+    {
+        "package": "react-native-gesture-handler",
+        "held": ">=2.32.0 <3",
+        "reason": "The Expo SDK 57 list (the installed expo bundledNativeModules.json) owns this version; a newer line from npm outdated is not in it and breaks the Expo Go / jest-expo pairing.",
+        "lift": "The SDK upgrade, once the expo `latest` tag moves to the next SDK line.",
+        "evidence": "https://github.com/Vadymk95/template-rn/pull/44"
+    },
+    {
+        "package": "react-native-screens",
+        "held": ">=4.26.0 <4.27",
+        "reason": "The Expo SDK 57 list (the installed expo bundledNativeModules.json) owns this version; a newer line from npm outdated is not in it and breaks the Expo Go / jest-expo pairing.",
+        "lift": "The SDK upgrade, once the expo `latest` tag moves to the next SDK line.",
+        "evidence": "https://github.com/Vadymk95/template-rn/pull/44"
+    },
+    {
+        "package": "react-native-safe-area-context",
+        "held": ">=5.7.0 <5.8",
+        "reason": "The Expo SDK 57 list (the installed expo bundledNativeModules.json) owns this version; a newer line from npm outdated is not in it and breaks the Expo Go / jest-expo pairing.",
+        "lift": "The SDK upgrade, once the expo `latest` tag moves to the next SDK line.",
+        "evidence": "https://github.com/Vadymk95/template-rn/pull/44"
+    },
+    {
+        "package": "@react-native-async-storage/async-storage",
+        "held": ">=2.2.0 <3",
+        "reason": "The Expo SDK 57 list (the installed expo bundledNativeModules.json) owns this version; a newer line from npm outdated is not in it and breaks the Expo Go / jest-expo pairing.",
+        "lift": "The SDK upgrade, once the expo `latest` tag moves to the next SDK line.",
+        "evidence": "https://github.com/Vadymk95/template-rn/pull/44"
+    },
+    {
+        "package": "test-renderer",
+        "held": ">=1.2.0 <1.3",
+        "reason": "test-renderer@1.3 depends on react-reconciler@0.34, which peers react ^19.3.0 while the SDK pins react 19.2.3: npm install prints ERESOLVE and npm ls --all exits 1.",
+        "lift": "The SDK that pins react 19.3.",
+        "evidence": "https://github.com/Vadymk95/template-rn/pull/44"
+    },
+    {
+        "package": "jest",
+        "held": ">=29.7.0 <30",
+        "reason": "jest-expo@57 is built on jest 29 internals (babel-jest ^29.2.1).",
+        "lift": "A jest-expo release built on babel-jest 30; lift jest, @types/jest and @babel/core together.",
+        "evidence": "https://github.com/Vadymk95/template-rn/pull/44"
+    },
+    {
+        "package": "@types/jest",
+        "held": ">=29.5.14 <30",
+        "reason": "The types stay level with jest 29.",
+        "lift": "Lifts with the jest hold.",
+        "evidence": "https://github.com/Vadymk95/template-rn/pull/44"
+    },
+    {
+        "package": "@babel/core",
+        "held": ">=7.29.7 <8",
+        "reason": "babel-jest@29 peers @babel/core ^7.8.0 and babel-preset-expo@57 uses @babel/plugin-* ^7, so Babel 8 arrives together with jest 30, never alone.",
+        "lift": "Lifts with the jest hold, in the same commit.",
+        "evidence": "https://github.com/Vadymk95/template-rn/pull/44"
+    },
+    {
+        "package": "tailwindcss",
+        "held": ">=3.4.19 <4",
+        "reason": "nativewind@4.2.x calls tailwindcss/lib/* internals that tailwindcss 4 does not ship, although its peer range would allow 4.",
+        "lift": "A stable nativewind 5.",
+        "evidence": "https://github.com/Vadymk95/template-rn/pull/44"
+    },
+    {
+        "package": "typescript",
+        "held": ">=6.0.3 <6.1",
+        "reason": "typescript-eslint@8 peers typescript <6.1.0; the compiler is also SDK-paired.",
+        "lift": "A typescript-eslint release whose peer range admits the next line.",
+        "evidence": "https://github.com/Vadymk95/template-rn/pull/44"
+    },
+    {
+        "package": "@types/react",
+        "held": ">=19.2.15 <19.3",
+        "reason": "@types/react@19.3 declares ViewTransition and FragmentInstance, which the SDK-pinned react 19.2.3 does not export at runtime, so a fork could compile code that is undefined on a device.",
+        "lift": "The SDK that pins react 19.3, in the same change.",
+        "evidence": "https://github.com/Vadymk95/template-rn/pull/44"
+    },
+    {
+        "package": "eslint",
+        "held": ">=10.12.0 <11",
+        "reason": "A new ESLint major outruns the plugin peers that package.json overrides map to $eslint; the repo is on 10.x with a literal react version in the flat config.",
+        "lift": "The plugins in the tree peer the next ESLint major.",
+        "evidence": "eslint.config.mjs:466"
+    },
+    {
+        "package": "@eslint/js",
+        "held": ">=10.0.1 <11",
+        "reason": "Level with the ESLint hold.",
+        "lift": "Lifts with the eslint hold.",
+        "evidence": "eslint.config.mjs:466"
+    }
+]
