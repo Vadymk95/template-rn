@@ -8,7 +8,7 @@ actual gate, its actual reuse locations and its actual danger zones, so nothing 
 ## 0. Before reading anything: is this still needed, and where does it live?
 
 Two questions, both cheap; both measured as the largest recoverable waste in a lane's entry
-(`AGENTS.md` § Entering this repo cheaply):
+(`.cursor/brain/READING_INDEX.md` says why):
 
 1. **Is the work still needed?** `git log --oneline -15` and one grep for the thing the task names.
    Say what you checked.
@@ -59,7 +59,7 @@ before §3; a plan is approved as a pull-request review, never as a chat reply.
 - **UI**: implement, then cover it with `@testing-library/react-native`. RNTL 14 is async — `render`,
   `renderHook`, `fireEvent`, `act` and `unmount` all return promises and must be awaited. An un-awaited
   `unmount()` poisons the next test's render.
-- Batch rule: `.cursor/rules/agent-pipeline.mdc` § Iteration protocol; the check is `npm run verify:iter`
+- Batch rule: `.cursor/rules/agent-pipeline.mdc` § Step 3: TDD-first execution; the check is `npm run verify:iter`
   (seconds). The full chain is the push hook's, never an implementer's.
 - Every `src` logic file needs a co-located `*.test.*` — the pre-commit hook refuses otherwise. Write the
   test because it is worth having, not to satisfy the hook.
@@ -79,7 +79,7 @@ by hand (tier law: `AGENTS.md` § Commands / the gate):
 npm run verify:iter > /tmp/verify.log 2>&1; echo $?
 ```
 
-Exit code **without a pipe**; the rest of the checklist: `.cursor/rules/agent-pipeline.mdc` § 4.1a.
+Exit code **without a pipe**; the rest of the checklist: `.cursor/brain/VERIFICATION.md` § Verification integrity.
 
 If the gate fails, fix the cause. `npm run fix && git add -u` handles lint and formatting. Do not lower a
 severity, add an `eslint-disable`, move a coverage threshold, or extend an ignore list to get green.

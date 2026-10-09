@@ -22,7 +22,7 @@ before style — style is ESLint's and Prettier's job, not a review finding.
 - **`ios/` and `android/` are generated** by `expo prebuild` and are not committed. A diff that hand-edits
   native project files is a finding — the change belongs in `app.config.ts`.
 - Native and Expo package versions come from `npx expo install --fix`, not from `npm outdated`. Bumping
-  past the SDK list breaks Expo Go and jest-expo. `.cursor/brain/DECISIONS.md` lists the holds and why.
+  past the SDK list breaks Expo Go and jest-expo. `scripts/version-holds.json` lists the holds and why.
 
 ## Conventions the linter enforces — flag attempts to work around them
 

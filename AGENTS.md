@@ -1,116 +1,52 @@
 # template-rn — agent guide
 
-Production-ready React Native + Expo starter — Expo SDK 57, file-based routing, strict types, validated env, enforced quality contract. A scaffold, not a runnable project (install deps, then `npx expo prebuild` for native folders).
+Production-ready React Native + Expo starter: file-based routing, strict types, validated env, an enforced quality contract. A scaffold, not a runnable project (install deps, then `npx expo prebuild` for native folders). Stack and versions: `.cursor/brain/PROJECT_CONTEXT.md` § Tech Stack.
 
 ## Start here
 
-1. Read `.cursor/brain/PROJECT_CONTEXT.md` before any task. Architecture map: `.cursor/brain/MAP.md`. What to run per change: `.cursor/brain/VERIFICATION.md`. Human-facing strict contract: `docs/strict-template-contract.md`.
-2. `.cursor/rules/*.mdc` are **binding for the files they cover** — read the rules relevant to the area you touch before the first edit. `agent-pipeline`, `global`, `project-config` and `workflow` are always applied; the rest load by glob.
-3. Role commands live in `.claude/commands/` (canonical) with thin pointers in `.cursor/commands/` so both tools behave identically: `/onboard`, `/feat`, `/test`, `/review`, `/docs`. Edit the `.claude/` file, never the shim.
+1. Read `.cursor/brain/PROJECT_CONTEXT.md`, then `READING_INDEX.md` beside it: it maps a situation to the two or three files that answer it. Also there: `MAP.md` (architecture), `SKELETONS.md` (danger zones), `VERIFICATION.md` (what to run per change). Human-facing contract: `docs/strict-template-contract.md`.
+2. `.cursor/rules/*.mdc` are **binding for the files they cover**: read the ones for the area you touch before the first edit (`global.mdc` § Rule routing lists which). `agent-pipeline`, `global` and `workflow` are always applied; the rest load by glob.
+3. Role commands (`/onboard` `/feat` `/test` `/review` `/docs`) live in `.claude/commands/` with thin shims in `.cursor/commands/`: edit the `.claude/` file, never the shim.
+4. Before sweeping the source, confirm the work is still needed (`git log --oneline -15` plus one grep). Name the files when you dispatch work to another agent.
 
-## Source of truth (tiebreaker)
+## Source of truth
 
-- **This file is the canonical guide for every tool.** Cursor and Codex load it natively; Claude Code loads it through the one-line import in `CLAUDE.md`. Edit THIS file; never grow the shim.
-- **Code is ground truth; this file is a verifiable pointer.** If a line here conflicts with the code, follow the CODE and fix or flag the stale line in the same session.
-
-## Stack
-
-Expo SDK 57 · React Native 0.86 · React 19.2 · TypeScript 6.0 strict · Expo Router v57 · NativeWind 4.2 (Tailwind 3.4) · Zustand 5 · TanStack Query 5 · Jest 29 + jest-expo + @testing-library/react-native 14 · React Compiler
+- **This file is canonical for every tool** (Cursor and Codex load it natively; Claude Code through the import in `CLAUDE.md`). Edit THIS file; never grow the shim.
+- **Code is ground truth; this file is a verifiable pointer.** A line that conflicts with the code is stale: follow the code, fix or flag the line in the same session.
+- **One canonical place per fact:** versions → `package.json`, commands → the table below, holds → `scripts/version-holds.json`, why → `.cursor/brain/DECISIONS.md`. Everything else points.
 
 ## Critical rules
 
-**Expo Router** — file-based in `src/app/`. Route groups via `(folder)`. Typed routes enabled (`experiments.typedRoutes: true`).
-
-**New Architecture is mandatory** since SDK 55 — don't re-add `newArchEnabled: true` to `app.config.ts`, it's a no-op.
-
-**React Compiler** is enabled (`experiments.reactCompiler: true`). Skip manual `useMemo`/`useCallback`/`React.memo` unless you hit a specific regression. Opt a file out with `"use no memo"` at the top.
-
-**Reanimated 4 worklets plugin** — `react-native-worklets/plugin` in `babel.config.js`, must be LAST.
-
-**NativeWind** — `className` only, no StyleSheet. `hover:` classes are no-ops on native, use `active:` / `pressed:`.
-
-**Colours** — a NativeWind class, or `COLOR_VALUES` from `src/shared/lib/theme/colors.ts` where an API needs a real value (navigation options, native props). Raw hex anywhere else under `src/` fails the gate.
-
-**Numbers** — `@typescript-eslint/no-magic-numbers` is on across `src/**`. `-1 0 1 2 100 1000` and enum/index/default positions are free; anything else gets a name. Exempt: `src/shared/lib/theme/**`, tests, root config files.
-
-**Layer imports** — `boundaries/dependencies` enforces the FSD map (`app` → `widgets` → `features` → `entities` → `shared`, downward only). It is lint law, not a convention: see `.cursor/rules/fsd-layers.mdc`.
-
-**Components** — arrow-only; explicit props type + explicit output: `const Screen = (): ReactElement => …; export default Screen` (or `FunctionComponent<Props>` annotation) — enforced by `@typescript-eslint/explicit-function-return-type` (inline callbacks exempt). Interface callbacks use property style (`onSelect: (id: string) => void`) — enforced by `method-signature-style`. Extract logic to `useComponentName.ts` next to heavy UI.
-
-**Stores** — Zustand with `createSelectors`. Tokens go to `expo-secure-store`, not AsyncStorage.
-
-**Imports** — `@/` alias only, no relative `../../`. Single source of truth is `tsconfig.json` `paths` (Metro reads it directly — no Babel plugin). `tsconfig.json` pins `types: ["jest", "node"]` — jest globals in tests resolve through it; don't remove.
-
-**Env** — all runtime config via `src/env.ts` (Zod-validated). Never read `process.env.*` directly.
-
-**Splash** — configured ONLY via the `expo-splash-screen` plugin in `app.config.ts`; the legacy top-level `splash` key was removed from the config schema in SDK 57.
-
-**EAS / OTA** — `EAS_PROJECT_ID` is optional build-time metadata for `app.config.ts` (enables `updates.url` when set). Local Expo Go / forks without EAS omit it.
-
-**CNG** — `app.config.ts` is the source of truth. Do NOT hand-edit `ios/` or `android/` — regenerate via `npx expo prebuild --clean` (SDK 57: prebuild clears native dirs by default).
-
-**Logger** — never raw `console.error`. Always `logger.error(message, error, context)`.
-
-**i18n** — user-visible strings go through `useTranslation` / `t()` and JSON under `src/shared/locales/`. Only the init-fallback screen uses hardcoded English (no `t()`).
-
-**Forms** — `react-hook-form` + `zodResolver` for non-trivial forms; one-off inputs may use `useState`.
-
-**Testing** — Jest + jest-expo + RNTL 14: `render`/`renderHook`/`fireEvent`/`act`/`unmount` are **async — always `await` them** (an un-awaited `unmount()` poisons the next test's render). Queries skip accessibility-hidden elements by default — pass `{ includeHiddenElements: true }` to reach intentionally hidden nodes (e.g. dialog backdrop). Native E2E: Maestro flows under `.maestro/` (`npm run maestro`).
-
-**Accessibility** — every interactive primitive in `src/shared/ui` applies `expectAccessibleControl` (`src/test/a11y.ts`) in its own test: it fails unless the control exposes its role and accessible name, and `src/test/uiA11yCoverage.test.ts` fails a new Pressable or TextInput primitive whose test omits it. `eslint-plugin-react-native-a11y` peers eslint ≤8, so the check lives in tests (hold: `DECISIONS.md`).
-
-**Reuse first** — before creating any function/util/component/constant, search for an existing equivalent and extend it. Duplicate utilities are a violation, not a style choice.
-
-**Consistency beats preference** — match the surrounding file's style and patterns.
-
-**Content variance** — anything that renders authored copy is proven against content it has NOT seen:
-`minimal` / `typical` / `long` / `unbroken` for text, `none` / `one` / `many` for collections, and the OS
-font scale. States live in `src/test/contentStress.ts`. The native axes are not the web ones: there is no
-`overflow-wrap` to forget, and what breaks a screen is an unbounded line count in a summary row, a row
-whose text sibling cannot shrink, and the accessibility font slider against a fixed control height. Cap a
-summary line count (`numberOfLines` + `ellipsizeMode`) and bound a label in a fixed-height control
-(`maxFontSizeMultiplier`) — never `allowFontScaling={false}`, which ignores the user's setting.
-
-**RNTL cannot measure layout, and that limit is stated rather than worked around** — it renders to a tree
-with no layout engine, so a test asserts the PROPS that bound a layout and nothing about pixels. Some
-props do not survive NativeWind's JSX interop into what RNTL exposes (measured on the button label, whose
-rendered props are only `className` and `children`); there the assertion goes against the module source
-with the reason next to it. Pixels need a device — `.maestro/`.
-
-## Entering this repo cheaply (read this before sweeping the source)
-
-Measured on a sibling project 2026-08-30: an agent's entry is ~93% READING SOURCE to find where
-things are and whether the task is still needed, and ~7% the documents that load automatically. So
-the levers are pointing and looking, in this order:
-
-1. **Open `.cursor/brain/READING_INDEX.md` first** — it maps a SITUATION ("about to change a shared
-   primitive") to the two or three files that answer it. It is a pointer file: it never restates a
-   rule, so it cannot go stale in the way a summary does.
-2. **Check the work is still needed** — `git log --oneline -15` plus one grep for the thing the task
-   names. Two of five lanes in that measurement returned "already done" after ~430k tokens; both
-   were five minutes of grep.
-3. **Do not invent a way to LOOK** - RNTL has no layout engine, so nothing here can measure a pixel. Assert the props that bound a layout, then `.maestro/`, then a device. `.cursor/brain/READING_INDEX.md` closes with the full substitute ladder.
-4. **Name the files when you dispatch work to another agent.** The largest observed difference
-   between a 33-tool-call lane and a 191-tool-call lane was how precisely the task pointed.
-
-**Where a rule must live** (which tool reads which file, and why a rule that must reach every tool
-belongs in this file): § Commands / the gate › Lanes › _Two tools, one file_. Verify what each tool
-loads before moving a rule between files.
+- **Expo Router**: file-based in `src/app/`, route groups via `(folder)`, typed routes on (`experiments.typedRoutes`).
+- **CNG**: `app.config.ts` is the source of truth; never hand-edit `ios/` or `android/` (regenerate with `npx expo prebuild --clean`). New Architecture is mandatory since SDK 55: don't re-add `newArchEnabled`. Splash is configured only by the `expo-splash-screen` plugin. `EAS_PROJECT_ID` is optional build-time metadata (it enables `updates.url`).
+- **React Compiler** is on (`experiments.reactCompiler`): skip manual `useMemo` / `useCallback` / `React.memo` unless you hit a regression; opt a file out with `"use no memo"`. **Reanimated 4**: `react-native-worklets/plugin` is LAST in `babel.config.js`.
+- **NativeWind**: `className` only, no StyleSheet; `hover:` is a no-op on native, use `active:` / `pressed:`. **Colours**: a NativeWind class, or `COLOR_VALUES` from `src/shared/lib/theme/colors.ts` where an API needs a real value; raw hex elsewhere under `src/` fails the gate. **Numbers**: `no-magic-numbers` is on across `src/**` (`-1 0 1 2 100 1000` and enum/index/default positions are free; exempt: `src/shared/lib/theme/**`, tests, root configs).
+- **Layers**: `boundaries/dependencies` enforces FSD (`app` → `widgets` → `features` → `entities` → `shared`, downward only); see `.cursor/rules/fsd-layers.mdc`.
+- **Components**: arrow-only, explicit props and return types (`const Screen = (): ReactElement => …; export default Screen`), interface callbacks in property style (`onSelect: (id: string) => void`); ESLint enforces both. Logic of heavy UI goes to `useComponentName.ts` beside it.
+- **Stores**: Zustand with `createSelectors`; tokens go to `expo-secure-store`, never AsyncStorage.
+- **Imports**: `@/` alias only, never `../../`; `tsconfig.json` `paths` is the single definition (no Babel plugin) and its `types: ["jest", "node"]` stays. **Env**: all runtime config through `src/env.ts` (Zod); never read `process.env.*` directly.
+- **Logger**: never raw `console.error`; `logger.error(message, error, context)`. **i18n**: user-visible strings go through `t()` with JSON under `src/shared/locales/` (only the init-fallback screen is hardcoded English). **Forms**: `react-hook-form` + `zodResolver` for non-trivial forms; one-off inputs may use `useState`.
+- **Testing**: Jest + jest-expo + RNTL 14. `render` / `renderHook` / `fireEvent` / `act` / `unmount` are **async, always `await` them** (an un-awaited `unmount()` poisons the next test). Queries skip accessibility-hidden nodes: pass `{ includeHiddenElements: true }` for intentionally hidden ones. Native E2E: Maestro flows in `.maestro/` (`npm run maestro`).
+- **Accessibility**: every interactive primitive in `src/shared/ui` applies `expectAccessibleControl` (`src/test/a11y.ts`) in its own test, and `src/test/uiA11yCoverage.test.ts` fails a new Pressable or TextInput primitive that omits it. The lint plugin peers eslint ≤8, so the check lives in tests (`DECISIONS.md` § Audit backlog).
+- **Reuse first**: before creating a function, util, component or constant, search for an existing equivalent and extend it; match the surrounding file's style.
+- **Content variance**: UI that renders authored copy is proven against content it has NOT seen (`minimal` / `typical` / `long` / `unbroken` text, `none` / `one` / `many` collections, the OS font scale; states in `src/test/contentStress.ts`). Cap a summary line (`numberOfLines` + `ellipsizeMode`), bound a label in a fixed-height control (`maxFontSizeMultiplier`), never `allowFontScaling={false}`. RNTL has no layout engine: assert the props that bound a layout, leave pixels to `.maestro/` or a device. Detail: `VERIFICATION.md` § Content variance.
 
 ## Commands / the gate
+
+The tier law (what runs at which moment, what is never run by hand) is the shared block below; this table is the repo's command list. Every other script: `package.json` and the README tables.
 
 ```bash
 npm start            # Expo dev server (QR → Expo Go / Dev Client)
 npm run verify:iter  # iteration tier: oxlint → tsc (incremental) → jest --onlyChanged (seconds; not a hand-over gate)
-npm run verify       # every OFFLINE check: hooks → oxlint → format → typecheck → eslint (cached) → scripts → coverage
+npm run verify       # every OFFLINE check: hooks → version holds → oxlint → format → typecheck → eslint (cached) → scripts → coverage
 npm run verify:ci    # audit:gate (network) + verify — what husky pre-push AND CI both run
 npm run fix          # the one remedy: oxlint --fix → eslint --fix → prettier --write
 npm run ci:local     # verify:ci + expo-doctor (full local parity)
 npm run test:one -- <file> # one jest test file, through the tracer (not around it)
 npm run trace:report # findings from .gate-trace.log (forbidden moments, budgets, worktrees)
-npm run docs:check   # docs class: paths, scripts, sentinels, versions, command table, dead docs, test quarantines, agent-memory imports (pre-commit when docs are staged; weekly CI adds --weekly)
+npm run docs:check   # docs drift (paths, scripts, versions, command table, dead docs); weekly CI adds --weekly
 npm run bench:verify # per-step timings when the gate feels slow
-npm run test:mutation # StrykerJS strength gate — weekly `mutation.yml` job, NOT in verify (2m per run)
+npm run test:mutation # StrykerJS strength gate — weekly `mutation.yml`, NOT in verify
 ```
 
 <!-- shared-harness:begin -->
@@ -229,67 +165,35 @@ that lives only in a conversation is not a plan.
 
 <!-- shared-harness:end -->
 
-**This repo's specifics, outside the shared block.** There is no browser lane: no measure script, no
-probe, no single-spec e2e — RNTL has no layout engine, so a question only a rendered result can answer
-goes to `.maestro/` or a device (the substitute ladder closes `.cursor/brain/READING_INDEX.md`). The
-push runs the full `verify:ci` directly; `scripts/gate-tiers.json` (`_phaseMeaning`) records why a
-scaffold phase would gate nothing here. The by-hand prohibition also covers `ci:local` and
-`test:mutation`. Native pixels are Maestro's job, never the gate's. The tracer additionally flags a
-code check on a docs-only change; the discipline changes by editing `scripts/gate-tiers.json`, never
-the analyser. Ports: the gate binds none, so nothing here kills anything — if a Metro port is busy,
-MOVE (`npx expo start --port <free>`).
+## Working agreements
 
-**Bootstrap after clone**: `npm run prepare` (once) — `.npmrc` disables lifecycle
-scripts as a supply-chain guard, so husky hooks don't install themselves; the
-verify gate fails loudly if hooks are missing. Dependency cooldown is also on
-(`.npmrc` `min-release-age=3`, DAYS): a brand-new package or urgent patch needs
-`npm install <pkg> --min-release-age=0`.
-
-The gate is **zero-warnings**: `eslint --max-warnings 0`, `oxlint --deny-warnings`. If it fails, fix the cause — do **not** downgrade rules, silence warnings, or sprinkle `eslint-disable`. A directive that must stay needs a `-- reason` and names its rules (`@eslint-community/eslint-comments`: `require-description`, `no-unlimited-disable`); an unused one is a warning, so the gate rejects it. `oxlint-disable*` comments are banned (`no-warning-comments`): oxlint cannot ask a directive for its reason, so a rule that is wrong for a class of files gets a documented `overrides` entry in `.oxlintrc.json`. If an ESLint rule is genuinely wrong for a class of files, add a documented file-scoped override in `eslint.config.mjs` stating why.
-
-**Complexity ratchet** — `complexity` 15 / `max-depth` 3 / `max-params` 4 / `max-lines-per-function` 120 / `max-lines` 200 over `src/**`, tests exempt. Thresholds sit above the measured ceiling (see `DECISIONS.md`), so a hit means new drift: split the function first; raising a number needs a fresh measurement and a `DECISIONS.md` line.
-
-**Mutation testing** — `npm run test:mutation` (StrykerJS + jest runner, weekly `mutation.yml` CI job). Coverage proves code RUNS under tests; the mutation score proves tests would CATCH a wrong implementation — the two disagree here by design (80% coverage floor vs a 54.32 score after the Stryker 10 bump, 2026-09). `thresholds.break` in `stryker.config.json` is a measured floor-of-record: raise it after a good run, never lower it to go green. RNTL's no-layout limit applies to mutants too: a defect only pixels would show belongs to `.maestro/`, not this score.
+- **No browser lane**: a question only a rendered result can answer goes to `.maestro/` or a device (the substitute ladder closes `READING_INDEX.md`). The push runs the full `verify:ci` directly (`gate-tiers.json` `_phaseMeaning` says why); the by-hand prohibition also covers `ci:local` and `test:mutation`. Change the tracer's discipline by editing `scripts/gate-tiers.json`, never the analyser. The gate binds no port: if Metro's is busy, MOVE (`npx expo start --port <free>`), kill nothing.
+- **Bootstrap after clone**: `npm run prepare` once (`.npmrc` disables lifecycle scripts as a supply-chain guard, so husky does not self-install; `verify` fails loudly without hooks). Dependency cooldown `.npmrc` `min-release-age=3` (days): a brand-new package or urgent patch needs `npm install <pkg> --min-release-age=0`.
+- **Zero warnings** (`eslint --max-warnings 0`, `oxlint --deny-warnings`): fix the cause; never downgrade a rule or sprinkle `eslint-disable`. A directive that must stay names its rules and carries `-- reason`; `oxlint-disable*` is banned. A rule wrong for a class of files gets a documented file-scoped override (`eslint.config.mjs`, or `overrides` in `.oxlintrc.json`).
+- **Complexity ratchet**: `complexity` 15 / `max-depth` 3 / `max-params` 4 / `max-lines-per-function` 120 / `max-lines` 200 over `src/**`, tests exempt. The numbers sit above the measured ceiling (`DECISIONS.md`), so a hit means new drift: split the function first; raising one needs a fresh measurement and a `DECISIONS.md` line.
+- **Mutation testing** (`npm run test:mutation`): coverage proves code RUNS, the score proves tests would CATCH a wrong implementation. `thresholds.break` in `stryker.config.json` is a measured floor: raise it after a good run, never lower it to go green.
+- **Machine-agnostic configs**: no absolute local paths (keep `i18next.i18nPaths` relative; the VS Code extension rewrites it) and no DURATION measured on one machine (`gate-tiers.json` holds a ratio; the baseline lives in the gitignored `.gate-budget.json`).
+- **Ask before** weakening the gate, a lint severity or a coverage threshold to get green, hand-editing `ios/` / `android/`, or bumping the Node engine (`engines.node`).
 
 ## Version holds (do not "fix" by bumping)
 
-- **Native/Expo packages are SDK-pinned** — `react`, `react-native`, `react-native-*`, `expo-*` versions come from `npx expo install --fix`, NOT from `npm outdated`. Bumping past the SDK list breaks Expo Go / jest-expo. Measured 2026-10-07: `npm outdated` lists `react-native@0.87`, `react-native-gesture-handler@3`, `@react-native-async-storage/async-storage@3`, `react-native-reanimated@4.7`, `react-native-worklets@0.13`, `react-native-screens@4.28` and `react-native-safe-area-context@5.10` as newer, and none of them is in the installed `expo`'s `bundledNativeModules.json`; the `expo@58` line does not appear in `npm outdated` because it is only on the `next` tag; Expo's versions API lists the 58 line on `react-native@0.88.0-rc.3` while Expo Go is on SDK 57, and `expo`'s `latest` tag is still `57.0.27`. Lift: the SDK upgrade, once `latest` moves to the 58 line.
-- **`expo install --check` and `expo-doctor` can go red for a patch the cooldown holds.** `.npmrc` `min-release-age=3` refuses a release younger than three days, so Expo's online list can name patches the lockfile cannot take yet. Wait for the age, or take them once with `npm_config_min_release_age=0 npx expo install --fix` (or `npm install <pkg>@<version> --min-release-age=0` for one package) and record each version with its publish date and npm provenance in `.cursor/brain/DECISIONS.md`; never lower `min-release-age` in `.npmrc`. `EXPO_OFFLINE=1 npx expo install --check` validates against the installed `expo`'s own list and stays green meanwhile. The 2026-10-07 bypass (online `expo install --check` and `expo-doctor` both green afterwards) is recorded in the "Dependency pass" entry there.
-- **`test-renderer` stays `~1.2.x`** — `test-renderer@1.3` depends on `react-reconciler@0.34`, which peers `react ^19.3.0`, while the SDK pins `react@19.2.3`: `npm install` prints ERESOLVE and `npm ls --all` exits 1 (measured 2026-10-07). Lift: the SDK that pins `react@19.3`.
-- **Jest stays 29.x** — `jest-expo@57` is built on jest 29 internals (`babel-jest ^29.2.1`, unchanged in `jest-expo@57.0.5`, 2026-10-07); `@types/jest` stays 29.x with it. `@babel/core` stays 7.x too: `babel-jest@29` peers `@babel/core ^7.8.0` and `babel-preset-expo@57` uses `@babel/plugin-*` ^7, so `@babel/core@8` arrives together with `jest@30`, never alone. Lift: a `jest-expo` release built on `babel-jest@30`.
-- **Tailwind stays 3.4.x** — NativeWind 4.x is built against the Tailwind 3 config format. Measured 2026-10-07: `nativewind@4.2.7` (still `latest`; v5 exists only as `5.0.0-rc.0`) calls `tailwindcss/lib/...` internals (`createUtilityPlugin`, `flattenColorPalette`, `cli/build`, `loadConfig`), and `tailwindcss@4.3.3` ships `dist/` with no `lib/`, even though the NativeWind peer range `>3.3.0` would allow it. Lift: a stable `nativewind@5`.
-- **TypeScript stays `~6.0.x`** — `typescript-eslint@8` peers `typescript >=4.8.4 <6.1.0` (unchanged in `typescript-eslint@8.71.1`, the newest, 2026-10-07, while `typescript@7.0.2` is `latest`). Lift: a `typescript-eslint` release whose peer range admits the next line.
-- **`@types/react` stays `~19.2.x`, level with the pinned `react@19.2.3`.** `@types/react@19.3.0` (published 2026-09-09) typechecks, lints and tests clean here, but its stable `index.d.ts` declares `ViewTransition` and `FragmentInstance`, which `react@19.2.3` does not export at runtime, so a fork could compile code that is `undefined` on a device. Lift: the SDK that pins `react@19.3`, in the same change.
-- **ESLint is 10.x.** `eslint-config-expo` sets `settings.react.version: 'detect'`, which crashes every React rule under ESLint 10, so `eslint.config.mjs` ends with a trailing block pinning the version to a literal. Do not delete it and do not set it back to `'detect'` — see the ESLint 10 entry in `.cursor/brain/DECISIONS.md`.
-- **`oxlint` has no lockstep partner here** — `eslint-plugin-oxlint` is deliberately not installed, so oxlint is bumped on its own (unlike the sibling web templates).
-- **`@expo/vector-icons` is deprecated upstream** (SDK 56+) but pinned explicitly and functional; migration path is `npx @react-native-vector-icons/codemod` — a deliberate follow-up, not a drive-by.
-- **`overrides` in `package.json` are security floors WITH major caps** (`">=fixed <next-major"`). Two of our own uncapped floors (brace-expansion, fast-uri) aged into their advisories' vulnerable ranges and turned the audit gate red — an uncapped floor is a delayed regression. Do not remove a floor to quiet npm, and never write one without a cap; details in `DECISIONS.md`. The `image-size` advisories left with the 2026-09 SDK-aligned update (the package is no longer in the tree), and their allowances went with them in the same commit — a stale allowance fails the gate by design.
+`scripts/version-holds.json` is the list (range, reason, lift condition, evidence). `scripts/check-version-holds.mjs`, inside `verify`, fails a manifest or lockfile outside a range and a missing Dependabot `ignore`. A hold lifts on its stated condition, never because `npm outdated` lists something newer. Why: `DECISIONS.md`.
 
-## Machine-agnostic configs
-
-Committed configs must never contain absolute local paths. The VS Code i18next extension rewrites `i18next.i18nPaths` with absolute paths when it can't resolve the configured ones — keep them relative and existing.
-
-**Nor a DURATION measured on one machine.** A committed number of seconds is the same mistake in a different costume: it describes the hardware that measured it, and a fork on slower hardware inherits a ceiling it may be unable to meet. Measured spread between this workstation and a two-core CI runner, same two suites: 5.6x and 10.5x. So the push budget in `scripts/gate-tiers.json` holds a RATIO and a sample size, never seconds; the gate calibrates its own baseline from its own first runs into the gitignored `.gate-budget.json`, ratchets it down when the gate gets faster, and reports drift. A clone starts with no baseline, no red reading, and no number belonging to someone else.
-
-## Out of scope (ask before touching)
-
-- Weakening the verify gate, lint severities, or coverage thresholds to get green.
-- Hand-editing `ios/` / `android/` (CNG owns them).
-- Node engine bump (`engines.node`).
+- **Native/Expo packages are SDK-pinned** (`react`, `react-native`, `react-native-*`, `expo-*`, async-storage): versions come from `npx expo install --fix`, never from `npm outdated`. Lift: the SDK upgrade.
+- **`expo install --check` / `expo-doctor` can go red for a patch the cooldown holds**: wait out `min-release-age`, or take it once with `npm_config_min_release_age=0 npx expo install --fix` and record each version, publish date and provenance in `DECISIONS.md`. Never lower `min-release-age` in `.npmrc`; `EXPO_OFFLINE=1 npx expo install --check` stays green meanwhile.
+- **`test-renderer` stays `~1.2.x`** (its 1.3 reconciler peers a newer React than the SDK pins). **Jest and `@types/jest` stay 29.x, `@babel/core` stays 7.x** (`jest-expo` is built on jest 29 internals). **Tailwind stays 3.4.x** (NativeWind 4 calls Tailwind 3 internals). **TypeScript stays `~6.0.x`** (typescript-eslint peer range). **`@types/react` stays level with the pinned `react`**.
+- **ESLint is 10.x**: the trailing block in `eslint.config.mjs` pins `settings.react.version` to a literal because `eslint-config-expo`'s `'detect'` crashes every React rule. Do not delete it or set it back to `'detect'`.
+- **`overrides` in `package.json` are security floors WITH major caps** (`">=fixed <next-major"`): an uncapped floor ages into its advisory's vulnerable range. Never write one without a cap, never remove a floor to quiet npm; a stale audit allowance fails the gate by design.
+- **`oxlint` has no lockstep partner** (`eslint-plugin-oxlint` is not installed): bump it alone.
 
 ## Changes reach master through a pull request
 
-Branch, run the gate, push the branch, open a PR, merge when CI is green.
-
-In THIS repository that is not only a habit: `master` carries a ruleset requiring the checks named in `.github/ruleset.json`, and a direct push bypasses it, because the owner role always may. A rule bypassed on every change is worse than no rule — it reads as protection to the next person and to every agent, and protects nothing.
-
-**In YOUR fork the habit is all there is, until you set the rest up.** Rulesets, branch protection and required checks are repository SETTINGS, and settings do not travel with a fork — only files do. So a fork arrives with the whole gate and none of the enforcement: the hooks still run locally, CI still runs on pull requests, and nothing at all stops a push straight to your default branch. `README.md` § "What your fork does not inherit" lists what to switch on and in what order.
+Branch, run the gate, push the branch, open a PR, merge when CI is green. Here `master` has a ruleset requiring the checks named in `.github/ruleset.json`, and the owner role can bypass it with a direct push: don't. **A fork inherits files, not settings:** it arrives with the whole gate and none of the enforcement until you switch it on (`README.md` § "What your fork does not inherit").
 
 ## Commit format
 
-`type(scope): description` — max 96 chars.
-Types: `feat` `fix` `chore` `docs` `style` `refactor` `perf` `test` `revert` `build` `ci`
+`type(scope): description`, English, imperative, max 96 chars, no `Co-authored-by` trailer (no hook checks the trailer). Types: `feat` `fix` `chore` `docs` `style` `refactor` `perf` `test` `revert` `build` `ci`.
 
 ## Maintaining this file
 
-Treat it like code. Add a rule when an agent or developer makes the same mistake twice — one line tied to the observed failure. Prune stale lines; a bloated file reduces compliance. One-line digests only — depth lives in `.cursor/brain/`.
+Keep it under 200 lines. Add a rule when an agent or developer makes the same mistake twice: one line tied to the observed failure. Prune stale lines; depth lives in `.cursor/brain/`.

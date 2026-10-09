@@ -18,10 +18,10 @@ updates:
       groups:
           minor-and-patch:
               update-types: ['minor', 'patch']
-      # The Expo SDK owns the native stack versions — `npx expo install --fix`
-      # is the only valid updater for these; Dependabot bumps would break the
-      # Expo Go / jest-expo pairing. See AGENTS.md "Version holds".
+      # Every ignore below is a version hold: the reason, the lift condition and the evidence live in
+      # scripts/version-holds.json, which `verify` checks against this file. Edit them together.
       ignore:
+          # The Expo SDK owns the native stack: `npx expo install --fix` is the only valid updater.
           - dependency-name: 'expo'
           - dependency-name: 'expo-*'
           - dependency-name: '@expo/*'
@@ -34,35 +34,20 @@ updates:
           - dependency-name: 'react-native-*'
           - dependency-name: '@react-native/*'
           - dependency-name: '@react-native-async-storage/*'
-          # jest-expo@57.0.5 depends on babel-jest ^29.2.1 (read 2026-10-07)
           - dependency-name: 'jest'
             versions: ['>=30']
           - dependency-name: '@types/jest'
             versions: ['>=30']
-          # babel-jest@29 (pulled by jest-expo@57) peers @babel/core ^7.8.0, so
-          # Babel 8 arrives together with Jest 30, never on its own. Drop this
-          # ignore in the same commit that lifts the jest hold above.
           - dependency-name: '@babel/core'
             versions: ['>=8']
-          # nativewind@4.2.7 (still latest, 2026-10-07) calls tailwindcss/lib/ modules
-          # that tailwindcss 4 does not ship
           - dependency-name: 'tailwindcss'
             versions: ['>=4']
-          # typescript-eslint@8.71.1 peers typescript <6.1.0 (read 2026-10-07); TS is also SDK-paired
           - dependency-name: 'typescript'
             versions: ['>=6.1']
-          # test-renderer@1.3.0 pulls react-reconciler@0.34, which peers react ^19.3.0; the SDK pins
-          # react 19.2.3 (read 2026-10-07). Lift with the SDK that pins react 19.3.
           - dependency-name: 'test-renderer'
             versions: ['>=1.3']
-          # The types stay level with the SDK-pinned react@19.2.3: @types/react@19.3
-          # declares ViewTransition, which that runtime does not export (2026-10-07).
-          # Lift with the SDK that pins react 19.3.
           - dependency-name: '@types/react'
             versions: ['>=19.3']
-          # ESLint: the repo IS on 10.x. The floor is >=11 so patches and minors
-          # inside 10 still arrive; a major would again outrun the plugin peers
-          # that `overrides` map to `$eslint`.
           - dependency-name: 'eslint'
             versions: ['>=11']
           - dependency-name: '@eslint/js'

@@ -33,6 +33,14 @@ describe('parseVerifySteps', () => {
         assert.ok(labels.includes('test:coverage'));
     });
 
+    it('keeps the version-holds check in the gate, so a bump past a hold turns verify red', () => {
+        const labels = parseVerifySteps(resolveScript(scripts(), 'verify')).map(
+            (step) => step.label
+        );
+
+        assert.ok(labels.includes('check-version-holds'));
+    });
+
     it('labels an npm step by its script name and a node step by its file', () => {
         assert.deepEqual(parseVerifySteps('npm run typecheck && node scripts/check-hooks.mjs'), [
             { label: 'typecheck', command: 'npm', args: ['run', 'typecheck'] },

@@ -1,5 +1,5 @@
 ---
-description: 'Global engineering standards & intelligence protocol (Expo RN template)'
+description: 'Global engineering standards & rule routing (Expo RN template)'
 globs: ['**/*']
 alwaysApply: true
 priority: 95
@@ -7,31 +7,20 @@ priority: 95
 
 # Global Standards
 
-## Pipeline Initialization (CRITICAL)
+Any task begins with the pipeline in `agent-pipeline.mdc`; domain standards live in their own rules and the pipeline enforces them.
 
-- **Any task MUST begin by initializing the protocol defined in `agent-pipeline.mdc`.**
-- The pipeline (Priority 100) orchestrates all steps: Discovery → Simulation → TDD Execution → Verification → Brain Sync → Confidence.
-- Domain standards live in their respective rules. The pipeline enforces them — never bypass it.
+## Rule routing
 
-## 0.1 Conditional Rule Routing
+Glob-scoped rules (`alwaysApply: false`) are not always auto-attached, so before planning or editing in an area, read the matching rule:
 
-Not every rule is `alwaysApply: true`. `react-patterns`, `engineering-standards`, `constants`, `fsd-layers`, `resilience`, and `test-driven-development` are glob-scoped (`alwaysApply: false`). Cursor does not always auto-attach glob-scoped rules, so **before planning or editing in a task area, explicitly read** the matching conditional rules:
+- React / UI / screens / components → `react-patterns`, `engineering-standards`, `constants`
+- New or changed behaviour, tests, mocks, Zustand stores → `test-driven-development`
+- New `src/` folders or rewired imports → `fsd-layers` (boundaries are CI law)
+- Data fetching, async, error handling, logging, stores → `resilience`, `engineering-standards`
+- `app.config.ts`, `babel.config.js`, `metro.config.js`, `package.json`, `tsconfig.json` → `project-config`
 
-- **React / UI / screen / component work** → `react-patterns.mdc`, `engineering-standards.mdc`, `constants.mdc` (+ always-on `project-config.mdc`)
-- **New behavioral component or changed behavior** → also `test-driven-development.mdc` before implementation
-- **Tests / mocks / fixtures** → `test-driven-development.mdc`
-- **Imports rewired or new folders under `src/`** → `fsd-layers.mdc` (boundaries are CI law)
-- **Zustand stores / client domain state (`src/store/**`)** → `test-driven-development.mdc`, `resilience.mdc`, `engineering-standards.mdc`
-- **TanStack Query / data fetching / async services** → `resilience.mdc`, `engineering-standards.mdc`
-- **Async / error handling / catch / logging / debugging** → `resilience.mdc`
-- **Styling / NativeWind / render-perf / visual quality** → `react-patterns.mdc` (§6 visual) + `engineering-standards.mdc`
-- **Constants / strings / i18n keys** → `constants.mdc`
+## Always
 
-## Intelligence & Context
-
-- **Reasoning**: Use `sequential-thinking` for multi-step logic and `context7` for API lookups when available; otherwise use official docs. **English** for code, comments, commits, and user-facing repo docs.
-- **Authority**: `AGENTS.md` § Source of truth — code is ground truth, `AGENTS.md` the canonical guide, `.cursor/brain/` the depth layer; sync drift in the same session.
-- **Stack**: Expo SDK 57 · React Native 0.86 · React 19 · TypeScript 6.0 strict · Expo Router · NativeWind (Tailwind 3) · Zustand · TanStack Query. Prefer existing libraries over custom infrastructure.
-- **Quality**: Minimalist code. User-visible copy belongs in `src/shared/locales/**`; business logic and public UI APIs use constants, tokens, or typed keys instead of unexplained literals.
-- **Hygiene**: Keep agent-oriented specs and process rules under `.cursor/`. Product README / deployment docs in root when they are part of the template contract.
-- **Git**: `type(scope): description` — English, max 96 chars. No `Co-authored-by` tags.
+- **English** for code, comments, commits and repo docs. Prefer existing libraries over custom infrastructure; minimalist code.
+- **Authority**: `AGENTS.md` § Source of truth (code is ground truth, `AGENTS.md` the canonical guide, `.cursor/brain/` the depth layer); sync drift in the same session.
+- User-visible copy lives in `src/shared/locales/**`; logic and public UI APIs use constants, tokens or typed keys instead of unexplained literals.

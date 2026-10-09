@@ -343,6 +343,7 @@ Not inherited, and each one is a switch in your own repository's settings:
 - **Rulesets and branch protection**, including every required status check. Until you add one, your default branch accepts any push, and the pull-request discipline this repository documents is a habit rather than a rule.
 - **Actions permissions.** A fork starts with workflows disabled; GitHub asks you to enable them once, in the Actions tab. Until you do, the CI described here never runs, and a green screen means nobody looked.
 - **Secret scanning and push protection**, **CodeQL**, and **Dependabot alerts.** The Dependabot CONFIG file travels; the alerts it feeds are a setting.
+- **The template's decisions history.** `.cursor/brain/DECISIONS.md` records why this template is the way it is, not why your product is. Start your own decisions file fresh, keep `scripts/version-holds.json`, and re-check the holds against your own Dependabot PRs: `docs/template-reset.md` § Decisions and version holds.
 
 `.github/ruleset.json` is the protection this repository runs, written down so you can reproduce it with one command instead of clicking through a form:
 

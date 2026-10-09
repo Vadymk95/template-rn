@@ -5,117 +5,42 @@ alwaysApply: true
 priority: 100
 ---
 
-# Agent Pipeline — Principal Autonomy Engine
+# Agent Pipeline
 
-> Defines the **process**. Quality standards live in domain rules. The pipeline enforces them — never bypass it.
+> Defines the **process**. Quality standards live in domain rules and in `AGENTS.md`. Never bypass the pipeline.
 
----
+## Step 1: Discovery (mandatory)
 
-## Step 1: Deep Discovery (mandatory)
+**Fast-track**: if the task targets only `*.test.ts(x)`, `*.spec.ts(x)`, `global.css`, `tailwind.config.js`, `metro.config.js`, `babel.config.js` or `*.md` under `.cursor/brain/`, skip the Brain reads and say `"Step 1 skipped — test/config/docs-only task."` The Rule Receipt is still required. In doubt, run the full step.
 
-### Step 1 Fast-Track
+1. **Brain scan**: `.cursor/brain/PROJECT_CONTEXT.md`, then `MAP.md`; `READING_INDEX.md` maps a situation to the files that answer it.
+2. **Verification contract**: `.cursor/brain/VERIFICATION.md` before editing code, config or tests.
+3. **Risk**: `.cursor/brain/SKELETONS.md` if the task touches native config, Metro/Babel, env, router layouts or persisted stores. A SKELETONS zone is flagged with a mitigation before Step 2.
+4. **Rule routing**: read the glob-scoped rules for the area you touch (`global.mdc` § Rule routing), then list them as the **Rule Receipt** (or `"none — always-on rules only"`).
+5. **Scope**: one message with the in-scope / out-of-scope list and the SKELETONS zones touched (or `"none"`). No code before it.
 
-If the task targets **only** files matching `*.test.ts`, `*.test.tsx`, `*.spec.ts`, `*.spec.tsx`, `global.css`, `tailwind.config.js`, `metro.config.js`, `babel.config.js`, or `*.md` under `.cursor/brain/` — skip Brain reads and proceed directly to Step 3. State: `"Step 1 skipped — test/config/docs-only task."` Still emit the **Rule Receipt** (usually `"none — config/test/docs-only"`). When in doubt → run full Step 1.
+## Step 2: Simulation
 
----
+- More than three steps: use `sequential-thinking` (`totalThoughts >= 3`) with one adversarial thought (iOS vs Android, cold start, offline, OTA). Without `context7`, use the official docs.
+- Critique: `@/` imports only; Zustand for client state, TanStack Query for server data, `useState` for component-only state; no magic strings or untyped external payloads; the ghost principle (every line serves the task, no drive-by refactors).
+- Per non-trivial function, trace 1-2 mental test cases (happy path and an edge); a failing trace revises the plan.
+- Gate by **risk, not LOC** (`workflow.mdc` § The Approval Law); trivial leaf edits proceed.
 
-Before any reasoning about implementation:
+## Step 3: TDD-first execution
 
-1. **Brain scan**: Read `.cursor/brain/PROJECT_CONTEXT.md` first, then `.cursor/brain/MAP.md`.
-2. **Verification contract**: Read `.cursor/brain/VERIFICATION.md` before editing code, config, or tests.
-3. **Layer contract**: If the task adds or rewires **imports** under `src/` or creates **new folders** in `src/`, read `.cursor/rules/fsd-layers.mdc` first — boundaries are CI law.
-4. **Risk detection**: Read `.cursor/brain/SKELETONS.md` if the task touches native config, Metro/Babel, env, router layouts, or persisted stores.
-5. **Context gathering**: Identify affected files. Search for existing patterns before inventing new ones.
-6. **Rule Routing**: Load the matching conditional rules using `global.mdc` §0.1 before planning edits.
-7. **Rule Receipt**: List the conditional rules actually loaded (or `"none — always-on rules only"`).
-8. **Scope declaration**: Produce clear **In-scope / Out-of-scope** list.
-9. **Explicit declaration**: State in one message: scope + SKELETONS zones touched (or `"none"`). Do not code before this.
+- Business logic (stores, hooks, `src/lib/`): list the cases in chat, then red, green, refactor (`test-driven-development.mdc`). RNTL calls are async: always `await` them.
+- UI screens: add or extend tests once the UI stabilizes, unless strict TDD is required.
+- 1-2 files per iteration, between two `verify:iter` runs, inside one PLAN slice (`AGENTS.md` › Before code). Re-check after each edit that the scope did not creep.
 
-> **Gate**: If the task touches a SKELETONS zone — flag the risk and propose mitigation before Step 2.
+## Step 4: Verification loop
 
----
+- Code-edit loop: `npm run verify:iter` (seconds). The full chain belongs to the pre-push hook and CI; an implementer never runs it (`AGENTS.md` § Commands / the gate).
+- Capture the exit code **without a pipe**: `cmd > log 2>&1; echo $?`. The rest of the integrity checklist (prove the gate can go red, name the condition under which green would have been red): `.cursor/brain/VERIFICATION.md` § Verification integrity.
+- Lint or format findings: `npm run fix && git add -u`. Never lower a severity or move a threshold to reach green.
+- Failure: no symptom patches; trace the root cause (types, runtime, native tooling), fix at the source, re-run.
+- Self-review the diff: plan alignment, scope, public exports. Router: typed `href`s. Query: handle `isPending` / `isError` for user-visible fetches.
 
-## Step 2: Architectural Simulation
-
-### Inference-Time Scaling
-
-Before simulating changes:
-
-- Activate `sequential-thinking` with `totalThoughts >= 3` for any task with more than three steps.
-- Dedicate at least one thought to **adversarial analysis**: what could break on iOS vs Android, cold start, offline, or OTA?
-- If `context7` is unavailable, fall back to official docs or repo-local documentation explicitly.
-
-### Architectural Critique
-
-1. **Imports**: Only `@/` path aliases — no `../../` chains.
-2. **State boundary**: Zustand for client/global UI state; TanStack Query for server/async data; local `useState` for component-only UI.
-3. **Tech debt**: Avoid magic strings, implicit cross-module coupling, and untyped external payloads.
-4. **Ghost principle**: Every line must serve the task — no drive-by refactors.
-5. **Stores**: NEW Zustand stores expose access via **`createSelectors`** (auto-generated selector hooks); **never** persist tokens/secrets to AsyncStorage — use `expo-secure-store`. Existing stores: leave as-is, do not migrate.
-
-### Solver-Verifier (mental test cases)
-
-After the critique, generate **1–2 mental test cases** per non-trivial function (happy path + edge). If the trace fails — revise the plan before coding.
-
-> **Gate**: Present the critique. Gate by **risk, not LOC** (the risk list: `workflow.mdc` § The Approval Law); trivial leaf edits proceed.
-
----
-
-## Step 3: TDD-First Execution
-
-### Business logic (stores, hooks, `src/lib/`)
-
-1. List test cases in chat.
-2. **Red** → **Green** → **Refactor** with Jest + Testing Library (RNTL 14: `render`, `renderHook`, `fireEvent`, `act`, `unmount` are **async — always `await` them**; an un-awaited `unmount()` poisons the next test's render. Queries need `{ includeHiddenElements: true }` to reach intentionally a11y-hidden nodes).
-
-### UI (React Native screens)
-
-Implement with `@testing-library/react-native`; add or extend tests after the UI stabilizes unless strict TDD is explicitly required.
-
-### Iteration protocol
-
-- **Batch size**: 1–2 files per iteration (an iteration is what sits between two `verify:iter` runs, INSIDE one PLAN slice — the slice is the 2-7 × <400-line unit of `AGENTS.md` › Before code); verify between batches.
-- **Ghost principle**: Re-check after each edit that scope did not creep.
-
-### Per-file checklist
-
-- [ ] Read the file before editing.
-- [ ] `@/` imports only; no raw `console.*` in app code — use `logger.*` from `@/lib/logger`.
-- [ ] No secrets in `EXPO_PUBLIC_*` env.
-- [ ] Pure computation not buried in hooks when it can live in `src/lib/`.
-
----
-
-## Step 4: Autonomous Verification Loop
-
-### 4.1 Automated checks
-
-Default source of truth: `.cursor/brain/VERIFICATION.md`.
-
-- Typical code-edit loop: `npm run verify:iter` — oxlint → tsc (incremental) → `jest --onlyChanged` (seconds). Drill into a failure with `npm run typecheck` / `npm run lint` / `npm test -- <path>`.
-- The full chain belongs to the pre-push hook and CI; an implementer never runs it (tier law: `AGENTS.md` § Commands / the gate).
-- Capture the exit code **without a pipe** — `cmd > log 2>&1; echo $?`. A pipe returns the pipe's status and a failed run reads as a pass.
-- Remedy for lint/format findings: `npm run fix && git add -u`. Never lower a severity or move a threshold to reach green.
-
-### 4.2 Failure protocol
-
-1. Do not paper over symptoms.
-2. Trace root cause (types vs runtime vs native tooling).
-3. Fix at the source; re-run the full loop.
-
-### 4.3 Manual pass
-
-- No new cycles across FSD-style boundaries if the repo enforces them.
-- Router: typed `href`s where Expo Router generates them.
-- Query: handle `isPending` / `isError` in UI for user-visible fetches.
-
-### 4.4 Diff self-review
-
-Plan alignment, ghost-principle check, regression scan on public exports.
-
----
-
-## Step 5: Brain Auto-Sync
+## Step 5: Brain sync
 
 | Brain file        | Update when                                        |
 | ----------------- | -------------------------------------------------- |
@@ -124,51 +49,12 @@ Plan alignment, ghost-principle check, regression scan on public exports.
 | `SKELETONS.md`    | New high-risk surfaces or mitigations              |
 | `VERIFICATION.md` | New mandatory checks or scripts                    |
 
-If nothing changed: state **`Brain sync: none needed.`**
-**FORBIDDEN**: Marking work complete without this declaration.
+If nothing changed, state **`Brain sync: none needed.`** Marking work complete without this declaration is forbidden.
 
----
+## Step 6: Confidence
 
-## Step 6: Confidence Declaration
+End with `Confidence: HIGH | MEDIUM | LOW — <one-line reason>`.
 
-End with: `Confidence: HIGH | MEDIUM | LOW — <one-line reason>`.
+## Forbidden
 
----
-
-## Anti-patterns (FORBIDDEN)
-
-- Skipping Step 1 for non-trivial code changes.
-- Editing many files without intermediate `typecheck` / `lint` / `test`.
-- Bypassing Brain sync declaration.
-- `../../` imports, raw `console.error(e)` without context, secrets in `EXPO_PUBLIC_*`.
-
-### 4.1a Verification Integrity
-
-Green means nothing until you know the gate can go red.
-
-1. **Capture the exit code without a pipe**: `npm run verify:iter > /tmp/verify.log 2>&1; echo $?`. Piping
-   to `tail` returns the PIPE's status, so a failed build reads as a pass.
-2. **Mutation-check the tests**: if mentally reverting your change leaves the suite green, the test is
-   worthless. Writing a test is Step 3; proving it would have failed is this step.
-3. **Prove a new gate gates**: break it on purpose once — an expired entry in
-   `scripts/audit-allowlist.json`, a raw hex in a component, a staged `src` logic file with no
-   `*.test.*` sibling — and watch it refuse. Then revert the sabotage.
-4. **A check that reports success when it could not run is fail-OPEN.** Ask what it does on a missing
-   directory, an empty result, or no network — not only on the failure it was written for.
-5. **Name the condition under which the green would have been RED.** If you cannot name one, the check
-   proved nothing — and a check that cannot fail still gets recorded as evidence. Two real shapes in
-   this repo: `jest --onlyChanged --passWithNoTests` (the iterate tier) exits 0 when the diff reaches no
-   test at all, so a green `verify:iter` on an untested change proves nothing; and `jest --coverage`
-   prints `Failed to collect coverage from <file>` for a file it could not parse and then exits 0 with a
-   percentage over the smaller set — `scripts/check-coverage.mjs` exists for exactly that.
-6. **Check the cases that "cannot happen".** For UI that is: the shortest copy allowed, the longest, one
-   unbroken token with nothing to wrap on, zero items, one item, many — plus the OS font scale, which is
-   the axis with no web equivalent and the one most often missed. The states are in
-   `src/test/contentStress.ts`.
-7. **Know what RNTL structurally cannot see, and say so instead of faking it.** There is no layout engine
-   behind the test renderer, so a test can assert the PROPS that bound a layout (`numberOfLines`,
-   `maxFontSizeMultiplier`, a shrinking column) and nothing about the resulting pixels. Some props do not
-   even survive NativeWind's JSX interop into what RNTL exposes — measured, not assumed — and there the
-   honest assertion is against the module source, with the reason written next to it. Pixels need a
-   device: that is what `.maestro/` is for.
-
+Skipping Step 1 for non-trivial code; editing many files without an intermediate `typecheck` / `lint` / `test`; omitting the Brain sync declaration; raw `console.error(e)`; secrets in `EXPO_PUBLIC_*`.

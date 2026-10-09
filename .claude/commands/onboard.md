@@ -9,7 +9,7 @@ job: the docs can be stale, and finding that out now is cheaper than finding it 
 
 In this order, in full:
 
-1. `AGENTS.md` — invariants, the gate, version holds, what is out of scope (then
+1. `AGENTS.md` — invariants, the gate, one-line version-hold pointers, what needs asking first (then
    `.cursor/brain/READING_INDEX.md` — where to look).
 2. `.cursor/brain/PROJECT_CONTEXT.md` — purpose, stack, layout, non-goals.
 3. `.cursor/brain/SKELETONS.md` — danger zones. Before touching anything, not after.
@@ -20,8 +20,9 @@ In this order, in full:
    Skim; read in full any entry whose subject the current task touches.
 
 In Cursor the process is already in context (always-applied rules: `agent-pipeline.mdc`, `global.mdc`,
-`project-config.mdc`, `workflow.mdc`). In Claude Code it is not: read `.cursor/rules/agent-pipeline.mdc`
-§ 4.1a and `.cursor/rules/workflow.mdc` § The Approval Law now — nothing beyond `AGENTS.md` is imported.
+`workflow.mdc`). In Claude Code it is not: read `.cursor/rules/agent-pipeline.mdc` and
+`.cursor/rules/workflow.mdc` § The Approval Law now, and `.cursor/brain/VERIFICATION.md` § Verification
+integrity before the first check you trust. Nothing beyond `AGENTS.md` is imported.
 
 Read the conditional `.cursor/rules/*.mdc` (`constants`, `engineering-standards`, `fsd-layers`,
 `react-patterns`, `resilience`, `test-driven-development`) only when a task tells you which files it
@@ -36,8 +37,8 @@ Do not take the reading at face value. Check, cheaply:
 - **The gate**: read `package.json` `verify` / `verify:ci` and `.github/workflows/*.yml`. Is `verify`
   still a superset of the offline checks CI runs? A check that lives only in the workflow is the defect
   this repo has a written decision about.
-- **The stack table**: versions in `AGENTS.md` and `README.md` against `package.json`, and remember
-  native packages are SDK-pinned (`npx expo install --fix`), not `npm outdated` candidates. Stack tables
+- **The stack**: versions in `PROJECT_CONTEXT.md` § Tech Stack and `README.md` against `package.json`, and remember
+  native packages are SDK-pinned (`npx expo install --fix`), not `npm outdated` candidates. Stack lists
   rot first.
 - **The layout**: `ls src/` against `MAP.md`. A directory in one and not the other is a finding.
 - **Native identity**: `app.config.ts` `slug` / `scheme` / bundle id against what the README claims for

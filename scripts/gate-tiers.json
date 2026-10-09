@@ -9,7 +9,7 @@
         },
         "verify": {
             "class": "code",
-            "description": "hooks -> oxlint -> format -> tsc -> eslint -> script tests -> coverage"
+            "description": "hooks -> version holds -> oxlint -> format -> tsc -> eslint -> script tests -> coverage"
         },
         "verify:ci": {
             "class": "code",

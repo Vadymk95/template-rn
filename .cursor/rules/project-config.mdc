@@ -1,18 +1,13 @@
 ---
-description: 'Authoritative stack & tooling map for this Expo RN template'
-globs: ['**/*']
-alwaysApply: true
+description: 'Native config danger zones: app.config.ts, babel, metro, dependencies (Expo RN template)'
+globs: ['app.config.ts', 'babel.config.js', 'metro.config.js', 'eas.json', 'package.json', 'tsconfig.json', 'global.css', 'tailwind.config.js']
+alwaysApply: false
+priority: 90
 ---
 
 # Project configuration
 
-## Technology stack
-
-See `AGENTS.md` § Stack; versions are `package.json`. E2E is Maestro (`.maestro/`, `npm run maestro` — `test-driven-development.mdc` § 5), never Playwright, which targets browsers.
-
-## Path aliases
-
-- `@/*` → `src/*` — single definition in `tsconfig.json` (Metro reads it, SDK 55+). **No** `../../` in application code.
+Stack: `PROJECT_CONTEXT.md` § Tech Stack. Path aliases: `AGENTS.md` § Critical rules and `tsconfig.json`. E2E is Maestro (`.maestro/`, `npm run maestro`), never Playwright.
 
 ## Native & config — DANGER ZONES (wrong edits break the build silently or in production only; see `.cursor/brain/SKELETONS.md`)
 
@@ -25,4 +20,5 @@ See `AGENTS.md` § Stack; versions are `package.json`. E2E is Maestro (`.maestro
 ## Dependency hygiene
 
 - Expo-managed packages: install with **`npx expo install <pkg>`** (not raw major bumps from npm `latest`).
+- A package listed in **`scripts/version-holds.json`** stays inside its `held` range; `verify` fails otherwise. Lift a hold only by its own condition, in the same change as the file.
 - **`npm run typecheck`** uses `tsc --noEmit` (no project references build step).
