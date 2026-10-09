@@ -220,6 +220,11 @@ describe('normalizeHeading', () => {
         assert.equal(normalizeHeading('<b>Bold</b> heading:'), 'bold heading');
     });
 
+    it('strips a tag that removing an inner tag completes', () => {
+        assert.equal(normalizeHeading('A <<b>b> B'), 'a b');
+        assert.equal(normalizeHeading('<scr<script>ipt>x'), 'x');
+    });
+
     it('leaves no angle bracket behind for nested or unclosed tags', () => {
         for (const raw of [
             'A <<b>b> B',
