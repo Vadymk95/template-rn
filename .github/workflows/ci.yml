@@ -25,6 +25,9 @@ jobs:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
+                  # Depth 2: lock:age (inside verify:ci) compares the lockfile with HEAD~1, and a
+                  # private fork's persist-credentials: false means it cannot fetch the parent itself.
+                  fetch-depth: 2
                   persist-credentials: false
 
             - name: Setup Node
@@ -33,16 +36,19 @@ jobs:
                   node-version-file: .nvmrc
                   cache: npm
 
-            # Node 24.15.0 (current LTS) bundles npm 11.12.1, which regressed
-            # peerOptional handling (npm/cli#9249, 2026-04-17) — peerOptional
-            # deps marked extraneous and removed. Combined with the long-standing
-            # cross-platform optional-binaries bug (npm/cli#4828) this means
-            # lock files generated on macOS arm64 fail Linux CI with EUSAGE
-            # "Missing: <pkg>-linux-x64-gnu from lock file" for native bindings
-            # (@expo/ngrok-bin, @unrs/resolver-binding, etc.). Both issues are
-            # fully restored in npm 11.14.0 (2026-05-06) via arborist 9.5.0.
-            # Pin to ^11.14.0 explicitly — npm@latest would track future majors
-            # that may regress again.
+            # `.nvmrc` holds the floor (24.11), so setup-node installs a 24.11.x, and
+            # every 24.11.x bundles an npm 11.6.x, older than 11.14.0. That npm has the
+            # long-standing cross-platform optional-binaries bug (npm/cli#4828): lock
+            # files generated on macOS arm64 fail Linux CI with EUSAGE "Missing:
+            # <pkg>-linux-x64-gnu from lock file" for native bindings (@expo/ngrok-bin,
+            # @unrs/resolver-binding, etc.). Both that bug and a later peerOptional
+            # regression (npm/cli#9249, 2026-04-17: peerOptional deps marked extraneous
+            # and removed, present in the npm 11.12.1 that Node 24.15.0 bundles) are
+            # fully restored in npm 11.14.0 (2026-05-06) via arborist 9.5.0. The step
+            # exists only because `.nvmrc` sits at the floor: Node 24.18.0 is the first
+            # release that bundles npm >= 11.14.0 (11.16.0), so once `.nvmrc` is raised
+            # to 24.18 or later this step and its pin can be deleted. Pin to ^11.14.0
+            # explicitly — npm@latest would track future majors that may regress again.
             - name: Upgrade npm to ^11.14 (cross-platform optional binaries fix)
               run: npm install -g npm@^11.14.0
 
@@ -55,7 +61,7 @@ jobs:
             # ONE step over the same script husky pre-push runs. A new check belongs
             # in `verify` (offline) or `verify:ci` (needs the network) — never only
             # here, or a green local gate stops meaning a green pipeline.
-            - name: Verify contract (audit gate, typecheck, lint, format, coverage)
+            - name: Verify contract (audit gate, lock age, typecheck, lint, format, coverage)
               run: npm run verify:ci
 
             # Expo doctor checks live external SDK/package state and can go red with

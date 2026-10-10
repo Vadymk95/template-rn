@@ -4,7 +4,7 @@
     "private": true,
     "main": "expo-router/entry",
     "engines": {
-        "node": ">=24.0.0"
+        "node": ">=24.11.0"
     },
     "scripts": {
         "start": "expo start --go",
@@ -28,6 +28,7 @@
         "format": "prettier --write . --cache --cache-location .prettiercache",
         "format:check": "prettier --check . --cache --cache-location .prettiercache",
         "audit:gate": "node scripts/audit-gate.mjs",
+        "lock:age": "node scripts/check-lock-age.mjs",
         "verify": "node scripts/gate-trace.mjs verify -- npm run verify:inner",
         "verify:iter": "node scripts/gate-trace.mjs verify:iter -- npm run verify:iter:inner",
         "verify:ci": "node scripts/gate-trace.mjs verify:ci -- npm run verify:ci:inner",
@@ -50,9 +51,9 @@
         "ci:local": "npm run verify:ci && npm run doctor",
         "maestro": "maestro test .maestro",
         "prepare": "husky",
-        "verify:inner": "node scripts/check-hooks.mjs && node scripts/check-version-holds.mjs && npm run lint:oxlint && npm run format:check && npm run typecheck && npm run lint && npm run test:scripts && npm run test:coverage",
+        "verify:inner": "node scripts/check-hooks.mjs && node scripts/check-version-holds.mjs && node scripts/check-engines-floor.mjs && npm run lint:oxlint && npm run format:check && npm run typecheck && npm run lint && npm run test:scripts && npm run test:coverage",
         "verify:iter:inner": "npm run lint:oxlint && npm run typecheck && jest --onlyChanged --passWithNoTests",
-        "verify:ci:inner": "npm run audit:gate && npm run verify",
+        "verify:ci:inner": "npm run audit:gate && npm run lock:age && npm run verify",
         "trace:report": "node scripts/trace-report.mjs",
         "test:one": "node scripts/gate-trace.mjs test:one -- npx --no-install jest",
         "docs:check": "node scripts/gate-trace.mjs docs:check -- node scripts/docs-check.mjs"

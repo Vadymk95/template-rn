@@ -25,7 +25,7 @@
         },
         "push": {
             "title": "Push",
-            "text": "The pre-push hook runs the gate once: the audit gate plus every offline check. No build and no e2e stage sit in this gate."
+            "text": "The pre-push hook runs the gate once: the audit gate, the lock-age check and every offline check. No build and no e2e stage sit in this gate."
         },
         "ci": {
             "title": "CI",

@@ -190,7 +190,7 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 
 ## The gate contract: `verify` is a superset of CI
 
-- **Decision**: `verify` is every check that works offline; `verify:ci` is `audit:gate` plus `verify` (the audit is the only check that needs the network). The Husky pre-push hook runs `verify:ci`, and the CI job runs it as a single step; `ci:local` adds `expo-doctor`. A new check goes into the script, never only into a workflow file, so a green local run predicts a green pipeline (three sibling templates once broke exactly this).
+- **Decision**: `verify` is every check that works offline; `verify:ci` is `audit:gate` plus `lock:age` plus `verify` (the audit and the lock-age check are the only checks that need the network). The Husky pre-push hook runs `verify:ci`, and the CI job runs it as a single step; `ci:local` adds `expo-doctor`. A new check goes into the script, never only into a workflow file, so a green local run predicts a green pipeline (three sibling templates once broke exactly this).
 - **Consequences**: the tier law (which checks run when) is in `AGENTS.md` § the gate and `scripts/gate-tiers.json`. Not in the gate: Maestro flows (`.maestro/`, `npm run maestro`) need a simulator or device, and `expo-doctor` reads live SDK state and can go red with no code change, so it is `continue-on-error` in CI.
 - **Status**: in force. **Evidence**: [4a29b21](https://github.com/Vadymk95/template-rn/commit/4a29b21).
 
@@ -203,7 +203,7 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 ## `docs:check` guards CI steps, ruleset contexts and its own trigger
 
 - **Decision**: `docs:check` fails when a `run:` step in a PR-triggered workflow is not declared in `scripts/gate-tiers.json` § `ci.allowedRunSteps` (a check that runs only in CI, outside `verify`; block scalars are read line by line), and when a required status check in `.github/ruleset.json` is produced by no workflow job (job `name:` or id, plus matrix values) nor listed in `ci.rulesetContextAllowlist`. A job whose context GitHub renders only at runtime prints one non-failing line. The pre-commit hook runs `docs:check` whenever the staged set touches docs, rules, `.github/`, `scripts/docs-check.*`, `scripts/gate-tiers.json` or `package.json`.
-- **Consequences**: `scripts/docs-check.mjs` is byte-identical across the four templates; this repo's data is in `gate-tiers.json`.
+- **Consequences**: `scripts/docs-check.mjs` is byte-identical across the four templates, the `prPermission` check (a gitleaks job on a pull request needs `pull-requests: read`) included; this repo's data is in `gate-tiers.json`.
 - **Status**: in force. **Evidence**: [PR #36](https://github.com/Vadymk95/template-rn/pull/36), [PR #38](https://github.com/Vadymk95/template-rn/pull/38).
 
 ## TDD sibling gate on pre-commit, no auto-commit hook

@@ -44,7 +44,7 @@ agent, it should not be a random inline English literal.
 
 - Typical local code-edit loop: `npm run verify:iter` — the iterate moment (`AGENTS.md` § Commands / the gate)
 - Repo-wide blocking contract: `npm run verify` (every offline check) and `npm run verify:ci`
-  (= `audit:gate` + `verify`), which is what husky pre-push and the CI job both run
+  (= `audit:gate` + `lock:age` + `verify`), which is what husky pre-push and the CI job both run
 - Native / machine parity: `npm run ci:local` (= `verify:ci` + `expo-doctor`)
 - CI does not restate the gate: the job is ONE step over `verify:ci`. A new check goes into the script,
   never only into the workflow file — that is what keeps a green local run predictive

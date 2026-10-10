@@ -153,7 +153,7 @@ Oxlint).
 - **Verify (every offline gate)** — default test task; `npm run verify`, no network
   and no `expo-doctor` (useful when Xcode on the machine is not pinned to Expo’s
   matrix yet).
-- **Verify CI contract** — `npm run verify:ci`; adds the audit gate, so it is what
+- **Verify CI contract** — `npm run verify:ci`; adds the audit gate and the lock-age check, so it is what
   the pipeline actually runs.
 - **Full local CI** — `npm run ci:local`, which is `verify:ci` plus `expo-doctor`.
 
@@ -170,8 +170,8 @@ npm run verify
 The `check-hooks` step fails loudly when git hooks are missing — run
 `npm run prepare` once after clone (lifecycle scripts are disabled via `.npmrc`).
 
-`verify` holds every check that works **offline**; `verify:ci` adds the one that
-needs the registry (`audit:gate`) and is what husky pre-push and the CI job both
+`verify` holds every check that works **offline**; `verify:ci` adds the ones that
+need the registry (`audit:gate`, `lock:age`) and is what husky pre-push and the CI job both
 run. The moments (iterate, commit, push, CI), what is never run by hand and the
 superset rule are defined ONCE in `AGENTS.md` § Commands / the gate; stage timings
 live in `.cursor/brain/VERIFICATION.md`.
@@ -221,7 +221,7 @@ Native / machine parity (a human parity check, not an agent moment):
 
 ```bash
 npm run ci:local
-# = npm run verify:ci + expo-doctor  (verify:ci = audit:gate + verify)
+# = npm run verify:ci + expo-doctor  (verify:ci = audit:gate + lock:age + verify)
 ```
 
 ---
@@ -341,6 +341,7 @@ Files travel with a fork. Settings do not. Everything the gate needs is in the f
 Not inherited, and each one is a switch in your own repository's settings:
 
 - **Rulesets and branch protection**, including every required status check. Until you add one, your default branch accepts any push, and the pull-request discipline this repository documents is a habit rather than a rule.
+- **Rulesets need a public repository or a paid plan.** On a private fork on GitHub Free, posting `.github/ruleset.json` returns 403 ("Upgrade to GitHub Pro or make this repository public"), so the required-CI-check boundary is a convention you keep by hand there; and a private fork deletes the `codeql` job AND its `.github/ruleset.json` entry together, or the ruleset waits forever on a check that never reports.
 - **Actions permissions.** A fork starts with workflows disabled; GitHub asks you to enable them once, in the Actions tab. Until you do, the CI described here never runs, and a green screen means nobody looked.
 - **Secret scanning and push protection**, **CodeQL**, and **Dependabot alerts.** The Dependabot CONFIG file travels; the alerts it feeds are a setting.
 - **The template's decisions history.** `.cursor/brain/DECISIONS.md` records why this template is the way it is, not why your product is. Start your own decisions file fresh, keep `scripts/version-holds.json`, and re-check the holds against your own Dependabot PRs: `docs/template-reset.md` § Decisions and version holds.
