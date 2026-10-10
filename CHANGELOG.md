@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.3.1](https://github.com/Vadymk95/template-rn/compare/v0.3.0...v0.3.1) (2026-10-10)
+
+
+### Bug fixes
+
+* **api:** stop retrying 4xx through safeFetch; refuse agent-memory imports in docs ([#43](https://github.com/Vadymk95/template-rn/issues/43)) ([1c2a134](https://github.com/Vadymk95/template-rn/commit/1c2a134bcfd1a31d1c1cf38038f075c05ebae87f))
+* **ci:** audit workflows with zizmor and stop persisting checkout credentials ([#41](https://github.com/Vadymk95/template-rn/issues/41)) ([32af113](https://github.com/Vadymk95/template-rn/commit/32af1136d07068d0f0c681bde4128266b2813955))
+* **deps:** floor handlebars at 4.7.10 for three new advisories ([#46](https://github.com/Vadymk95/template-rn/issues/46)) ([fb2e4bf](https://github.com/Vadymk95/template-rn/commit/fb2e4bf382e590b4aceaead2df63269b23c84205))
+* **gate:** docs:check flags CI steps that bypass the gate and ruleset drift ([#36](https://github.com/Vadymk95/template-rn/issues/36)) ([bb1584c](https://github.com/Vadymk95/template-rn/commit/bb1584cf34159215f632d0aaca082b777f765101))
+* **gate:** suppressions need a reason, bundle budget in CI, a11y guard on UI primitives ([#45](https://github.com/Vadymk95/template-rn/issues/45)) ([448bca0](https://github.com/Vadymk95/template-rn/commit/448bca01c1f5a325c34f628b8d611db6fbacbf1f))
+* **harness:** lock-age and Node-floor guards, private-fork gitleaks permission ([#49](https://github.com/Vadymk95/template-rn/issues/49)) ([516b466](https://github.com/Vadymk95/template-rn/commit/516b4660bbe4ed8463b19471bc61b22b5cb14c02))
+* **native:** guard cleartext config, drop four unused native deps, pin actions by SHA ([#39](https://github.com/Vadymk95/template-rn/issues/39)) ([a5afcd2](https://github.com/Vadymk95/template-rn/commit/a5afcd2ca94a7e80cca6a573610699dd923ebde7))
+* **theme:** native colours match global.css, enable no-empty, fix stale docs ([#38](https://github.com/Vadymk95/template-rn/issues/38)) ([4ae66e3](https://github.com/Vadymk95/template-rn/commit/4ae66e3ea29c62069ceeb3cf5d4530f4f906fcf5))
+
+
+### Maintenance
+
+* **deps:** newest Expo SDK 57 patches and compatible packages; holds recorded ([#44](https://github.com/Vadymk95/template-rn/issues/44)) ([aa1f7de](https://github.com/Vadymk95/template-rn/commit/aa1f7deea2bc7565b4318240ddbf85863c906be1))
+
+
+### Documentation
+
+* **brain:** integration recipes for icons, device info, auth, OTA and crash reports ([#42](https://github.com/Vadymk95/template-rn/issues/42)) ([2990832](https://github.com/Vadymk95/template-rn/commit/2990832711cacc2d89920429c2e2b8a95da81058))
+* **brain:** record the rejected RN accessibility engine ([#48](https://github.com/Vadymk95/template-rn/issues/48)) ([db70ca4](https://github.com/Vadymk95/template-rn/commit/db70ca44db40dd858f2ffa143d0078ac1719f811))
+* **harness:** slim agent docs, enforce version holds, resolve section pointers ([#47](https://github.com/Vadymk95/template-rn/issues/47)) ([580df4d](https://github.com/Vadymk95/template-rn/commit/580df4d61746d6dc03789f48ad7bc90c7aec8fc2))
+
 ## [0.3.0](https://github.com/Vadymk95/template-rn/compare/v0.2.2...v0.3.0) (2026-10-02)
 
 
