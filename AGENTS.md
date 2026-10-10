@@ -38,8 +38,8 @@ The tier law (what runs at which moment, what is never run by hand) is the share
 ```bash
 npm start            # Expo dev server (QR → Expo Go / Dev Client)
 npm run verify:iter  # iteration tier: oxlint → tsc (incremental) → jest --onlyChanged (seconds; not a hand-over gate)
-npm run verify       # every OFFLINE check: hooks → version holds → oxlint → format → typecheck → eslint (cached) → scripts → coverage
-npm run verify:ci    # audit:gate (network) + verify — what husky pre-push AND CI both run
+npm run verify       # every OFFLINE check: hooks → version holds → engines floor → oxlint → format → typecheck → eslint (cached) → scripts → coverage
+npm run verify:ci    # audit:gate + lock:age (network) + verify — what husky pre-push AND CI both run
 npm run fix          # the one remedy: oxlint --fix → eslint --fix → prettier --write
 npm run ci:local     # verify:ci + expo-doctor (full local parity)
 npm run test:one -- <file> # one jest test file, through the tracer (not around it)
@@ -69,14 +69,15 @@ that file disagree, the file wins and the prose is fixed in the same commit.
   look) or the probe, where the repo has them. Legal at any time, in any lane, never a violation.
   Measuring is not verifying: it runs no lint, no types, no tests.
 - **Commit** - the pre-commit hook owns it: staged autofix, the TDD sibling gate, then the repo-wide cheap
-  checks. Nothing to run by hand; on refusal the hook prints the remedy.
+  checks. Nothing to run by hand; on refusal the hook prints the remedy. The commit-msg hook (commitlint)
+  also rejects any body or footer line over 100 characters (the header cap is 96): wrap the body.
 - **Push** - the pre-push hook runs the gate ONCE, never shortened by what the diff touched. Where the
   repo has heavy stages (build, size, e2e), the push script is phase-aware: phase 0 (scaffold, before the
   first deploy) runs the offline checks and loudly SKIPS the heavy stages; phase 1 (from the first deploy)
   runs the full `verify:ci`. A skipped stage is printed, never silent; flip the phase in one commit at the
   first deploy. A repo whose gate has no heavy stage runs the full `verify:ci` at push and records in
   `gate-tiers.json` that a phase switch would gate nothing.
-- **CI** - phase-blind: always the full `verify:ci` (`audit:gate` + `verify`), plus what only CI can do
+- **CI** - phase-blind: always the full `verify:ci` (`audit:gate` + `lock:age` + `verify`), plus what only CI can do
   (the security workflow, the scheduled mutation job, a mandatory dev-smoke job where the repo has one).
 
 **Prohibitions, stated as such.** An implementer or a reviewer NEVER runs `verify`, `verify:ci`,
@@ -106,7 +107,7 @@ that outgrew it, so that number moves on a measurement and a `DECISIONS.md` line
 
 **`verify` is a strict superset of the offline checks CI runs**, so a green `verify` predicts a green CI.
 Keeping that true is a rule: a new check goes into the script, never only into the workflow file.
-`audit:gate` sits in `verify:ci` rather than `verify` because it needs the network, so an offline agent can
+`audit:gate` and `lock:age` sit in `verify:ci` rather than `verify` because they need the network, so an offline agent can
 still run the whole offline gate. `bench:verify` derives its step list from the `verify` script; a
 hand-written second list has already drifted once.
 
@@ -168,7 +169,7 @@ that lives only in a conversation is not a plan.
 ## Working agreements
 
 - **No browser lane**: a question only a rendered result can answer goes to `.maestro/` or a device (the substitute ladder closes `READING_INDEX.md`). The push runs the full `verify:ci` directly (`gate-tiers.json` `_phaseMeaning` says why); the by-hand prohibition also covers `ci:local` and `test:mutation`. Change the tracer's discipline by editing `scripts/gate-tiers.json`, never the analyser. The gate binds no port: if Metro's is busy, MOVE (`npx expo start --port <free>`), kill nothing.
-- **Bootstrap after clone**: `npm run prepare` once (`.npmrc` disables lifecycle scripts as a supply-chain guard, so husky does not self-install; `verify` fails loudly without hooks). Dependency cooldown `.npmrc` `min-release-age=3` (days): a brand-new package or urgent patch needs `npm install <pkg> --min-release-age=0`.
+- **Bootstrap after clone**: `npm run prepare` once (`.npmrc` disables lifecycle scripts as a supply-chain guard, so husky does not self-install; `verify` fails loudly without hooks). Dependency cooldown `.npmrc` `min-release-age=3` (days): a brand-new package or urgent patch needs `npm install <pkg> --min-release-age=0`. The lockfile obeys the same cooldown: `npm run lock:age` (in `verify:ci`) fails a changed `name@version` younger than `min-release-age`; a deliberate bypass bump is listed with a reason and an expiry in `scripts/lock-age-allowlist.json`.
 - **Zero warnings** (`eslint --max-warnings 0`, `oxlint --deny-warnings`): fix the cause; never downgrade a rule or sprinkle `eslint-disable`. A directive that must stay names its rules and carries `-- reason`; `oxlint-disable*` is banned. A rule wrong for a class of files gets a documented file-scoped override (`eslint.config.mjs`, or `overrides` in `.oxlintrc.json`).
 - **Complexity ratchet**: `complexity` 15 / `max-depth` 3 / `max-params` 4 / `max-lines-per-function` 120 / `max-lines` 200 over `src/**`, tests exempt. The numbers sit above the measured ceiling (`DECISIONS.md`), so a hit means new drift: split the function first; raising one needs a fresh measurement and a `DECISIONS.md` line.
 - **Mutation testing** (`npm run test:mutation`): coverage proves code RUNS, the score proves tests would CATCH a wrong implementation. `thresholds.break` in `stryker.config.json` is a measured floor: raise it after a good run, never lower it to go green.
@@ -177,10 +178,10 @@ that lives only in a conversation is not a plan.
 
 ## Version holds (do not "fix" by bumping)
 
-`scripts/version-holds.json` is the list (range, reason, lift condition, evidence). `scripts/check-version-holds.mjs`, inside `verify`, fails a manifest or lockfile outside a range and a missing Dependabot `ignore`. A hold lifts on its stated condition, never because `npm outdated` lists something newer. Why: `DECISIONS.md`.
+`scripts/version-holds.json` is the list (range, reason, lift condition, evidence). `scripts/check-version-holds.mjs`, inside `verify`, fails a manifest or lockfile outside a range and a missing Dependabot `ignore`. A hold lifts on its stated condition, never because `npm outdated` lists something newer. Why: `DECISIONS.md`. `scripts/check-engines-floor.mjs`, also inside `verify`, fails an `engines.node` or `.nvmrc` below the strictest `engines.node` in the lockfile (`engine-strict` refuses that install): a dependency bump that raises the floor raises both files in the same change.
 
 - **Native/Expo packages are SDK-pinned** (`react`, `react-native`, `react-native-*`, `expo-*`, async-storage): versions come from `npx expo install --fix`, never from `npm outdated`. Lift: the SDK upgrade.
-- **`expo install --check` / `expo-doctor` can go red for a patch the cooldown holds**: wait out `min-release-age`, or take it once with `npm_config_min_release_age=0 npx expo install --fix` and record each version, publish date and provenance in `DECISIONS.md`. Never lower `min-release-age` in `.npmrc`; `EXPO_OFFLINE=1 npx expo install --check` stays green meanwhile.
+- **`expo install --check` / `expo-doctor` can go red for a patch the cooldown holds**: wait out `min-release-age`, or take it once with `npm_config_min_release_age=0 npx expo install --fix` and record each version, publish date and provenance in `DECISIONS.md` and in `scripts/lock-age-allowlist.json` (reason + expiry; `lock:age` fails it otherwise). Never lower `min-release-age` in `.npmrc`; `EXPO_OFFLINE=1 npx expo install --check` stays green meanwhile.
 - **`test-renderer` stays `~1.2.x`** (its 1.3 reconciler peers a newer React than the SDK pins). **Jest and `@types/jest` stay 29.x, `@babel/core` stays 7.x** (`jest-expo` is built on jest 29 internals). **Tailwind stays 3.4.x** (NativeWind 4 calls Tailwind 3 internals). **TypeScript stays `~6.0.x`** (typescript-eslint peer range). **`@types/react` stays level with the pinned `react`**.
 - **ESLint is 10.x**: the trailing block in `eslint.config.mjs` pins `settings.react.version` to a literal because `eslint-config-expo`'s `'detect'` crashes every React rule. Do not delete it or set it back to `'detect'`.
 - **`overrides` in `package.json` are security floors WITH major caps** (`">=fixed <next-major"`): an uncapped floor ages into its advisory's vulnerable range. Never write one without a cap, never remove a floor to quiet npm; a stale audit allowance fails the gate by design.

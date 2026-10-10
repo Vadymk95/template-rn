@@ -74,7 +74,7 @@ Three rungs, and the split is deliberate:
   `AGENTS.md` § Commands / the gate; why: `DECISIONS.md` § The gate contract. **No gate preflight
   here, deliberately:** this gate has no production build, no e2e port and no required env, so every
   candidate check would be one that cannot fail — and a check that cannot fail only claims coverage.
-- **`npm run verify:ci`** — `audit:gate` (needs the registry) + `verify`. This is
+- **`npm run verify:ci`** — `audit:gate` + `lock:age` (both need the registry) + `verify`. This is
   what husky pre-push runs and what the CI job runs, as a single step.
 
 `npm run test:mutation` sits on neither rung on purpose: it runs weekly via the

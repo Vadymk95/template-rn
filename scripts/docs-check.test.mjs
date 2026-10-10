@@ -1,6 +1,14 @@
 // Runner: `node:test`, not Jest — see gate-trace.test.mjs. Run via `npm run test:scripts`.
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import {
+    existsSync,
+    mkdirSync,
+    mkdtempSync,
+    readdirSync,
+    readFileSync,
+    rmSync,
+    writeFileSync
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, it } from 'node:test';
@@ -13,6 +21,7 @@ import {
     checkMemoryImports,
     checkQuarantine,
     checkPathsAndScripts,
+    checkPullRequestReadPermission,
     checkRulesetContexts,
     checkSectionPointers,
     checkSuiteBudgets,
@@ -657,8 +666,8 @@ describe('extractRunSteps', () => {
         assert.deepEqual(extractRunSteps(text), [{ command: 'npm ci', line: 5 }]);
     });
 
-    // R1: a block scalar used to be skipped outright, which let a check added as a multi-line
-    // step bypass F1 with docs:check green — the audit's exact sabotage shape.
+    // A block scalar must not be skipped outright: a check added as a multi-line step would
+    // otherwise bypass the run-step allowlist with docs:check green.
     it('reads every non-empty line inside a run: | block scalar, each with its own line number', () => {
         const text = [
             'jobs:',
@@ -709,7 +718,7 @@ describe('checkCiRunSteps', () => {
         '              run: npm run lint:extra'
     ].join('\n');
 
-    it('flags a run step outside the allowlist, in the F1 finding style, and accepts an allowed one', () => {
+    it('flags a run step outside the allowlist, naming the file and line, and accepts an allowed one', () => {
         const findings = checkCiRunSteps({
             workflows: [['.github/workflows/ci.yml', workflow]],
             allowedRunSteps: [{ run: 'npm ci --ignore-scripts', reason: 'install, not a check' }]
@@ -730,8 +739,8 @@ describe('checkCiRunSteps', () => {
         );
     });
 
-    // R1: the audit's sabotage replayed as a block step — one allowed line, one unknown one —
-    // must flag exactly the unknown line, at its own position inside the block.
+    // A block step holding one allowed line and one unknown one must flag exactly the unknown
+    // line, at its own position inside the block.
     it('checks each line inside a run: | block, flagging only the unknown command', () => {
         const blockWorkflow = [
             'name: CI',
@@ -753,6 +762,227 @@ describe('checkCiRunSteps', () => {
         assert.deepEqual(findings, [
             '.github/workflows/ci.yml:11: CI runs "npm run lint:extra" outside the gate. Put it into verify, or list it in scripts/gate-tiers.json ci.allowedRunSteps with a reason.'
         ]);
+    });
+});
+
+describe('checkPullRequestReadPermission', () => {
+    const FILE = '.github/workflows/security.yml';
+    const workflow = ({ trigger = 'pull_request', top = [], job = [] } = {}) =>
+        [
+            'name: Security',
+            'on:',
+            `    ${trigger}:`,
+            ...top,
+            'jobs:',
+            '    gitleaks:',
+            '        runs-on: ubuntu-latest',
+            ...job,
+            '        steps:',
+            '            - uses: actions/checkout@abc # v1',
+            '            - name: Run gitleaks',
+            '              uses: gitleaks/gitleaks-action@def # v3',
+            '    other:',
+            '        runs-on: ubuntu-latest',
+            '        steps:',
+            '            - run: echo ok'
+        ].join('\n');
+    const READ_CONTENTS = ['        permissions:', '            contents: read'];
+    const READ_BOTH = [...READ_CONTENTS, '            pull-requests: read'];
+    const check = (text) => checkPullRequestReadPermission({ workflows: [[FILE, text]] });
+
+    it('flags a gitleaks job on a pull_request trigger whose permissions lack pull-requests: read', () => {
+        const findings = check(workflow({ job: READ_CONTENTS }));
+
+        assert.equal(findings.length, 1);
+        assert.match(findings[0], /^\.github\/workflows\/security\.yml:\d+: /);
+        assert.match(findings[0], /job "gitleaks"/);
+        assert.match(findings[0], /pull-requests: read/);
+        assert.match(findings[0], /403/);
+    });
+
+    it('points at the uses line of the action', () => {
+        const text = workflow({ job: READ_CONTENTS });
+        const line =
+            text.split('\n').findIndex((row) => row.includes('gitleaks/gitleaks-action')) + 1;
+
+        assert.match(check(text)[0], new RegExp(`:${String(line)}: `));
+    });
+
+    it('accepts the scope on the job, and a write or a blanket grant on the job', () => {
+        assert.deepEqual(check(workflow({ job: READ_BOTH })), []);
+        assert.deepEqual(
+            check(workflow({ job: ['        permissions:', '            pull-requests: write'] })),
+            []
+        );
+        assert.deepEqual(check(workflow({ job: ['        permissions: read-all'] })), []);
+    });
+
+    it('does not read pull-requests: none as a grant, on the job or on the workflow', () => {
+        const none = ['        permissions:', '            pull-requests: none'];
+        const top = ['', 'permissions:', '    pull-requests: none', ''];
+
+        assert.equal(check(workflow({ job: none })).length, 1);
+        assert.equal(check(workflow({ top })).length, 1);
+    });
+
+    it('reads a blanket grant that carries a trailing comment', () => {
+        assert.deepEqual(
+            check(workflow({ job: ['        permissions: read-all # lists the commits'] })),
+            []
+        );
+    });
+
+    it('takes the workflow-level grant only when the job declares no permissions of its own', () => {
+        const top = ['', 'permissions:', '    contents: read', '    pull-requests: read', ''];
+        const noJobBlock = workflow({ top });
+        assert.deepEqual(check(noJobBlock), []);
+
+        // A job-level block replaces the workflow-level one entirely, it does not add to it.
+        assert.equal(check(workflow({ top, job: READ_CONTENTS })).length, 1);
+    });
+
+    it('flags a gitleaks job with no permissions at all when the workflow grants only contents', () => {
+        const top = ['', 'permissions:', '    contents: read', ''];
+
+        assert.equal(check(workflow({ top })).length, 1);
+    });
+
+    it('reads a job whose permissions are indented by two spaces, not four', () => {
+        const twoSpaces = [
+            'on:',
+            '  pull_request:',
+            'jobs:',
+            '  gitleaks:',
+            '    permissions:',
+            '      pull-requests: read',
+            '    steps:',
+            '      - uses: gitleaks/gitleaks-action@aaa'
+        ].join('\n');
+
+        assert.deepEqual(check(twoSpaces), []);
+        assert.equal(check(twoSpaces.replace('pull-requests: read', 'contents: read')).length, 1);
+    });
+
+    it('leaves a workflow that is not pull_request triggered, and a job without the action', () => {
+        assert.deepEqual(check(workflow({ trigger: 'push', job: READ_CONTENTS })), []);
+        assert.deepEqual(
+            check(
+                [
+                    'on:',
+                    '    pull_request:',
+                    'jobs:',
+                    '    a:',
+                    '        steps:',
+                    '            - run: echo'
+                ].join('\n')
+            ),
+            []
+        );
+    });
+
+    it('flags each gitleaks job of a workflow separately', () => {
+        const twice = [
+            'on:',
+            '    pull_request:',
+            'jobs:',
+            '    first:',
+            '        permissions:',
+            '            contents: read',
+            '        steps:',
+            '            - uses: gitleaks/gitleaks-action@aaa',
+            '    second:',
+            '        permissions:',
+            '            contents: read',
+            '            pull-requests: read',
+            '        steps:',
+            '            - uses: gitleaks/gitleaks-action@bbb',
+            '    third:',
+            '        steps:',
+            '            - uses: gitleaks/gitleaks-action@ccc'
+        ].join('\n');
+        const findings = check(twice);
+
+        assert.equal(findings.length, 2);
+        assert.match(findings[0], /job "first"/);
+        assert.match(findings[1], /job "third"/);
+    });
+
+    // A job-level `permissions:` block replaces the workflow-level one, so the scope belongs on the
+    // gitleaks job alone: a workflow-wide grant would also widen every other job's token.
+    const pullRequestScopeOutsideJob = (text, jobId) => {
+        const lines = text.split('\n');
+        const own = lines.findIndex((line) => line === `    ${jobId}:`);
+        const next = lines.findIndex((line, index) => index > own && /^ {4}\S/.test(line));
+        const stop = next === -1 ? lines.length : next;
+
+        return lines.flatMap((line, index) => {
+            const inside = own !== -1 && index > own && index < stop;
+            const grant = /^\s*(pull-requests:|permissions:\s*(read|write)-all\b)/.test(line);
+            return grant && !inside ? [index + 1] : [];
+        });
+    };
+    const securityFixture = (workflowLevel, otherJob) =>
+        [
+            'on:',
+            '    pull_request:',
+            workflowLevel,
+            'jobs:',
+            '    gitleaks:',
+            '        permissions:',
+            '            contents: read',
+            '            pull-requests: read',
+            '        steps:',
+            '            - uses: gitleaks/gitleaks-action@aaa',
+            '    codeql:',
+            otherJob
+        ].join('\n');
+
+    it('finds a pull-requests grant outside the gitleaks job, and none inside it', () => {
+        const clean = securityFixture('permissions:\n    contents: read', '        steps: []');
+        const wide = securityFixture(
+            'permissions:\n    contents: read\n    pull-requests: read',
+            '        steps: []'
+        );
+        const blanket = securityFixture('permissions: read-all', '        steps: []');
+        const sibling = securityFixture(
+            'permissions:\n    contents: read',
+            '        permissions:\n            pull-requests: write'
+        );
+
+        assert.deepEqual(pullRequestScopeOutsideJob(clean, 'gitleaks'), []);
+        assert.equal(pullRequestScopeOutsideJob(wide, 'gitleaks').length, 1);
+        assert.equal(pullRequestScopeOutsideJob(blanket, 'gitleaks').length, 1);
+        assert.equal(pullRequestScopeOutsideJob(sibling, 'gitleaks').length, 1);
+        assert.notDeepEqual(pullRequestScopeOutsideJob(clean, 'missing'), []);
+    });
+
+    // The private-fork failure shows only on a fork's first pull request, so this repository's own
+    // workflows are checked on every test run, not only when docs:check runs.
+    describe("this repository's own workflows", () => {
+        const dir = path.join(process.cwd(), '.github/workflows');
+        const files = existsSync(dir)
+            ? readdirSync(dir).filter((file) => file.endsWith('.yml'))
+            : [];
+
+        it('grant pull-requests: read to every gitleaks job on a pull_request trigger', () => {
+            const workflows = files.map((file) => [
+                `.github/workflows/${file}`,
+                readFileSync(path.join(dir, file), 'utf8')
+            ]);
+
+            assert.deepEqual(checkPullRequestReadPermission({ workflows }), []);
+        });
+
+        it('keep the pull-requests scope on the security workflow gitleaks job only', () => {
+            assert.ok(files.includes('security.yml'));
+            assert.deepEqual(
+                pullRequestScopeOutsideJob(
+                    readFileSync(path.join(dir, 'security.yml'), 'utf8'),
+                    'gitleaks'
+                ),
+                []
+            );
+        });
     });
 });
 
@@ -785,8 +1015,8 @@ describe('deriveWorkflowContexts', () => {
         });
     });
 
-    // R2(a): a fork that writes its matrix as a block list, not inline, must derive the same
-    // contexts — the inline shape was the only one read before.
+    // A matrix written as a block list, not inline, must derive the same contexts: both shapes
+    // are valid workflow syntax.
     it('gives identical contexts for an inline matrix and the equivalent block-list matrix', () => {
         const inlineMatrix = [
             'name: CI',
@@ -822,7 +1052,7 @@ describe('deriveWorkflowContexts', () => {
         );
     });
 
-    // R2: an `include:`/`exclude:` matrix renders its real combination set only at runtime, so the
+    // An `include:`/`exclude:` matrix renders its real combination set only at runtime, so the
     // job is undecidable rather than silently wrong.
     it('marks a job with an include/exclude matrix as undecidable, naming its static base', () => {
         const workflow = [
@@ -847,7 +1077,7 @@ describe('deriveWorkflowContexts', () => {
         ]);
     });
 
-    // R2: a job name that interpolates a matrix value is rendered only at runtime too.
+    // A job name that interpolates a matrix value is rendered only at runtime too.
     it('marks a job whose name: carries an expression as undecidable, keeping the static prefix', () => {
         const workflow = [
             'name: CI',
@@ -901,8 +1131,8 @@ describe('checkRulesetContexts', () => {
         assert.deepEqual(result.notes, []);
     });
 
-    // R2(c): an ordinary renamed job must still fail — the exemption below is scoped to
-    // undecidable jobs only, never a blanket loosening.
+    // An ordinary renamed job must still fail: the exemption for undecidable jobs is scoped to
+    // those jobs only, never a blanket loosening.
     it('fails when the job behind a required context is renamed', () => {
         const renamed = workflow.replace('cross-browser:', 'cross-browser-v2:');
         const result = checkRulesetContexts({
@@ -934,8 +1164,8 @@ describe('checkRulesetContexts', () => {
     });
 });
 
-// R2(b): a job GitHub can only resolve at runtime (include/exclude, an expression name) must
-// never cause a false red, and must say so once, loudly, without failing the check.
+// A job GitHub can only resolve at runtime (include/exclude, an expression name) must never
+// cause a false red, and must say so once, loudly, without failing the check.
 describe('checkRulesetContexts: jobs that cannot be derived statically', () => {
     const includeMatrixWorkflow = [
         'name: CI',

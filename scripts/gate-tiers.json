@@ -9,11 +9,11 @@
         },
         "verify": {
             "class": "code",
-            "description": "hooks -> version holds -> oxlint -> format -> tsc -> eslint -> script tests -> coverage"
+            "description": "hooks -> version holds -> engines floor -> oxlint -> format -> tsc -> eslint -> script tests -> coverage"
         },
         "verify:ci": {
             "class": "code",
-            "description": "audit:gate -> verify; what pre-push runs"
+            "description": "audit:gate -> lock:age -> verify; what pre-push runs"
         },
         "verify:native": {
             "class": "code",
