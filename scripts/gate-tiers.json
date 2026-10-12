@@ -9,7 +9,7 @@
         },
         "verify": {
             "class": "code",
-            "description": "hooks -> version holds -> engines floor -> oxlint -> format -> tsc -> eslint -> script tests -> coverage"
+            "description": "hooks -> version holds -> engines floor -> sibling-tests range -> oxlint -> format -> tsc -> eslint -> script tests -> coverage"
         },
         "verify:ci": {
             "class": "code",
@@ -56,6 +56,10 @@
             {
                 "run": "npm run perf:check",
                 "reason": "Hermes bundle budget: a full expo export of both platforms, the heaviest stage the repo has, so a CI-only lane (job bundle-budget) like the weekly mutation run; the same script runs locally"
+            },
+            {
+                "run": "node scripts/check-gate-integrity.mjs --base \"$BASE_SHA\" --head \"$HEAD_SHA\" --labels \"$PR_LABELS\"",
+                "reason": "lists a change to the gate or an added suppression on a pull request until a reviewer labels it; the labels exist only on the pull request event, so no local chain can judge them"
             }
         ],
         "rulesetContextAllowlist": []

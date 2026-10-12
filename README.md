@@ -153,8 +153,8 @@ Oxlint).
 - **Verify (every offline gate)** — default test task; `npm run verify`, no network
   and no `expo-doctor` (useful when Xcode on the machine is not pinned to Expo’s
   matrix yet).
-- **Verify CI contract** — `npm run verify:ci`; adds the audit gate and the lock-age check, so it is what
-  the pipeline actually runs.
+- **Verify CI contract** — `npm run verify:ci`; adds the audit gate and the lock-age check, so it is
+  what the pipeline actually runs.
 - **Full local CI** — `npm run ci:local`, which is `verify:ci` plus `expo-doctor`.
 
 Each task calls an npm script instead of spelling the gate out, so the tasks cannot
@@ -261,6 +261,7 @@ To report a vulnerability, see `SECURITY.md`.
 ```bash
 nvm use                           # reads .nvmrc
 npm install
+npm run prepare                   # git hooks: .npmrc disables install scripts, so npm install skips them
 npx expo-doctor                   # verifies deps match SDK
 npm start                         # QR code → Expo Go / Dev Client
 npm run start:clear               # same, but resets the Metro cache
@@ -344,6 +345,7 @@ Not inherited, and each one is a switch in your own repository's settings:
 - **Rulesets need a public repository or a paid plan.** On a private fork on GitHub Free, posting `.github/ruleset.json` returns 403 ("Upgrade to GitHub Pro or make this repository public"), so the required-CI-check boundary is a convention you keep by hand there; and a private fork deletes the `codeql` job AND its `.github/ruleset.json` entry together, or the ruleset waits forever on a check that never reports.
 - **Actions permissions.** A fork starts with workflows disabled; GitHub asks you to enable them once, in the Actions tab. Until you do, the CI described here never runs, and a green screen means nobody looked.
 - **Secret scanning and push protection**, **CodeQL**, and **Dependabot alerts.** The Dependabot CONFIG file travels; the alerts it feeds are a setting.
+- **Review of gate changes.** `.github/workflows/gate-integrity.yml` lists every pull request that touches the gate (a check script, a hook, a workflow, a lint, type or test config, a rule file, the `package.json` scripts, `scripts/gate-files.json` names them all) or adds a suppression, and fails until a reviewer who has read the list adds the pull-request label `gate-change`. Two parts are yours: labels do not travel with a fork, so create `gate-change` once; and CI runs the pull request's own copy of the check, so the boundary is the required `gate-integrity` check plus a human read. A `gate-change` pull request needs that read, whoever opens it. A gate config that imports a helper (a setup or fixtures file) needs that helper listed too: `scripts/gate-config-coverage.test.mjs` fails until the manifest names it. A team fork also adds a CODEOWNERS entry for the manifest paths and turns on required code-owner review in its ruleset. After adding or removing the label, let the new run start: a re-run of an old run reuses the labels it began with.
 - **The template's decisions history.** `.cursor/brain/DECISIONS.md` records why this template is the way it is, not why your product is. Start your own decisions file fresh, keep `scripts/version-holds.json`, and re-check the holds against your own Dependabot PRs: `docs/template-reset.md` § Decisions and version holds.
 
 `.github/ruleset.json` is the protection this repository runs, written down so you can reproduce it with one command instead of clicking through a form:

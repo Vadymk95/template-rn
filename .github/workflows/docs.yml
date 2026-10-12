@@ -2,8 +2,9 @@ name: Docs
 
 # The mechanical half of doc drift (scripts/docs-check.mjs) runs in pre-commit when docs are
 # staged; this weekly job runs the same checks on a repo nobody committed to, so a test
-# quarantine that expires in a quiet week still turns it red. No check reads a date out of
-# prose. A missing trace log here is a loud skip, not a pass.
+# quarantine that expires in a quiet week still turns it red (a quarantine is capped at 30 days
+# and is red ON its date). docs-check does not run inside verify in this repo. No check reads a
+# date out of prose. A missing trace log here is a loud skip, not a pass.
 
 on:
     schedule:

@@ -25,8 +25,9 @@ jobs:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
-                  # Depth 2: lock:age (inside verify:ci) compares the lockfile with HEAD~1, and a
-                  # private fork's persist-credentials: false means it cannot fetch the parent itself.
+                  # Depth 2: lock:age (inside verify:ci) compares the lockfile with HEAD~1 and the
+                  # sibling-tests range check (inside verify) falls back to HEAD~1 as its base in CI; a
+                  # private fork's persist-credentials: false means neither can fetch the parent itself.
                   fetch-depth: 2
                   persist-credentials: false
 
@@ -36,8 +37,8 @@ jobs:
                   node-version-file: .nvmrc
                   cache: npm
 
-            # `.nvmrc` holds the floor (24.11), so setup-node installs a 24.11.x, and
-            # every 24.11.x bundles an npm 11.6.x, older than 11.14.0. That npm has the
+            # `.nvmrc` holds the floor (24.14.1), so setup-node installs exactly that, and
+            # it bundles npm 11.11.0, older than 11.14.0. That npm has the
             # long-standing cross-platform optional-binaries bug (npm/cli#4828): lock
             # files generated on macOS arm64 fail Linux CI with EUSAGE "Missing:
             # <pkg>-linux-x64-gnu from lock file" for native bindings (@expo/ngrok-bin,
@@ -61,7 +62,7 @@ jobs:
             # ONE step over the same script husky pre-push runs. A new check belongs
             # in `verify` (offline) or `verify:ci` (needs the network) — never only
             # here, or a green local gate stops meaning a green pipeline.
-            - name: Verify contract (audit gate, lock age, typecheck, lint, format, coverage)
+            - name: Verify contract (audit gate, lock age, oxlint, format, typecheck, lint, script tests, coverage)
               run: npm run verify:ci
 
             # Expo doctor checks live external SDK/package state and can go red with
