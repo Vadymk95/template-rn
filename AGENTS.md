@@ -38,8 +38,8 @@ The tier law (what runs at which moment, what is never run by hand) is the share
 ```bash
 npm start            # Expo dev server (QR → Expo Go / Dev Client)
 npm run verify:iter  # iteration tier: oxlint → tsc (incremental) → jest --onlyChanged (seconds; not a hand-over gate)
-npm run verify       # every OFFLINE check: hooks → version holds → engines floor → oxlint → format → typecheck → eslint (cached) → scripts → coverage
-npm run verify:ci    # audit:gate + lock:age (network) + verify — what husky pre-push AND CI both run
+npm run verify       # every OFFLINE check: hooks → version holds → engines floor → sibling-tests range → oxlint → format → typecheck → eslint (cached) → scripts → coverage
+npm run verify:ci    # audit:gate + lock:age (network) + verify — husky pre-push AND CI both run it
 npm run fix          # the one remedy: oxlint --fix → eslint --fix → prettier --write
 npm run ci:local     # verify:ci + expo-doctor (full local parity)
 npm run test:one -- <file> # one jest test file, through the tracer (not around it)
@@ -121,8 +121,7 @@ scripts take the next free port. Only the push gate clears its own port.
 
 ### Lanes - who runs what
 
-- **Main agent, inline.** Iterate and measure while working; the push runs the chain. Never the full gate
-  by hand.
+- **Main agent, inline.** Iterate and measure while working; the push runs the chain, never a hand-run.
 - **Implementer subagent.** Works in a hand-made `git worktree` OUTSIDE the repo directory, on its own
   port, with `node_modules` symlinked from the main checkout. Iterate and measure only; the gate never
   runs from a worktree (the tracer records it as a finding). The lead removes the worktree, checks the
@@ -136,7 +135,8 @@ scripts take the next free port. Only the push gate clears its own port.
   `.github/copilot-instructions.md`, which points here for the gate.
 - **Review, any lane.** The diff plus `verify:iter`, never a re-run of the gate. Findings are correctness,
   test strength, security, readability; style belongs to the linters. A non-author human approves; an
-  agent's own green is not an approval.
+  agent's own green is not an approval. A gate or suppression change stays red until a reviewer adds the
+  `gate-change` label, never the author (`scripts/check-gate-integrity.mjs` lists the change).
 - **Two tools, one file.** Claude Code reads `CLAUDE.md` -> `AGENTS.md` -> the brain files this guide
   points at (read on demand; nothing beyond `AGENTS.md` is `@`-imported); Cursor reads `AGENTS.md` plus
   every `alwaysApply: true` rule; Copilot reads `.github/copilot-instructions.md`. `AGENTS.md` is the only
@@ -178,7 +178,7 @@ that lives only in a conversation is not a plan.
 
 ## Version holds (do not "fix" by bumping)
 
-`scripts/version-holds.json` is the list (range, reason, lift condition, evidence). `scripts/check-version-holds.mjs`, inside `verify`, fails a manifest or lockfile outside a range and a missing Dependabot `ignore`. A hold lifts on its stated condition, never because `npm outdated` lists something newer. Why: `DECISIONS.md`. `scripts/check-engines-floor.mjs`, also inside `verify`, fails an `engines.node` or `.nvmrc` below the strictest `engines.node` in the lockfile (`engine-strict` refuses that install): a dependency bump that raises the floor raises both files in the same change.
+`scripts/version-holds.json` is the list (range, reason, lift condition, evidence). `scripts/check-version-holds.mjs`, inside `verify`, fails a manifest or lockfile outside a range and a missing Dependabot `ignore`. A hold lifts on its stated condition, never because `npm outdated` lists something newer. Why: `DECISIONS.md`. `scripts/check-engines-floor.mjs`, also inside `verify`, fails an `engines.node` or `.nvmrc` below the strictest `engines.node` in the lockfile (`engine-strict` refuses that install): a dependency bump that raises the floor raises both files in the same change. It also fails an `engines.npm` below the npm that a `.npmrc` key needs (`min-release-age`: 11.10, first bundled by Node 24.14.1, the `.nvmrc`), because an older npm ignores the key with a warning.
 
 - **Native/Expo packages are SDK-pinned** (`react`, `react-native`, `react-native-*`, `expo-*`, async-storage): versions come from `npx expo install --fix`, never from `npm outdated`. Lift: the SDK upgrade.
 - **`expo install --check` / `expo-doctor` can go red for a patch the cooldown holds**: wait out `min-release-age`, or take it once with `npm_config_min_release_age=0 npx expo install --fix` and record each version, publish date and provenance in `DECISIONS.md` and in `scripts/lock-age-allowlist.json` (reason + expiry; `lock:age` fails it otherwise). Never lower `min-release-age` in `.npmrc`; `EXPO_OFFLINE=1 npx expo install --check` stays green meanwhile.

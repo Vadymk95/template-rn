@@ -9,7 +9,12 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import { parseRange } from './check-version-holds.mjs';
-import { checkEnginesFloor, floorWithinMajor, run } from './check-engines-floor.mjs';
+import {
+    checkEnginesFloor,
+    checkLockRootEngines,
+    floorWithinMajor,
+    run
+} from './check-engines-floor.mjs';
 
 const { describe, it } = globalThis.describe ? globalThis : await import('node:test');
 
@@ -22,19 +27,31 @@ const SCRIPT = path.resolve(process.cwd(), 'scripts/check-engines-floor.mjs');
 /** The case that motivated the check: the manifest said >=24.0.0 while a locked package needed 24.15. */
 const STRICT_ENGINES = '^22.22.2 || ^24.15.0 || >=26.0.0';
 
-const lockWith = (packages = {}) => ({
+const lockWith = (packages = {}, rootEngines = { node: '>=24.0.0' }) => ({
     lockfileVersion: 3,
-    packages: { '': { engines: { node: '>=24.0.0' } }, ...packages }
+    packages: { '': { engines: rootEngines }, ...packages }
 });
 
 const pkg = (spec, extra = {}) => ({ version: '1.0.0', engines: { node: spec }, ...extra });
 
-const check = ({ declared = '>=24.15.0', packages = {}, nvmrc = '24.15' } = {}) =>
+const check = ({
+    declared = '>=24.15.0',
+    declaredNpm,
+    packages = {},
+    nvmrc = '24.15',
+    npmrc = null
+} = {}) =>
     checkEnginesFloor({
-        manifest: { engines: { node: declared } },
+        manifest: {
+            engines: { node: declared, ...(declaredNpm === undefined ? {} : { npm: declaredNpm }) }
+        },
         lock: lockWith(packages),
-        nvmrc
+        nvmrc,
+        npmrc
     });
+
+/** The `.npmrc` key that only npm 11.10+ reads; older npm warns "Unknown project config" and ignores it. */
+const COOLDOWN_NPMRC = '# cooldown\nengine-strict=true\nmin-release-age=3\n';
 
 const floorOf = (spec, major) => floorWithinMajor(parseRange(spec), major);
 
@@ -208,12 +225,132 @@ describe('checkEnginesFloor', () => {
     });
 });
 
+/* ------------------------------------------------------------------------ npm leg */
+
+describe('npm floor the .npmrc settings need', () => {
+    it('fails when .npmrc uses min-release-age and engines.npm is missing, naming the fix', () => {
+        const { findings } = check({ npmrc: COOLDOWN_NPMRC });
+
+        assert.equal(findings.length, 1);
+        assert.match(findings[0], /min-release-age/);
+        assert.match(findings[0], /11\.10\.0/);
+        assert.match(findings[0], /engines\.npm/);
+        assert.match(findings[0], /">=11\.10\.0"/);
+    });
+
+    it('fails when engines.npm admits an npm that ignores the key', () => {
+        const { findings } = check({ npmrc: COOLDOWN_NPMRC, declaredNpm: '>=10.0.0' });
+
+        assert.equal(findings.length, 1);
+        assert.match(findings[0], /engines\.npm ">=10\.0\.0" admits 10\.0\.0/);
+        assert.match(findings[0], /min-release-age/);
+    });
+
+    it('fails an engines.npm with no lower bound', () => {
+        const { findings } = check({ npmrc: COOLDOWN_NPMRC, declaredNpm: '<12' });
+
+        assert.equal(findings.length, 1);
+        assert.match(findings[0], /engines\.npm "<12" has no lower bound/);
+    });
+
+    it('passes at the needed floor and above it', () => {
+        assert.deepEqual(check({ npmrc: COOLDOWN_NPMRC, declaredNpm: '>=11.10.0' }).findings, []);
+        assert.deepEqual(check({ npmrc: COOLDOWN_NPMRC, declaredNpm: '>=11.14.0' }).findings, []);
+    });
+
+    it('stays quiet when the key is absent, commented out, or there is no .npmrc', () => {
+        assert.deepEqual(check({ npmrc: 'engine-strict=true\n' }).findings, []);
+        assert.deepEqual(check({ npmrc: '# min-release-age=3\n' }).findings, []);
+        assert.deepEqual(check({ npmrc: null }).findings, []);
+    });
+
+    it('reads the key with spaces around the equals sign', () => {
+        assert.equal(check({ npmrc: 'min-release-age = 3\n' }).findings.length, 1);
+    });
+});
+
+describe('the .nvmrc fix is a version the check accepts', () => {
+    it('writes the full version when the floor has a patch, so the fix cannot loop', () => {
+        const { findings } = check({ declared: '>=24.14.1', nvmrc: '24.14' });
+
+        assert.equal(findings.length, 1);
+        assert.match(findings[0], /write 24\.14\.1$/);
+        assert.deepEqual(check({ declared: '>=24.14.1', nvmrc: '24.14.1' }).findings, []);
+    });
+});
+
+/* ------------------------------------------------------------------------ lock root */
+
+describe('the lockfile root against package.json', () => {
+    const lockRoot = (engines) => ({ packages: { '': { engines } } });
+
+    it('passes when the lockfile root carries the same engines as package.json', () => {
+        const manifest = { engines: { node: '>=24.15.0', npm: '>=11.10.0' } };
+        const lock = lockRoot({ node: '>=24.15.0', npm: '>=11.10.0' });
+        assert.deepEqual(checkLockRootEngines({ manifest, lock }), []);
+    });
+
+    it('does not care in which order the keys are written', () => {
+        const manifest = { engines: { node: '>=24.15.0', npm: '>=11.10.0' } };
+        const lock = lockRoot({ npm: '>=11.10.0', node: '>=24.15.0' });
+        assert.deepEqual(checkLockRootEngines({ manifest, lock }), []);
+    });
+
+    it('fails a lockfile root whose node range differs, and prints both sides', () => {
+        const manifest = { engines: { node: '>=24.15.0' } };
+        const lock = lockRoot({ node: '>=24.0.0' });
+        const findings = checkLockRootEngines({ manifest, lock });
+        assert.equal(findings.length, 1);
+        assert.match(findings[0], /^package-lock\.json packages\[""\]\.engines is /);
+        assert.match(findings[0], /is \{"node":">=24\.0\.0"\} but package\.json engines is/);
+        assert.match(findings[0], /package\.json engines is \{"node":">=24\.15\.0"\}/);
+    });
+
+    it('fails a lockfile root that lacks an engine package.json declares', () => {
+        const manifest = { engines: { node: '>=24.15.0', npm: '>=11.10.0' } };
+        const lock = lockRoot({ node: '>=24.15.0' });
+        const findings = checkLockRootEngines({ manifest, lock });
+        assert.equal(findings.length, 1);
+        assert.match(findings[0], /"npm":">=11\.10\.0"/);
+    });
+
+    it('fails a lockfile root that holds an engine package.json no longer declares', () => {
+        const manifest = { engines: { node: '>=24.15.0' } };
+        const lock = lockRoot({ node: '>=24.15.0', npm: '>=10.0.0' });
+        assert.equal(checkLockRootEngines({ manifest, lock }).length, 1);
+    });
+
+    it('treats a lockfile root with no engines like an empty object', () => {
+        assert.deepEqual(checkLockRootEngines({ manifest: {}, lock: lockRoot(undefined) }), []);
+        assert.equal(
+            checkLockRootEngines({
+                manifest: { engines: { node: '>=24.15.0' } },
+                lock: lockRoot(undefined)
+            }).length,
+            1
+        );
+    });
+
+    it('fails a lockfile with no root entry, because there is nothing to compare', () => {
+        const manifest = { engines: { node: '>=24.15.0' } };
+        const findings = checkLockRootEngines({ manifest, lock: { packages: {} } });
+        assert.equal(findings.length, 1);
+        assert.match(findings[0], /no root entry/);
+        assert.equal(checkLockRootEngines({ manifest, lock: {} }).length, 1);
+    });
+});
+
 /* ------------------------------------------------------------------------ run + CLI */
 
-const writeRoot = ({ declared, nvmrc, packages }) => {
+const writeRoot = ({ declared, declaredNpm, rootEngines, nvmrc, packages, npmrc = null }) => {
     const root = mkdtempSync(path.join(tmpdir(), 'engines-floor-'));
-    writeFileSync(path.join(root, 'package.json'), JSON.stringify({ engines: { node: declared } }));
-    writeFileSync(path.join(root, 'package-lock.json'), JSON.stringify(lockWith(packages)));
+    const engines = { node: declared, ...(declaredNpm ? { npm: declaredNpm } : {}) };
+    writeFileSync(path.join(root, 'package.json'), JSON.stringify({ engines }));
+    if (npmrc !== null) writeFileSync(path.join(root, '.npmrc'), npmrc);
+    writeFileSync(
+        path.join(root, 'package-lock.json'),
+        JSON.stringify(lockWith(packages, rootEngines ?? engines))
+    );
     if (nvmrc !== null) writeFileSync(path.join(root, '.nvmrc'), `${nvmrc}\n`);
     return root;
 };
@@ -244,6 +381,50 @@ describe('run and the command line', () => {
             const green = spawnSync('node', [SCRIPT, '--root', good], { encoding: 'utf8' });
             assert.equal(green.status, 0);
             assert.match(green.stdout, /24\.15\.0/);
+        } finally {
+            rmSync(bad, { recursive: true, force: true });
+            rmSync(good, { recursive: true, force: true });
+        }
+    });
+
+    it('exits 1 when the lockfile root engines differ from package.json', () => {
+        const root = writeRoot({
+            declared: '>=24.15.0',
+            rootEngines: { node: '>=24.0.0' },
+            nvmrc: '24.15',
+            packages: {}
+        });
+        try {
+            const result = spawnSync('node', [SCRIPT, '--root', root], { encoding: 'utf8' });
+            assert.equal(result.status, 1);
+            assert.match(result.stdout, /✖ package-lock\.json packages\[""\]\.engines is /);
+            assert.equal(run({ root }).findings.length, 1);
+        } finally {
+            rmSync(root, { recursive: true, force: true });
+        }
+    });
+
+    it('reads .npmrc from the root and exits 1 when engines.npm is below what it needs', () => {
+        const bad = writeRoot({
+            declared: '>=24.15.0',
+            nvmrc: '24.15',
+            packages: {},
+            npmrc: COOLDOWN_NPMRC
+        });
+        const good = writeRoot({
+            declared: '>=24.15.0',
+            declaredNpm: '>=11.10.0',
+            nvmrc: '24.15',
+            packages: {},
+            npmrc: COOLDOWN_NPMRC
+        });
+        try {
+            const red = spawnSync('node', [SCRIPT, '--root', bad], { encoding: 'utf8' });
+            assert.equal(red.status, 1);
+            assert.match(red.stdout, /min-release-age/);
+
+            const green = spawnSync('node', [SCRIPT, '--root', good], { encoding: 'utf8' });
+            assert.equal(green.status, 0);
         } finally {
             rmSync(bad, { recursive: true, force: true });
             rmSync(good, { recursive: true, force: true });

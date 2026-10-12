@@ -41,6 +41,18 @@ describe('parseVerifySteps', () => {
         assert.ok(labels.includes('check-version-holds'));
     });
 
+    it('keeps the sibling-test range check inside verify, never only in the network tier', () => {
+        // The raw script, not the parsed steps: the benchmark keeps only a step's file, never its flags.
+        const all = scripts();
+
+        assert.ok(
+            resolveScript(all, 'verify').includes('node scripts/check-test-siblings.mjs --range')
+        );
+        // The check is offline, so only verify carries it; verify:ci adds the registry checks on top and
+        // must not run it a second time.
+        assert.ok(!all['verify:ci:inner'].includes('check-test-siblings'));
+    });
+
     it('labels an npm step by its script name and a node step by its file', () => {
         assert.deepEqual(parseVerifySteps('npm run typecheck && node scripts/check-hooks.mjs'), [
             { label: 'typecheck', command: 'npm', args: ['run', 'typecheck'] },

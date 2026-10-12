@@ -7,7 +7,7 @@ hooks, the tracer and what the absence of a scaffold phase is based on.
 ## The moments
 
 - **Iterate** — `npm run verify:iter`, per change, seconds.
-- **Docs, rules, commands, brain, tier data** (`*.md`, `*.mdc`, `scripts/gate-tiers.json`) — `npm run docs:check` (the pre-commit hook runs it when such files are staged; `--weekly`, the scheduled Docs workflow's flag, runs the same checks so a quarantine that expires while nobody pushes still turns it red; it also refuses a focused test, an unconditional skip without `quarantine until YYYY-MM-DD` + reason, and an agent-memory import: an `@` pointer in `CLAUDE.md` or `AGENTS.md` that names a file, which Claude Code would load into every session; write it as a backticked path instead)
+- **Docs, rules, commands, brain, tier data** (`*.md`, `*.mdc`, `scripts/gate-tiers.json`) — `npm run docs:check` (the pre-commit hook runs it when such files are staged; `--weekly`, the scheduled Docs workflow's flag, runs the same checks so a quarantine that expires while nobody pushes still turns it red; it also refuses a focused test, an unconditional way to switch a test off (`.skip`, `.fixme`, an expected failure such as `.fails` or `.failing`, a constant `.skipIf(true)`) without `quarantine until YYYY-MM-DD` + reason (the date at most 30 days out and red ON the date itself), and an agent-memory import: an `@` pointer in `CLAUDE.md` or `AGENTS.md` that names a file, which Claude Code would load into every session; write it as a backticked path instead). `docs:check` does not run inside `verify` here. The jest lint rules are the `verify` layer for tests: `jest/no-focused-tests` is an error, so a `.only` stops at pre-commit and at `verify`; `jest/no-disabled-tests` is a warning, so a `.skip` passes the pre-commit `eslint --fix` (it has no `--max-warnings`) and goes red at `verify`, whose `lint` runs with `--max-warnings 0`
 - **Proposing a new Maestro flow** — the suite is counted in invariants, not screens (`AGENTS.md` § the gate); `npm run docs:check` reports the suite against the ceiling in `scripts/gate-tiers.json` § suites
 - **Commit** — the pre-commit hook (below). Nothing by hand.
 - **Push** — the pre-push hook runs `verify:ci`. Never run it, `verify`, or `ci:local` by hand;
@@ -50,7 +50,7 @@ CAN fail is mutation-proving's job.
 ## What the git hooks enforce
 
 - **pre-commit** — `lint-staged` (oxlint --fix → eslint --fix → prettier) on the staged
-  files, then the TDD sibling gate (`scripts/check-test-siblings.mjs`, staged-only), then
+  files, then the TDD sibling gate (`scripts/check-test-siblings.mjs`, staged files against the index), then
   a **repo-wide** `lint:oxlint`, `format:check` and `typecheck`, all three run before the
   hook decides so one attempt reports everything. Why the repo-wide pass exists:
   `DECISIONS.md` § TDD sibling gate on pre-commit. Remedy: `npm run fix && git add -u`.
@@ -71,7 +71,9 @@ Three rungs, and the split is deliberate:
   `scripts/**` tests (`test:scripts`) surface at the push chain, not during iteration.
 - **`npm run verify`** — every check that works OFFLINE. Stage order: the `verify:inner` script in
   `package.json` (cheap independent stages first); the superset rule and the push/CI split:
-  `AGENTS.md` § Commands / the gate; why: `DECISIONS.md` § The gate contract. **No gate preflight
+  `AGENTS.md` § Commands / the gate; why: `DECISIONS.md` § The gate contract. It includes the TDD
+  sibling gate in range mode (`check-test-siblings.mjs --range`, every source file the branch changed
+  against the HEAD tree, so a skipped pre-commit hook is caught here). **No gate preflight
   here, deliberately:** this gate has no production build, no e2e port and no required env, so every
   candidate check would be one that cannot fail — and a check that cannot fail only claims coverage.
 - **`npm run verify:ci`** — `audit:gate` + `lock:age` (both need the registry) + `verify`. This is

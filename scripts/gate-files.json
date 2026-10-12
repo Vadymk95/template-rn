@@ -1,0 +1,25 @@
+{
+    "paths": [
+        "scripts/**",
+        "scripts/gate-files.json",
+        ".husky/**",
+        ".github/**",
+        ".claude/**",
+        ".cursor/rules/**",
+        "AGENTS.md",
+        "CLAUDE.md",
+        "eslint.config.mjs",
+        ".oxlintrc.json",
+        "tooling/eslint-plugin-template/**",
+        "tsconfig*.json",
+        "stryker.config.json",
+        "src/test/setup.ts",
+        ".maestro/**",
+        ".prettierrc.json",
+        ".prettierignore",
+        "commitlint.config.mjs",
+        ".npmrc",
+        ".nvmrc"
+    ],
+    "packageKeys": ["overrides"]
+}
