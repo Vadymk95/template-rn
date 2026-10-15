@@ -48,8 +48,8 @@ you dispatch work to another agent.
 - `AGENTS.md` § Commands / the gate — WINS: the tier law itself (what runs at which moment, the
   prohibitions).
 - `.cursor/brain/VERIFICATION.md` — the mechanics: the per-change table, the hooks, the tracer.
-- `scripts/gate-tiers.json` — the moments and budgets as DATA, plus the measured reason this repo has
-  no scaffold phase.
+- `scripts/gate-tiers.json` — the moments and budgets as DATA, the readable stage chain of every gate
+  script (`checks.<name>.chain`), plus the measured reason this repo has no scaffold phase.
 - `scripts/native-config.test.mjs` and `scripts/native-config-allowlist.json` — the guard that reads the
   text of `app.config.ts` and of the files directly under `plugins/` (subdirectories are not scanned) for
   cleartext-HTTP keys; a line naming one other than as a plain `<key>: false` needs the key and a reason in

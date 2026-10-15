@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 # Same script CI runs, so a green push cannot turn into a red pipeline.
-# `verify:ci` = audit:gate (needs the network) + verify (everything offline).
+# `verify:ci` is the CI gate; its stages are in scripts/gate-tiers.json.
 if ! npm run verify:ci; then
     echo ''
     echo '✖ pre-push: verify:ci failed — the pipeline would fail the same way.'

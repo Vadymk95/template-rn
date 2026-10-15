@@ -25,8 +25,8 @@ jobs:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
-                  # Depth 2: lock:age (inside verify:ci) compares the lockfile with HEAD~1 and the
-                  # sibling-tests range check (inside verify) falls back to HEAD~1 as its base in CI; a
+                  # Depth 2: the lock-age check compares the lockfile with HEAD~1 and the
+                  # sibling-tests range check falls back to HEAD~1 as its base in CI; a
                   # private fork's persist-credentials: false means neither can fetch the parent itself.
                   fetch-depth: 2
                   persist-credentials: false
@@ -60,9 +60,9 @@ jobs:
               run: npm ci --ignore-scripts
 
             # ONE step over the same script husky pre-push runs. A new check belongs
-            # in `verify` (offline) or `verify:ci` (needs the network) — never only
+            # in the gate (offline, or network-bound where it needs the network) — never only
             # here, or a green local gate stops meaning a green pipeline.
-            - name: Verify contract (audit gate, lock age, oxlint, format, typecheck, lint, script tests, coverage)
+            - name: Verify contract (the CI gate chain, stages in scripts/gate-tiers.json)
               run: npm run verify:ci
 
             # Expo doctor checks live external SDK/package state and can go red with

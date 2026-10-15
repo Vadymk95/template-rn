@@ -72,7 +72,7 @@ If you fork this template, keep those files in sync with your product decisions.
 | Testing        | Jest + jest-expo + @testing-library/react-native (built-in matchers)                                 | RN-native testing, no deprecated jest-native                                                         |
 | Lint           | ESLint 10 flat + `eslint-config-expo` + `import-x` + Oxlint + React Compiler + TanStack Query strict | Same rules locally and in CI                                                                         |
 | Format         | Prettier 3                                                                                           | Enforced via eslint-plugin-prettier                                                                  |
-| Hooks          | Husky + commitlint + lint-staged                                                                     | pre-commit: staged fixes + TDD sibling gate + repo-wide lint/format/typecheck; pre-push: `verify:ci` |
+| Hooks          | Husky + commitlint + lint-staged                                                                     | pre-commit: staged fixes + TDD sibling gate + the repo-wide cheap checks; pre-push: `verify:ci` gate |
 
 ---
 
@@ -153,9 +153,9 @@ Oxlint).
 - **Verify (every offline gate)** — default test task; `npm run verify`, no network
   and no `expo-doctor` (useful when Xcode on the machine is not pinned to Expo’s
   matrix yet).
-- **Verify CI contract** — `npm run verify:ci`; adds the audit gate and the lock-age check, so it is
+- **Verify CI contract** — `npm run verify:ci`; adds the network-bound checks, so it is
   what the pipeline actually runs.
-- **Full local CI** — `npm run ci:local`, which is `verify:ci` plus `expo-doctor`.
+- **Full local CI** — `npm run ci:local`, the whole CI run on this machine.
 
 Each task calls an npm script instead of spelling the gate out, so the tasks cannot
 drift from `verify`.
@@ -164,15 +164,14 @@ CLI equivalent of the default verify task:
 
 ```bash
 npm run verify
-# the stage order is the `verify` script in package.json — not repeated here on purpose
+# the stages, in order: scripts/gate-tiers.json (checks.<name>.chain) — not repeated here on purpose
 ```
 
 The `check-hooks` step fails loudly when git hooks are missing — run
 `npm run prepare` once after clone (lifecycle scripts are disabled via `.npmrc`).
 
-`verify` holds every check that works **offline**; `verify:ci` adds the ones that
-need the registry (`audit:gate`, `lock:age`) and is what husky pre-push and the CI job both
-run. The moments (iterate, commit, push, CI), what is never run by hand and the
+`verify` holds every check that works **offline**. `verify:ci` is what husky pre-push and the CI job both
+run; the checks that need the registry live there, not in `verify`. The moments (iterate, commit, push, CI), what is never run by hand and the
 superset rule are defined ONCE in `AGENTS.md` § Commands / the gate; stage timings
 live in `.cursor/brain/VERIFICATION.md`.
 
@@ -182,7 +181,7 @@ would catch a wrong implementation, not just execute the code. It runs as a week
 `stryker.config.json`) and stays outside `verify` because a full run costs minutes.
 
 If the gate fails on lint or formatting, `npm run fix && git add -u` is the one
-remedy command (oxlint --fix → eslint --fix → prettier --write). CI runs the same
+remedy command (the autofix of every linter and the formatter). CI runs the same
 checks and will fail the PR the same way.
 
 ---
@@ -190,7 +189,7 @@ checks and will fail the PR the same way.
 ## Post-edit pipeline
 
 ```bash
-npm run verify:iter   # the iterate moment: oxlint → tsc (incremental) → jest --onlyChanged, seconds
+npm run verify:iter   # the iterate moment: the seconds-long check
 npm run docs:check    # mechanical doc drift: paths, scripts, sentinels, versions, command table, dead docs, agent-memory imports
 ```
 
@@ -204,7 +203,7 @@ npm run format:check             # prettier --check
 npm run test:watch               # jest --watch
 npm run test:coverage            # coverage thresholds (scripts/check-coverage.mjs)
 npm run test:scripts             # node:test suites of the gate scripts
-npm run verify:native            # verify + expo-doctor
+npm run verify:native            # machine parity with the Expo tooling, offline
 npm run verify:rc                # react-compiler-healthcheck on src
 npm run bundle:analyze           # Expo Atlas export, iOS
 npm run bundle:analyze:android   # Expo Atlas export, Android
@@ -213,6 +212,8 @@ npm run perf:capture             # export + metrics, iOS
 npm run perf:capture:all         # export + metrics, both platforms
 npm run perf:baseline            # write scripts/perf-baseline.json
 npm run perf:check               # compare against the baseline
+npm run audit:gate               # fail-closed dependency audit with a self-expiring allowlist (needs the network)
+npm run gate:integrity           # lists the gate files and suppressions this branch changes vs origin/master (CI: PR base)
 ```
 
 The full chain belongs to the pre-push hook and CI (`AGENTS.md` § Commands / the gate).
@@ -221,7 +222,7 @@ Native / machine parity (a human parity check, not an agent moment):
 
 ```bash
 npm run ci:local
-# = npm run verify:ci + expo-doctor  (verify:ci = audit:gate + lock:age + verify)
+# the whole CI run on this machine
 ```
 
 ---
@@ -230,7 +231,7 @@ npm run ci:local
 
 | Workflow                    | What it does                                                                       | Works in a private fork?                                                            |
 | --------------------------- | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `ci.yml` → `verify`         | One step over `npm run verify:ci`, plus advisory `expo-doctor`                     | Yes                                                                                 |
+| `ci.yml` → `verify`         | One step over `npm run verify:ci`. An advisory Expo health check follows           | Yes                                                                                 |
 | `ci.yml` → `bundle-budget`  | `npm run perf:check`: Hermes bundle bytes vs `scripts/perf-baseline.json` (+5%)    | Yes                                                                                 |
 | `security.yml` → `gitleaks` | Secret scan across full commit history; runs its own scanner                       | Yes (a licence key is asked for only when the repo is owned by an **organisation**) |
 | `security.yml` → `codeql`   | Static analysis, `security-extended` query pack, plus a weekly cron                | **No** — needs GitHub code scanning                                                 |

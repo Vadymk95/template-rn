@@ -23,7 +23,32 @@
             "Edit(/.github/ruleset.json)",
             "Edit(/scripts/gate-tiers.json)",
             "Edit(/stryker.config.json)",
-            "Edit(/.npmrc)"
+            "Edit(/.npmrc)",
+            "Edit(/scripts/gate-*.mjs)",
+            "Edit(/scripts/check-*.mjs)",
+            "Edit(/scripts/docs-check.mjs)",
+            "Edit(/scripts/docs-check.test.mjs)",
+            "Edit(/scripts/gate-files.json)",
+            "Edit(/tsconfig*.json)",
+            "Edit(/eslint.config.mjs)",
+            "Edit(/.oxlintrc.json)",
+            "Edit(/src/test/setup.ts)",
+            "Edit(/.cursor/rules/**)",
+            "Edit(/scripts/audit-gate*.mjs)",
+            "Edit(/scripts/audit-allowlist.json)",
+            "Edit(/scripts/lock-age-allowlist.json)",
+            "Edit(/scripts/version-holds.json)",
+            "Edit(/scripts/native-config*)",
+            "Edit(/scripts/mutation-scope.test.mjs)",
+            "Edit(/scripts/bench-verify.test.mjs)",
+            "Edit(/tooling/eslint-plugin-template/**)",
+            "Edit(/.maestro/**)",
+            "Edit(/.prettierrc.json)",
+            "Edit(/.prettierignore)",
+            "Edit(/commitlint.config.mjs)",
+            "Edit(/.nvmrc)",
+            "Edit(/AGENTS.md)",
+            "Edit(/CLAUDE.md)"
         ]
     }
 }

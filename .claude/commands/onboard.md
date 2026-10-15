@@ -34,7 +34,7 @@ Do not take the reading at face value. Check, cheaply:
 
 - **The command list**: every `npm run` named in `AGENTS.md` and `PROJECT_CONTEXT.md` exists in
   `package.json`, and every script that gates something is documented. Check both directions.
-- **The gate**: read `package.json` `verify` / `verify:ci` and `.github/workflows/*.yml`. Is `verify`
+- **The gate**: read the gate scripts in `package.json` and `.github/workflows/*.yml`. Is `verify`
   still a superset of the offline checks CI runs? A check that lives only in the workflow is the defect
   this repo has a written decision about.
 - **The stack**: versions in `PROJECT_CONTEXT.md` § Tech Stack and `README.md` against `package.json`, and remember

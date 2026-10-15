@@ -29,6 +29,7 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 | Raw hex and magic numbers are lint errors                              | 2026-07 | in force                               |
 | Native colour values mirror `global.css`                               | 2026-10 | in force                               |
 | The gate contract: `verify` is a superset of CI                        | 2026-07 | in force                               |
+| The gate chain has one readable home                                   | 2026-10 | in force                               |
 | Fail-closed audit gate                                                 | 2026-07 | in force                               |
 | `docs:check` guards CI steps, ruleset contexts and its own trigger     | 2026-10 | in force                               |
 | TDD sibling gate on pre-commit, no auto-commit hook                    | 2026-07 | in force                               |
@@ -190,9 +191,40 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 
 ## The gate contract: `verify` is a superset of CI
 
-- **Decision**: `verify` is every check that works offline, the TDD sibling range check included; `verify:ci` is `audit:gate` plus `lock:age` plus `verify` (the audit and the lock-age check are the only checks that need the network). The Husky pre-push hook runs `verify:ci`, and the CI job runs it as a single step; `ci:local` adds `expo-doctor`. A new check goes into the script, never only into a workflow file, so a green local run predicts a green pipeline (three sibling templates once broke exactly this).
+- **Decision**: `verify` is every check that works offline, the TDD sibling range check included; `verify:ci` is what CI runs; the network-bound checks live there (they are the only checks that need the network). The Husky pre-push hook runs `verify:ci`, and the CI job runs it as a single step; `ci:local` is the full local parity run. A new check goes into the script, never only into a workflow file, so a green local run predicts a green pipeline (three sibling templates once broke exactly this).
 - **Consequences**: the tier law (which checks run when) is in `AGENTS.md` § the gate and `scripts/gate-tiers.json`. Not in the gate: Maestro flows (`.maestro/`, `npm run maestro`) need a simulator or device, and `expo-doctor` reads live SDK state and can go red with no code change, so it is `continue-on-error` in CI.
 - **Status**: in force. **Evidence**: [4a29b21](https://github.com/Vadymk95/template-rn/commit/4a29b21).
+
+## The gate chain has one readable home
+
+- **Context**: the stage order was retold by hand in 24 places, unchecked: the pre-push comment dropped
+  `lock:age`.
+- **Decision**: `checks.<name>.chain` is derived from the script and `docs:check` fails on any difference
+  (deleting the view left pointers without a page). Elsewhere a file names a script and its purpose and points
+  at the view. A line outside it also fails when it names 3 or more distinct stages, or composes a script
+  whatever the count (a count of 3 never saw a pair): two of its parts (`a then b`, `x = a && b`) at most 2
+  words apart, or the script and one part (`x runs a`) at most 4, in one sentence. Names come from the repo
+  (multi-step scripts, their steps, `docs.stageWords`). The script is read by its own name, never by a word
+  filed under it, and must be strong; of two parts, one must be, unless `&&` or an arrow joins them. Strong:
+  in code or after `npm run`; spelled with a separator; a stage word no script or step spells (`eslint`, also
+  a step, stays ordinary until it is in code); adjacent names are one unit, strong when any is. Read: docs
+  (fences, tables, this file), workflow names and comments, `.husky/*` comments, `gate-tiers.json` prose.
+- **Consequences**: a false positive costs a reword, never an allowance; the windows and
+  `RETELLING_MIN_STAGES` move only on a measurement (places of the old tree caught, lines flagged on the
+  rewritten tree):
+
+| rule                                                 | caught of 24 | flagged |
+| ---------------------------------------------------- | ------------ | ------- |
+| 3+ stages (before)                                   | 15           | 0       |
+| 2+ stages                                            | 20           | 30      |
+| two stages and a connector (`&&`, `->`, `+`, `then`) | 10           | 0       |
+| shipped                                              | 22           | 27      |
+
+- **Status**: in force. Of the 27, 17 state what a script is made of; 10 are ordinary (lists, prohibitions,
+  history). Not caught: 2 old places in files the check does not read (`.vscode/tasks.json`, `docs/`), a
+  spread beyond the windows in words, lines or sentences, two bare words with no mark, script comments, code,
+  issue templates, app copy, a one-name statement in a `gate-tiers.json` description (read without its key).
+  **Evidence**: `scripts/docs-check.mjs` and its test, `scripts/gate-tiers.json`.
 
 ## Fail-closed audit gate
 
@@ -209,7 +241,7 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 ## TDD sibling gate on pre-commit, no auto-commit hook
 
 - **Decision**: `scripts/check-test-siblings.mjs` refuses a commit when a staged `src/**` file has no co-located `*.test.*` in the git index (an untracked test on disk does not count). It checks changed files only, a ratchet: existing untested files are not retroactively broken, the next edit to one needs a test. `verify` (so pre-push and CI) runs the same rule in `--range` mode against the HEAD tree, so a commit made with the hook skipped, or a PR from a clone without hooks, fails at push and in CI; the first commit of a repository has nothing to compare with and passes. Its exempt list derives from this repo's `collectCoverageFrom` plus declaration-only modules; `src/shared/lib/theme/**` is not exempt. The hook proves existence, never worth: the mutation check (revert the fix, the test must go red) lives in `test-driven-development.mdc`.
-- **Consequences**: pre-commit also runs repo-wide `lint:oxlint`, `format:check` and `typecheck`, collecting all failures before deciding, because `lint-staged` restores the unstaged hunks of a partially staged file after fixing it. Not adopted: a hook that commits for you, which hides a formatting fix inside a commit nobody wrote; the hook prints the remedy (`npm run fix && git add -u`) instead.
+- **Consequences**: pre-commit also runs the repo-wide cheap checks (the list is `.husky/pre-commit`), collecting all failures before deciding, because `lint-staged` restores the unstaged hunks of a partially staged file after fixing it. Not adopted: a hook that commits for you, which hides a formatting fix inside a commit nobody wrote; the hook prints the remedy (`npm run fix && git add -u`) instead.
 - **Status**: in force. **Evidence**: [88f5551](https://github.com/Vadymk95/template-rn/commit/88f5551).
 
 ## Complexity ratchet
@@ -223,7 +255,7 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 
 - **Context**: coverage cannot tell whether tests would catch a wrong implementation; the first baseline, 53.72%, sat under green 80/60/80/80 coverage floors.
 - **Decision**: `npm run test:mutation` (StrykerJS with the Jest runner, `projectType: "custom"`, which reads the `package.json` Jest config; works with `jest-expo` unmodified) runs weekly through `mutation.yml` (cron and dispatch). `thresholds.break: 48` in `stryker.config.json` is a floor of record: raise it after a good run, never lower it to go green. Not in `verify` or pre-push (a full run takes minutes).
-- **Consequences**: the score sees only the kill side (it cannot see an over-strict test) and purely visual mutants (those belong to `.maestro/`). `.stryker-tmp` and `reports` are ignored by git, prettier and ESLint, and `.env*` stays out of Stryker's sandbox through `ignorePatterns`, because a crashed run once left a sandbox that reddened an unrelated push. The runner's tree is inside the audit gate: a high advisory there gets an override floor, not an allowance.
+- **Consequences**: the score sees only the kill side (it cannot see an over-strict test) and purely visual mutants (those belong to `.maestro/`). `.stryker-tmp` and `reports` are ignored by git, the formatter and the linters, and `.env*` stays out of Stryker's sandbox through `ignorePatterns`, because a crashed run once left a sandbox that reddened an unrelated push. The runner's tree is inside the audit gate: a high advisory there gets an override floor, not an allowance.
 - **Status**: in force. **Evidence**: [310238b](https://github.com/Vadymk95/template-rn/commit/310238b), [ed8e4f8](https://github.com/Vadymk95/template-rn/commit/ed8e4f8).
 
 ## Content variance on native: props, not pixels
@@ -273,7 +305,7 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 - **Tailwind class-hygiene lint rules**: those plugins read a Tailwind v4 CSS config; this repo is Tailwind 3.4 with a JS config (a recorded hold), so they would no-op or misreport. Revisit with NativeWind 5.
 - **`SECURITY_REQUIREMENTS.md`**: in the web templates it is HTTP headers, CSP and nonces; an app serves no document. The native equivalent (`EXPO_PUBLIC_*` is public, secure-store versus AsyncStorage, `app.config.ts` permissions, deep links as untrusted input, EAS secrets) is in `.cursor/brain/SECURITY_REVIEW.md` and `.github/copilot-instructions.md`.
 - **e2e in the gate**: Maestro needs a simulator or device, which a CI runner lacks (see the gate contract).
-- **`expo-doctor` as a blocking step**: it can go red with no code change; it stays `continue-on-error` in CI and `ci:local`, never in `verify`.
+- **`expo-doctor` as a blocking step**: it can go red with no code change, so it stays advisory (`continue-on-error`) in CI and in the full local parity run, never in the core gate.
 - **Status**: in force. **Evidence**: [c3155eb](https://github.com/Vadymk95/template-rn/commit/c3155eb).
 
 ## Audit backlog: what the template adopts and defers
@@ -292,7 +324,7 @@ Recorded so forks do not re-litigate the list. Ghost principle: only **Adopted**
 
 ## React Compiler silent-bailout awareness
 
-- **Decision**: keep `experiments.reactCompiler: true`, `eslint-plugin-react-compiler` and `eslint-plugin-react-hooks` 7 (rules-of-hooks and exhaustive-deps come through `eslint-config-expo`). `npm run verify:rc` (`react-compiler-healthcheck src`) is an opt-in audit, not part of `verify` or `ci:local`. The escape hatch for a bailout that causes an observable regression is a file-level `"use no memo"`.
+- **Decision**: keep `experiments.reactCompiler: true`, `eslint-plugin-react-compiler` and `eslint-plugin-react-hooks` 7 (rules-of-hooks and exhaustive-deps come through `eslint-config-expo`). `npm run verify:rc` (`react-compiler-healthcheck src`) is an opt-in audit, outside the gate. The escape hatch for a bailout that causes an observable regression is a file-level `"use no memo"`.
 - **Consequences**: `reactHooks.configs['recommended-latest']` is not wired: `eslint-config-expo` bundles an older `react-hooks` instance, so the v7-only rules do not resolve under flat config. Two upstream bugs can make the Compiler skip memoization silently: [facebook/react#35105](https://github.com/facebook/react/issues/35105) (`eslint-disable` suppresses the incompatible-library warning) and [#35644](https://github.com/facebook/react/issues/35644) (silent bailout with try/catch/finally in a component body). Drop this awareness once both are closed.
 - **Status**: in force. The web siblings do not enable the Compiler (a Vite/Babel conflict and no ruled-out reproducer); this repo does.
 - **Evidence**: [31a9d36](https://github.com/Vadymk95/template-rn/commit/31a9d36), [9c3f78e](https://github.com/Vadymk95/template-rn/commit/9c3f78e).
