@@ -14,7 +14,9 @@ The one place for the stack. Exact versions are `package.json`; every package he
 - **Routing and styling**: Expo Router v57; NativeWind 4.2 on Tailwind 3.4; `@expo/vector-icons` (ships with Expo); Reanimated 4 with worklets; gesture-handler.
 - **State and data**: Zustand 5 (devtools + persist); TanStack Query 5 with AppState focus; `@t3-oss/env-core` + Zod for env; `expo-secure-store` for secrets, AsyncStorage for cache.
 - **i18n and forms**: i18next + react-i18next, typed `t()` keys, bundled JSON in `src/shared/locales/`, expo-localization; react-hook-form + `@hookform/resolvers` (Zod).
-- **Quality**: Jest + jest-expo + `@testing-library/react-native` (built-in matchers); ESLint 10 flat + eslint-config-expo + import-x behind an oxlint pre-pass; Prettier 3; Husky + commitlint + lint-staged.
+- **Tests**: Jest + jest-expo + `@testing-library/react-native` (built-in matchers).
+- **Lint**: ESLint 10 flat + eslint-config-expo + import-x behind an oxlint pre-pass.
+- **Format and hooks**: Prettier 3; Husky + commitlint + lint-staged.
 - **Observability**: stub `logger.ts`; wire Sentry or similar in the product.
 
 ## Architecture

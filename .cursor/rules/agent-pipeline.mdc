@@ -36,7 +36,7 @@ priority: 100
 
 - Code-edit loop: `npm run verify:iter` (seconds). The full chain belongs to the pre-push hook and CI; an implementer never runs it (`AGENTS.md` § Commands / the gate).
 - Capture the exit code **without a pipe**: `cmd > log 2>&1; echo $?`. The rest of the integrity checklist (prove the gate can go red, name the condition under which green would have been red): `.cursor/brain/VERIFICATION.md` § Verification integrity.
-- Lint or format findings: `npm run fix && git add -u`. Never lower a severity or move a threshold to reach green.
+- Findings autofix can handle: `npm run fix && git add -u`. Never lower a severity or move a threshold to reach green.
 - Failure: no symptom patches; trace the root cause (types, runtime, native tooling), fix at the source, re-run.
 - Self-review the diff: plan alignment, scope, public exports. Router: typed `href`s. Query: handle `isPending` / `isError` for user-visible fetches.
 
@@ -57,4 +57,4 @@ End with `Confidence: HIGH | MEDIUM | LOW — <one-line reason>`.
 
 ## Forbidden
 
-Skipping Step 1 for non-trivial code; editing many files without an intermediate `typecheck` / `lint` / `test`; omitting the Brain sync declaration; raw `console.error(e)`; secrets in `EXPO_PUBLIC_*`.
+Skipping Step 1 for non-trivial code; editing many files without an intermediate drill-down check (`typecheck`, say); omitting the Brain sync declaration; raw `console.error(e)`; secrets in `EXPO_PUBLIC_*`.

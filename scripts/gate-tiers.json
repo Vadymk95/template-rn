@@ -1,23 +1,27 @@
 {
-    "_description": "The gate discipline as data. scripts/trace-report.mjs reads this instead of hardcoding stage names; the analyser names no stage. Editing THIS file is how the discipline changes. Docs: .cursor/brain/VERIFICATION.md.",
+    "_description": "The gate discipline as data. scripts/trace-report.mjs reads this instead of hardcoding stage names; the analyser names no stage. Editing THIS file is how the discipline changes. `checks.<name>.chain` is the ONE readable view of the stages a gate script runs, in order: package.json defines what runs, scripts/docs-check.mjs derives the chain from it and fails on any difference, and no other file lists the stages. Docs: .cursor/brain/VERIFICATION.md.",
     "phase": 1,
-    "_phaseMeaning": "The web siblings gate a scaffold phase that skips build/e2e until the first deploy. MEASURED here 2026-08-30: the whole gate is 8.7s (coverage 4.2 \u00b7 lint 2.1 \u00b7 tsc 1.2 \u00b7 format 0.5 \u00b7 oxlint 0.4 \u00b7 script tests 0.2 \u00b7 hooks 0.05) \u2014 there is no build, no e2e and no size stage to skip, so a phase switch would be machinery gating nothing. Recorded as a decision, not an omission; revisit if a native build or a Maestro run ever enters the gate.",
+    "_phaseMeaning": "The web siblings gate a scaffold phase that skips the stages needing a build until the first deploy. MEASURED here 2026-08-30: the whole gate is 8.7s (per-stage timings: .cursor/brain/VERIFICATION.md) \u2014 this gate has no stage that needs a build, so a phase switch would be machinery gating nothing. Recorded as a decision, not an omission; revisit if a native build or a Maestro run ever enters the gate.",
     "checks": {
         "verify:iter": {
             "class": "code",
-            "description": "oxlint -> tsc -> jest --onlyChanged"
+            "description": "iterate: the seconds-long check run per change",
+            "chain": "lint:oxlint -> typecheck -> jest --onlyChanged --passWithNoTests"
         },
         "verify": {
             "class": "code",
-            "description": "hooks -> version holds -> engines floor -> sibling-tests range -> oxlint -> format -> tsc -> eslint -> script tests -> coverage"
+            "description": "the offline gate: every check CI runs except the network-bound ones",
+            "chain": "check-hooks -> check-version-holds -> check-engines-floor -> check-test-siblings --range -> lint:oxlint -> format:check -> typecheck -> lint -> test:scripts -> test:coverage"
         },
         "verify:ci": {
             "class": "code",
-            "description": "audit:gate -> lock:age -> verify; what pre-push runs"
+            "description": "the CI chain, and what pre-push runs",
+            "chain": "audit:gate -> lock:age -> verify"
         },
         "verify:native": {
             "class": "code",
-            "description": "verify -> expo doctor"
+            "description": "machine parity with the Expo tooling, offline",
+            "chain": "verify -> doctor"
         },
         "lint": {
             "class": "code",
@@ -37,7 +41,7 @@
         },
         "docs:check": {
             "class": "docs",
-            "description": "mechanical doc drift: paths, scripts, sentinels, versions, command table, dead docs, agent-memory imports; the push budget vs traced pushes of the same phase (report only)"
+            "description": "mechanical doc drift: paths, scripts, sentinels, versions, command table, dead docs, agent-memory imports, the chain view against package.json, hand-written retellings and compositions of it; the push budget vs traced pushes of the same phase (report only)"
         }
     },
     "ci": {
@@ -65,7 +69,20 @@
         "rulesetContextAllowlist": []
     },
     "docs": {
-        "_description": "Data for scripts/docs-check.mjs. sentinels = verbatim fragments of the tier law that may live only in AGENTS.md; versions = doc names -> package names compared with package-lock.json (node -> .nvmrc).",
+        "_description": "Data for scripts/docs-check.mjs. sentinels = verbatim fragments of the tier law that may live only in AGENTS.md; versions = doc names -> package names compared with package-lock.json (node -> .nvmrc); stageWords = a stage of the verify chains -> the words the docs use for it besides its script name (a line outside the chain view that names enough distinct stages, or two parts of one script, is a retelling).",
+        "stageWords": {
+            "check-version-holds": ["version holds"],
+            "check-engines-floor": ["engines floor"],
+            "check-test-siblings": ["sibling-test range", "sibling-tests range", "sibling gate"],
+            "lint:oxlint": ["oxlint"],
+            "format:check": ["format", "prettier"],
+            "typecheck": ["tsc", "type-check"],
+            "lint": ["eslint"],
+            "test:scripts": ["script tests"],
+            "test:coverage": ["coverage"],
+            "audit:gate": ["audit"],
+            "doctor": ["Expo doctor"]
+        },
         "sentinels": [
             "never shortened by what the diff touched",
             "Legal at any time, in any lane, never a violation",

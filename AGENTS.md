@@ -33,32 +33,32 @@ Production-ready React Native + Expo starter: file-based routing, strict types, 
 
 ## Commands / the gate
 
-The tier law (what runs at which moment, what is never run by hand) is the shared block below; this table is the repo's command list. Every other script: `package.json` and the README tables.
+The tier law (what runs at which moment, what is never run by hand) is the shared block below; this table is the repo's command list; the stages each gate script runs: `scripts/gate-tiers.json` (`checks.<name>.chain`). Every other script: `package.json` and the README tables.
 
 ```bash
 npm start            # Expo dev server (QR → Expo Go / Dev Client)
-npm run verify:iter  # iteration tier: oxlint → tsc (incremental) → jest --onlyChanged (seconds; not a hand-over gate)
-npm run verify       # every OFFLINE check: hooks → version holds → engines floor → sibling-tests range → oxlint → format → typecheck → eslint (cached) → scripts → coverage
-npm run verify:ci    # audit:gate + lock:age (network) + verify — husky pre-push AND CI both run it
-npm run fix          # the one remedy: oxlint --fix → eslint --fix → prettier --write
-npm run ci:local     # verify:ci + expo-doctor (full local parity)
+npm run verify:iter  # iteration tier: the seconds-long check (not a hand-over gate)
+npm run verify       # every OFFLINE check
+npm run verify:ci    # the CI gate — husky pre-push AND CI both run it (`ci:local` is the full local parity with CI)
+npm run fix          # the one remedy: repo-wide autofix, then format
 npm run test:one -- <file> # one jest test file, through the tracer (not around it)
 npm run trace:report # findings from .gate-trace.log (forbidden moments, budgets, worktrees)
-npm run docs:check   # docs drift (paths, scripts, versions, command table, dead docs); weekly CI adds --weekly
+npm run docs:check   # docs drift (paths, scripts, versions, command table, dead docs, the gate chain view and any retelling or composition of it); weekly CI adds --weekly
 npm run bench:verify # per-step timings when the gate feels slow
 npm run test:mutation # StrykerJS strength gate — weekly `mutation.yml`, NOT in verify
 ```
 
 <!-- shared-harness:begin -->
-<!-- This block is byte-identical in all four templates (template-1, template-spa-pwa, template-next-seo, template-rn). Change it in every template in the same commit, or not at all. Stack-specific facts (which stages `verify` runs, ports, what is skipped and why, timings) live OUTSIDE this block: in the command table above and in `.cursor/brain/VERIFICATION.md`. -->
+<!-- This block is byte-identical in all four templates (template-1, template-spa-pwa, template-next-seo, template-rn). Change it in every template in the same commit, or not at all. Stack-specific facts (ports, what is skipped and why, timings) live OUTSIDE this block: in the command table above and in `.cursor/brain/VERIFICATION.md`; the stages each gate script runs live in `scripts/gate-tiers.json`. -->
 
 ### The tier law - this section is the ONLY place it lives
 
 Every other file (rules, commands, brain, README, Copilot instructions) points here and restates nothing.
 A restated pipeline rule goes stale in place; a stale copy cost a sibling repo a day of 40-minute rounds
 because five copies still demanded the full chain before the first report. `scripts/gate-tiers.json` is
-the machine-readable form (expected and forbidden scripts per moment, budgets, phase); when this prose and
-that file disagree, the file wins and the prose is fixed in the same commit.
+the machine-readable form (expected and forbidden scripts per moment, budgets, phase) and the one readable
+list of the stages each gate script runs (`checks.<name>.chain`, checked against `package.json` by
+`docs:check`); when this prose and that file disagree, the file wins and the prose is fixed in the same commit.
 
 **Four moments, and one that is not a gate.**
 
@@ -72,19 +72,19 @@ that file disagree, the file wins and the prose is fixed in the same commit.
   checks. Nothing to run by hand; on refusal the hook prints the remedy. The commit-msg hook (commitlint)
   also rejects any body or footer line over 100 characters (the header cap is 96): wrap the body.
 - **Push** - the pre-push hook runs the gate ONCE, never shortened by what the diff touched. Where the
-  repo has heavy stages (build, size, e2e), the push script is phase-aware: phase 0 (scaffold, before the
-  first deploy) runs the offline checks and loudly SKIPS the heavy stages; phase 1 (from the first deploy)
-  runs the full `verify:ci`. A skipped stage is printed, never silent; flip the phase in one commit at the
-  first deploy. A repo whose gate has no heavy stage runs the full `verify:ci` at push and records in
-  `gate-tiers.json` that a phase switch would gate nothing.
-- **CI** - phase-blind: always the full `verify:ci` (`audit:gate` + `lock:age` + `verify`), plus what only CI can do
-  (the security workflow, the scheduled mutation job, a mandatory dev-smoke job where the repo has one).
+  repo has heavy stages (the ones that need a build), the push script is phase-aware: phase 0 (scaffold,
+  before the first deploy) runs the offline checks and loudly SKIPS the heavy stages; phase 1 (from the
+  first deploy) runs the full `verify:ci`. A skipped stage is printed, never silent; flip the phase in one
+  commit at the first deploy. A repo whose gate has no heavy stage runs the full `verify:ci` at push and
+  records in `gate-tiers.json` that a phase switch would gate nothing.
+- **CI** - phase-blind: always the full `verify:ci`, plus what only CI can do (the security workflow, the
+  scheduled mutation job, a mandatory dev-smoke job where the repo has one).
 
-**Prohibitions, stated as such.** An implementer or a reviewer NEVER runs `verify`, `verify:ci`,
-the fuller `verify:*` variants, `build` or the e2e suite by hand: the full chain belongs to the push hook and CI, and a
+**Prohibitions, stated as such.** An implementer or a reviewer NEVER runs `verify`, the fuller `verify:*`
+variants, a production build or a browser suite by hand: the full chain belongs to the push hook and CI, and a
 result an agent cannot act on is not worth its minutes. A review round gets the diff plus `verify:iter`;
 acceptance does not re-run the gate, the push does. Parallel lanes never run heavy stages (one machine,
-shared caches): heavy work serialises at the push. Individual scripts (`typecheck`, `lint`, `test`, `fix`)
+shared caches): heavy work serialises at the push. Individual scripts (`typecheck`, `test`, `fix`)
 are drill-downs on a specific failure; none of them is a moment.
 
 **A red push costs one fix, not another round of the whole gate.** Where the repo has a browser suite, it
@@ -107,7 +107,7 @@ that outgrew it, so that number moves on a measurement and a `DECISIONS.md` line
 
 **`verify` is a strict superset of the offline checks CI runs**, so a green `verify` predicts a green CI.
 Keeping that true is a rule: a new check goes into the script, never only into the workflow file.
-`audit:gate` and `lock:age` sit in `verify:ci` rather than `verify` because they need the network, so an offline agent can
+The network-bound checks sit in the CI chain rather than in `verify` because they need the network, so an offline agent can
 still run the whole offline gate. `bench:verify` derives its step list from the `verify` script; a
 hand-written second list has already drifted once.
 
@@ -146,12 +146,12 @@ scripts take the next free port. Only the push gate clears its own port.
   included: reading .env files other than the example, editing `.claude/settings.json` itself, a force
   push (a `+branch` refspec too), `--no-verify` or `-n` on a commit, `--no-verify` on a push,
   `git reset --hard`, `git clean -f`. Asked before every edit of the gate files, the documented edits
-  included (the phase flip, a raised mutation threshold): `.husky/`, `.github/workflows/`,
-  `.github/ruleset.json`, `scripts/gate-tiers.json`, `stryker.config.json`, `.npmrc`. A rule matches the
-  command or path as an agent usually writes it and is not a security boundary: `sh -c`, a full binary
-  path, a `git -C` or `git -c` prefix, a bundled flag such as `-uf`, or a command that reads a file
-  without naming it (`grep -r`) walks past it. The boundary is the required CI check on the default
-  branch. To change a guarded file, edit it yourself or change the rule in a reviewed commit.
+  included (the phase flip, a raised mutation threshold); the list lives in `permissions.ask` of
+  `.claude/settings.json`. A rule matches the command or path as an agent usually writes it and is not a
+  security boundary: `sh -c`, a full binary path, a `git -C` or `git -c` prefix, a bundled flag such as
+  `-uf`, or a command that reads a file without naming it (`grep -r`) walks past it. The boundary is the
+  required CI check on the default branch. To change a guarded file, edit it yourself or change the rule
+  in a reviewed commit.
 
 ### Before code - spec and plan
 
@@ -169,7 +169,7 @@ that lives only in a conversation is not a plan.
 ## Working agreements
 
 - **No browser lane**: a question only a rendered result can answer goes to `.maestro/` or a device (the substitute ladder closes `READING_INDEX.md`). The push runs the full `verify:ci` directly (`gate-tiers.json` `_phaseMeaning` says why); the by-hand prohibition also covers `ci:local` and `test:mutation`. Change the tracer's discipline by editing `scripts/gate-tiers.json`, never the analyser. The gate binds no port: if Metro's is busy, MOVE (`npx expo start --port <free>`), kill nothing.
-- **Bootstrap after clone**: `npm run prepare` once (`.npmrc` disables lifecycle scripts as a supply-chain guard, so husky does not self-install; `verify` fails loudly without hooks). Dependency cooldown `.npmrc` `min-release-age=3` (days): a brand-new package or urgent patch needs `npm install <pkg> --min-release-age=0`. The lockfile obeys the same cooldown: `npm run lock:age` (in `verify:ci`) fails a changed `name@version` younger than `min-release-age`; a deliberate bypass bump is listed with a reason and an expiry in `scripts/lock-age-allowlist.json`.
+- **Bootstrap after clone**: `npm run prepare` once (`.npmrc` disables lifecycle scripts as a supply-chain guard, so husky does not self-install; `verify` fails loudly without hooks). Dependency cooldown `.npmrc` `min-release-age=3` (days): a brand-new package or urgent patch needs `npm install <pkg> --min-release-age=0`. The lockfile obeys the same cooldown: `npm run lock:age` (a network-bound check) fails a changed `name@version` younger than `min-release-age`; a deliberate bypass bump is listed with a reason and an expiry in `scripts/lock-age-allowlist.json`.
 - **Zero warnings** (`eslint --max-warnings 0`, `oxlint --deny-warnings`): fix the cause; never downgrade a rule or sprinkle `eslint-disable`. A directive that must stay names its rules and carries `-- reason`; `oxlint-disable*` is banned. A rule wrong for a class of files gets a documented file-scoped override (`eslint.config.mjs`, or `overrides` in `.oxlintrc.json`).
 - **Complexity ratchet**: `complexity` 15 / `max-depth` 3 / `max-params` 4 / `max-lines-per-function` 120 / `max-lines` 200 over `src/**`, tests exempt. The numbers sit above the measured ceiling (`DECISIONS.md`), so a hit means new drift: split the function first; raising one needs a fresh measurement and a `DECISIONS.md` line.
 - **Mutation testing** (`npm run test:mutation`): coverage proves code RUNS, the score proves tests would CATCH a wrong implementation. `thresholds.break` in `stryker.config.json` is a measured floor: raise it after a good run, never lower it to go green.

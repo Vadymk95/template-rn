@@ -43,9 +43,9 @@ agent, it should not be a random inline English literal.
 ## Quality gates
 
 - Typical local code-edit loop: `npm run verify:iter` — the iterate moment (`AGENTS.md` § Commands / the gate)
-- Repo-wide blocking contract: `npm run verify` (every offline check) and `npm run verify:ci`
-  (= `audit:gate` + `lock:age` + `verify`), which is what husky pre-push and the CI job both run
-- Native / machine parity: `npm run ci:local` (= `verify:ci` + `expo-doctor`)
+- Repo-wide blocking contract: `npm run verify` (every offline check) and `npm run verify:ci`,
+  which is what husky pre-push and the CI job both run
+- Native / machine parity: `npm run ci:local`, the whole CI run on this machine
 - CI does not restate the gate: the job is ONE step over `verify:ci`. A new check goes into the script,
   never only into the workflow file — that is what keeps a green local run predictive
 - Repo-owned lint rules live in `tooling/eslint-plugin-template/` and are part of the contract, not optional extras

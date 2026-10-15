@@ -30,7 +30,7 @@
             "problemMatcher": []
         },
         {
-            "label": "Verify CI contract (adds the network audit gate and lock-age check)",
+            "label": "Verify CI contract (adds the network-bound checks)",
             "type": "shell",
             "command": "npm run verify:ci",
             "options": { "cwd": "${workspaceFolder}" },
