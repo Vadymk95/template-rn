@@ -106,7 +106,7 @@
         "@stryker-mutator/core": "^10.0.0",
         "@stryker-mutator/jest-runner": "^10.0.0",
         "@tanstack/eslint-plugin-query": "^5.104.1",
-        "@testing-library/react-native": "^14.0.1",
+        "@testing-library/react-native": "^14.1.0",
         "@types/jest": "^29.5.14",
         "@types/react": "~19.2.15",
         "babel-plugin-transform-remove-console": "^6.9.4",
