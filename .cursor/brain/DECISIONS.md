@@ -11,7 +11,7 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 | Expo SDK 57 baseline                                                   | 2026-07 | in force; SDK 58 held                  |
 | NativeWind 4.2 on Tailwind 3.4, not v5                                 | 2026-04 | in force; version hold                 |
 | Dependencies: the SDK list is the authority, holds are data            | 2026-10 | in force                               |
-| Override floors with major caps, dated allowances                      | 2026-10 | in force; allowances expire 2026-11-02 |
+| Override floors with major caps, dated allowances                      | 2026-10 | in force; allowances expire 2026-12-01 |
 | ESLint 10 and `eslint-config-expo`                                     | 2026-07 | in force                               |
 | Oxlint before ESLint                                                   | 2026-04 | in force                               |
 | 4-space indent, single quotes                                          | 2026-04 | in force                               |
@@ -87,7 +87,7 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 
 - **Context**: a transitive advisory with a fixed release is closed with a root `overrides` floor; npm's own suggested fix was once a semver-major downgrade of `eslint-config-expo`, which is destructive. Our own uncapped floors (`brace-expansion`, `fast-uri`) aged into later advisories' vulnerable ranges.
 - **Decision**: every floor carries a major cap (`">=fixed <next-major"`), and two majors need two floors keyed by major (`"js-yaml@^3"` and `"js-yaml@^4"`; the parent-scoped form made `npm ls --all` flaky). An advisory with no fixed release anywhere gets a dated entry in `scripts/audit-allowlist.json` (`id`, `expires`, `reason`, `upstream`), not a floor.
-- **Consequences**: `node-forge` (GHSA-86w9-cpqp-85rv, no patched release; reached through `expo-updates` and `@expo/cli`, which parse no attacker-supplied RSA signature in a shipped app) and `braces` (GHSA-vfj7-8cjw-p6xm) are allowed until 2026-11-02. At expiry, check `npm view <pkg> versions` and the upstream chain for a release past the vulnerable range; re-date only with a fresh reading. The `audit:gate` guard prints each allowance on every run and fails an expired or stale one.
+- **Consequences**: `node-forge` (GHSA-86w9-cpqp-85rv, no patched release; reached through `expo-updates` and `@expo/cli`, which parse no attacker-supplied RSA signature in a shipped app) and `braces` (GHSA-vfj7-8cjw-p6xm) are allowed until 2026-12-01. At expiry, check `npm view <pkg> versions` and the upstream chain for a release past the vulnerable range; re-date only with a fresh reading. The `audit:gate` guard prints each allowance on every run and fails an expired or stale one.
 - **Status**: in force. **Evidence**: [1f90e46](https://github.com/Vadymk95/template-rn/commit/1f90e46), [PR #44](https://github.com/Vadymk95/template-rn/pull/44).
 
 ## ESLint 10 and `eslint-config-expo`
