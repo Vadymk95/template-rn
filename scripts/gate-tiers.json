@@ -11,7 +11,7 @@
         "verify": {
             "class": "code",
             "description": "the offline gate: every check CI runs except the network-bound ones",
-            "chain": "check-hooks -> check-version-holds -> check-engines-floor -> check-test-siblings --range -> lint:oxlint -> format:check -> typecheck -> lint -> test:scripts -> test:coverage"
+            "chain": "check-hooks -> check-version-holds -> check-engines-floor -> check-test-siblings --range -> docs-check -> lint:oxlint -> format:check -> typecheck -> lint -> test:scripts -> test:coverage"
         },
         "verify:ci": {
             "class": "code",

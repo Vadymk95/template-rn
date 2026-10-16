@@ -43,7 +43,7 @@ npm run verify:ci    # the CI gate — husky pre-push AND CI both run it (`ci:lo
 npm run fix          # the one remedy: repo-wide autofix, then format
 npm run test:one -- <file> # one jest test file, through the tracer (not around it)
 npm run trace:report # findings from .gate-trace.log (forbidden moments, budgets, worktrees)
-npm run docs:check   # docs drift (paths, scripts, versions, command table, dead docs, the gate chain view and any retelling or composition of it); weekly CI adds --weekly
+npm run docs:check   # docs drift (paths, scripts, versions, command table, dead docs, the gate chain view and any retelling or composition of it); inside verify, weekly CI adds --weekly
 npm run bench:verify # per-step timings when the gate feels slow
 npm run test:mutation # StrykerJS strength gate — weekly `mutation.yml`, NOT in verify
 ```

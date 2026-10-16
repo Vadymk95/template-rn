@@ -223,7 +223,9 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 - **Status**: in force. Of the 27, 17 state what a script is made of; 10 are ordinary (lists, prohibitions,
   history). Not caught: 2 old places in files the check does not read (`.vscode/tasks.json`, `docs/`), a
   spread beyond the windows in words, lines or sentences, two bare words with no mark, script comments, code,
-  issue templates, app copy, a one-name statement in a `gate-tiers.json` description (read without its key).
+  issue templates, app copy, a one-name statement in a `gate-tiers.json` description (read without its key),
+  a one-name alias statement in prose (a line saying one script is an alias of another). `docs:check` runs
+  inside `verify` here too, because it ran only at pre-commit and weekly.
   **Evidence**: `scripts/docs-check.mjs` and its test, `scripts/gate-tiers.json`.
 
 ## Fail-closed audit gate
@@ -234,7 +236,7 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 
 ## `docs:check` guards CI steps, ruleset contexts and its own trigger
 
-- **Decision**: `docs:check` fails when a `run:` step in a PR-triggered workflow is not declared in `scripts/gate-tiers.json` § `ci.allowedRunSteps` (a check that runs only in CI, outside `verify`; block scalars are read line by line), and when a required status check in `.github/ruleset.json` is produced by no workflow job (job `name:` or id, plus matrix values) nor listed in `ci.rulesetContextAllowlist`. A job whose context GitHub renders only at runtime prints one non-failing line. The pre-commit hook runs `docs:check` whenever the staged set touches docs, rules, `.github/`, `scripts/docs-check.*`, `scripts/gate-tiers.json` or `package.json`.
+- **Decision**: `docs:check` fails when a `run:` step in a PR-triggered workflow is not declared in `scripts/gate-tiers.json` § `ci.allowedRunSteps` (a check that runs only in CI, outside `verify`; block scalars are read line by line), and when a required status check in `.github/ruleset.json` is produced by no workflow job (job `name:` or id, plus matrix values) nor listed in `ci.rulesetContextAllowlist`. A job whose context GitHub renders only at runtime prints one non-failing line. The pre-commit hook runs `docs:check` whenever the staged set touches docs, rules, `.github/`, `.husky/`, `scripts/docs-check.*`, `scripts/gate-tiers.json` or `package.json`.
 - **Consequences**: `scripts/docs-check.mjs` is byte-identical across the four templates, the `prPermission` check (a gitleaks job on a pull request needs `pull-requests: read`) included; this repo's data is in `gate-tiers.json`.
 - **Status**: in force. **Evidence**: [PR #36](https://github.com/Vadymk95/template-rn/pull/36), [PR #38](https://github.com/Vadymk95/template-rn/pull/38).
 

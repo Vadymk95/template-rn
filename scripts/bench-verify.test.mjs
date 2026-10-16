@@ -41,6 +41,14 @@ describe('parseVerifySteps', () => {
         assert.ok(labels.includes('check-version-holds'));
     });
 
+    it('keeps docs-check in verify, so doc drift that skipped the commit hook turns the push red', () => {
+        const labels = parseVerifySteps(resolveScript(scripts(), 'verify')).map(
+            (step) => step.label
+        );
+
+        assert.ok(labels.includes('docs-check'));
+    });
+
     it('keeps the sibling-test range check inside verify, never only in the network tier', () => {
         // The raw script, not the parsed steps: the benchmark keeps only a step's file, never its flags.
         const all = scripts();
