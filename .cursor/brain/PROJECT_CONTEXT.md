@@ -21,7 +21,7 @@ The one place for the stack. Exact versions are `package.json`; every package he
 
 ## Architecture
 
-**Shipped under `src/`**: `app/` (root layout with the i18n and store hydration gate, `_RootStack`, tabs, not-found), the `widgets/` + `features/` + `store/` slices of the start guide and the todo sample, `shared/` (ui primitives, tokenized theme, locales and i18n init), `lib/` (query client with AppState focus, logger stub, `secureToken`), `test/setup.ts` and `env.ts`. File map: `MAP.md`; layer rules: `.cursor/rules/fsd-layers.mdc`.
+**Shipped under `src/`**: `app/` (root layout with the i18n and store hydration gate, tabs, not-found), `widgets/root-stack` (the root `Stack`), the `widgets/` + `features/` + `store/` slices of the start guide and the todo sample, `shared/` (ui primitives, tokenized theme, locales and i18n init), `lib/` (query client with AppState focus, logger stub, `secureToken`), `test/setup.ts` and `env.ts`. File map: `MAP.md`; layer rules: `.cursor/rules/fsd-layers.mdc`.
 
 **Extension points** (add when the product needs them): API clients per feature, offline query persistence, a product auth provider, a vendor observability adapter behind `logger.ts`. Recipes: `EXTENSIONS.md`.
 

@@ -5,7 +5,6 @@ import { DEFAULT_TODO_FILTER } from '@/store/todo/constants';
 import { createTodoId } from '@/store/todo/createTodoId';
 import { mockTodos } from '@/store/todo/mockTodos';
 import type { Todo, TodoState } from '@/store/todo/types';
-import { createSelectors } from '@/store/utils/createSelectors';
 
 const cloneTodo = (todo: Todo): Todo => ({
     ...todo
@@ -37,7 +36,7 @@ const getNextTodoCollisionIndex = (todos: Todo[], timestamp: number): number => 
     return maxCollisionIndex + 1;
 };
 
-const useTodoStoreBase = create<TodoState>()(
+export const useTodoStore = create<TodoState>()(
     devtools((set) => ({
         todos: mockTodos.map(cloneTodo),
         filter: DEFAULT_TODO_FILTER,
@@ -117,5 +116,3 @@ const useTodoStoreBase = create<TodoState>()(
         }
     }))
 );
-
-export const useTodoStore = createSelectors(useTodoStoreBase);

@@ -62,7 +62,7 @@ Touch with intent; re-verify via the commands in `VERIFICATION.md`.
 
 - Provider order matters: `GestureHandlerRootView` → `SafeAreaProvider` →
   **i18n bootstrap** (error UI, loading gate, then `I18nextProvider`) →
-  `QueryClientProvider` → `_RootStack` (`src/app/_RootStack.tsx`, Expo `Stack`). Swapping the outer shell
+  `QueryClientProvider` → `RootStack` (`src/widgets/root-stack/RootStack.tsx`, Expo `Stack`). Swapping the outer shell
   breaks gestures on Android; moving `QueryClientProvider` outside
   `I18nextProvider` risks screens querying before `t()` is available.
 - `ErrorBoundary` exported from `expo-router` — must be a named re-export at
@@ -80,3 +80,10 @@ Touch with intent; re-verify via the commands in `VERIFICATION.md`.
   are NOT secrets — never put API keys with billing power here.
 - Adding a new var requires editing `.env.example`, `src/env.ts` schema, AND
   restarting Metro (env is read once).
+
+## Hermes runtime (Expo SDK 57)
+
+- `Array#toSorted` is `undefined` on a device (Expo Go 57.0.9, iOS Simulator; `toReversed`,
+  `toSpliced` and `with` are functions), while web and Jest have it, so only a device throws.
+  Copy, then sort: `[...items].sort(...)`. Lint bans `.toSorted` under `src/**`, and the oxlint
+  rule that demands it (`unicorn/no-array-sort`) is off in `.oxlintrc.json`.

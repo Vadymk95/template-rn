@@ -60,7 +60,7 @@ If you fork this template, keep those files in sync with your product decisions.
 | Language       | TypeScript 6.0 strict + `noUncheckedIndexedAccess` + `exactOptionalPropertyTypes`                    | Zero soft-land type escape hatches                                                                   |
 | Routing        | Expo Router v57                                                                                      | File-based, typed routes, deep links                                                                 |
 | Styling        | NativeWind 4 + Tailwind 3.4                                                                          | className-first; dark mode via `.dark`                                                               |
-| State (client) | Zustand 5 + `createSelectors`                                                                        | Minimal, no boilerplate                                                                              |
+| State (client) | Zustand 5 + plain selectors                                                                          | Minimal, no boilerplate; the Compiler cannot see a generated `.use.x()` call as a hook               |
 | State (server) | TanStack Query 5 + AppState focus wiring                                                             | Queries refetch on app foreground                                                                    |
 | Env            | `@t3-oss/env-core` + Zod                                                                             | Fail fast on missing vars                                                                            |
 | i18n           | `i18next` + `react-i18next` + JSON bundles + `expo-localization`                                     | Typed keys; add languages under `src/shared/locales/`                                                |
@@ -110,7 +110,6 @@ src/
   store/
     todo/                         # local Todo domain state
     user/                         # example persisted auth-adjacent state
-    utils/                        # createSelectors helper
   shared/
     ui/                           # reusable primitives: Button, Input, Dialog, ...
     lib/
@@ -168,7 +167,8 @@ npm run verify
 ```
 
 The `check-hooks` step fails loudly when git hooks are missing — run
-`npm run prepare` once after clone (lifecycle scripts are disabled via `.npmrc`).
+`npm run prepare` once after clone (lifecycle scripts are disabled via `.npmrc`). It is the first
+step of `verify:iter` as well, so the working loop stops there before a push can go out with no gate.
 
 `verify` holds every check that works **offline**. `verify:ci` is what husky pre-push and the CI job both
 run; the checks that need the registry live there, not in `verify`. The moments (iterate, commit, push, CI), what is never run by hand and the

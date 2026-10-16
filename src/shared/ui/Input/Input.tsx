@@ -33,7 +33,7 @@ export const Input = forwardRef<TextInput, InputProps>(
             inputClassName,
             accessibilityLabel,
             accessibilityHint,
-            accessibilityState,
+            'aria-disabled': ariaDisabled,
             editable,
             ...textInputProps
         },
@@ -66,10 +66,7 @@ export const Input = forwardRef<TextInput, InputProps>(
                         aria-invalid={hasError}
                         accessibilityLabel={accessibilityLabel ?? label}
                         accessibilityHint={accessibilityHint ?? helperText}
-                        accessibilityState={{
-                            ...accessibilityState,
-                            disabled: accessibilityState?.disabled ?? editable === false
-                        }}
+                        aria-disabled={ariaDisabled ?? editable === false}
                         className={cn('flex-1 text-base text-foreground', inputClassName)}
                         editable={editable}
                         placeholderTextColor={getThemeColorValue(colorScheme, 'textSecondary')}
@@ -80,8 +77,10 @@ export const Input = forwardRef<TextInput, InputProps>(
                 {helperText ? (
                     <Text
                         accessibilityLiveRegion={hasError ? 'polite' : undefined}
+                        // The size only: the caption token carries its own colour, and on web two
+                        // colour classes on one node are settled by stylesheet order, not by this list.
                         className={cn(
-                            TYPOGRAPHY_TOKENS.caption,
+                            'text-xs',
                             hasError ? 'text-destructive' : 'text-muted-foreground'
                         )}
                     >

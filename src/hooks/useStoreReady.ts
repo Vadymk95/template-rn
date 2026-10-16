@@ -5,4 +5,4 @@ import { useUserStore } from '@/store/user/userStore';
  * AsyncStorage. Gates the root layout so the app tree never renders against
  * stale defaults from the first synchronous render.
  */
-export const useStoreReady = (): boolean => useUserStore.use._hasHydrated();
+export const useStoreReady = (): boolean => useUserStore((state) => state._hasHydrated);

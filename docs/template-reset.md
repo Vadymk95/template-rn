@@ -12,6 +12,10 @@ This template ships with a working Todo workspace so a new repo starts with real
 
 Replace the Todo example slice first. That usually means the workspace screen, related feature widgets, and the `src/store/todo/**` state model. Route, tab, and Todo example copy now live in `src/shared/locales/**`, so replacing the slice should update those locale files together with the feature code.
 
+The first tab is the start guide (`src/widgets/start-guide/`, mounted by `src/app/(tabs)/index.tsx`): a pointer into this repo for whoever just cloned it, not product code. Delete it together with its copy, or point the route at your own first screen.
+
+Nothing that guards the repo cites this sample code. `AGENTS.md`, `.cursor/rules/**` and `.claude/commands/**` name no file of the Todo slice or the start guide, so deleting either never changes a gate file and never needs a `gate-change` label. What does cite them is the repo's own description of itself: `npm run docs:check` fails on each backticked path that no longer exists, and the list it prints is the list of lines to edit (`.cursor/brain/MAP.md` carries a "Start guide" and a "Todo vertical slice" table; `README.md` and `.cursor/brain/PROJECT_CONTEXT.md` name the slices too).
+
 ## Suggested order
 
 1. Rename the product in docs, app config, and localized copy under `src/shared/locales/**`.
@@ -83,5 +87,7 @@ Every fork must update these values before shipping. `file:line` refs are valid 
 ### Example / demo content to strip
 
 - [ ] `src/shared/locales/en/todo.json` — delete if removing the Todo slice, then mirror the deletion in `src/shared/lib/i18n/constants.ts:14`, `src/shared/lib/i18n/index.ts`, `src/shared/lib/i18n/resources.ts`
+- [ ] `src/widgets/start-guide/` and `src/shared/locales/en/start.json` — the first tab's content; mirror the locale deletion in the same three i18n files, and replace what `src/app/(tabs)/index.tsx` mounts (its tab entry lives in `src/app/(tabs)/_layout.tsx`)
+- [ ] `.cursor/brain/MAP.md` ("Start guide" and "Todo vertical slice"), `README.md` (the `src/` tree), `.cursor/brain/PROJECT_CONTEXT.md` (Architecture) — rewrite the lines `npm run docs:check` reports once the slices are gone
 - [ ] `.maestro/smoke.yaml`, `.maestro/create-task.yaml` — hardcoded Todo copy and `testID`s; rewrite or delete with the slice
 - [ ] `scripts/perf-baseline.json` — regenerate via `npm run perf:baseline` once the product bundle shape stabilizes

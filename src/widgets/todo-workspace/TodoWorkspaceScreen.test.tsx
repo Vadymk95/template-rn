@@ -1,5 +1,4 @@
 import { fireEvent, render } from '@testing-library/react-native';
-import type { ReactNode } from 'react';
 
 import { TODO_FILTERS } from '@/store/todo/constants';
 import { mockTodos } from '@/store/todo/mockTodos';
@@ -9,26 +8,6 @@ import { TodoWorkspaceScreen } from '@/widgets/todo-workspace/TodoWorkspaceScree
 jest.mock('@expo/vector-icons/Ionicons', () => ({
     __esModule: true,
     default: () => null
-}));
-
-jest.mock('react-native-safe-area-context', () => ({
-    SafeAreaProvider: ({ children }: { children: ReactNode }) => children,
-    SafeAreaConsumer: ({
-        children
-    }: {
-        children: (insets: {
-            top: number;
-            right: number;
-            bottom: number;
-            left: number;
-        }) => ReactNode;
-    }) => children({ top: 0, right: 0, bottom: 0, left: 0 }),
-    useSafeAreaInsets: () => ({
-        top: 0,
-        right: 0,
-        bottom: 0,
-        left: 0
-    })
 }));
 
 const cloneTodos = () =>

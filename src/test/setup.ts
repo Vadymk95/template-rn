@@ -38,8 +38,10 @@ jest.mock('expo-secure-store', () => ({
 // Gesture handler ships an official jest setup that no-ops its native module.
 require('react-native-gesture-handler/jestSetup');
 
-jest.mock('react-native-safe-area-context', () =>
-    require('react-native-safe-area-context/jest/mock')
+// The package's jest mock is `export default { ... }`, so `.default` is what carries the named exports.
+jest.mock(
+    'react-native-safe-area-context',
+    () => require('react-native-safe-area-context/jest/mock').default
 );
 
 jest.mock('expo-router', () => ({

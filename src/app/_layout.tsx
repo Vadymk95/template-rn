@@ -9,13 +9,13 @@ import { ActivityIndicator, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { RootStack } from '@/app/_RootStack';
 import { useStoreReady } from '@/hooks/useStoreReady';
 import { logger } from '@/lib/logger';
 import { queryClient, QueryClientAppStateBridge } from '@/lib/queryClient';
 import { EXPO_ROUTER } from '@/shared/lib/constants/expoRouter';
 import i18n, { i18nInitPromise } from '@/shared/lib/i18n';
 import { I18nInitErrorFallback } from '@/shared/lib/i18n/I18nInitErrorFallback';
+import { RootStack } from '@/widgets/root-stack/RootStack';
 
 export { ErrorBoundary } from '@/shared/ui/ErrorBoundary/ErrorBoundary';
 

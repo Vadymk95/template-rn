@@ -109,10 +109,8 @@ export const Button = ({
         <Pressable
             accessibilityRole="button"
             accessibilityLabel={accessibilityLabel ?? label}
-            accessibilityState={{
-                disabled: isDisabled,
-                busy: loading
-            }}
+            aria-busy={loading}
+            aria-disabled={isDisabled}
             disabled={isDisabled}
             {...pressableProps}
             onPress={isDisabled ? undefined : onPress}

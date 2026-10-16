@@ -30,9 +30,7 @@ export const TodoToggleButton = ({
                         : TODO_COPY_KEYS.actions.markComplete
                 )
             )}
-            accessibilityState={{
-                selected: completed
-            }}
+            aria-selected={completed}
             testID={testID}
             onPress={onPress}
         />

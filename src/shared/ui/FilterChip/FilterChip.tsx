@@ -29,10 +29,8 @@ export const FilterChip = ({
         <Pressable
             accessibilityRole="button"
             accessibilityLabel={label}
-            accessibilityState={{
-                disabled: isDisabled,
-                selected
-            }}
+            aria-disabled={isDisabled}
+            aria-selected={selected}
             disabled={isDisabled}
             {...(className ? { className } : {})}
             style={({ pressed }) => ({

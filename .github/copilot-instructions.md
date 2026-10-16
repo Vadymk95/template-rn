@@ -65,7 +65,8 @@ before style — style is ESLint's and Prettier's job, not a review finding.
 - A number that also appears inside a user-facing message must be interpolated from the same constant, or
   the two drift.
 - Icon-only controls need `accessibilityLabel`; interactive elements need `accessibilityRole` and, where
-  relevant, `accessibilityState`. Touch targets come from `src/shared/lib/theme/controlSizes.ts`.
+  relevant, the state as `aria-*` props (`aria-selected`, `aria-disabled`; never `accessibilityState`,
+  which react-native-web ignores). Touch targets come from `src/shared/lib/theme/controlSizes.ts`.
 - A list with no practical ceiling (a paginated feed, chat history) needs `FlatList` with
   `keyExtractor`, not `.map()` — `.map()` is fine for a small, fixed-size list like the bundled
   `TodoList`, which renders that way today.

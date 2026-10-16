@@ -4,7 +4,6 @@ import { createJSONStorage, devtools, persist } from 'zustand/middleware';
 
 import { clearAuthToken, setAuthToken } from '@/lib/secureToken';
 import { STORAGE_KEYS } from '@/lib/storageKeys';
-import { createSelectors } from '@/store/utils/createSelectors';
 
 interface UserState {
     username: string | null;
@@ -14,7 +13,7 @@ interface UserState {
     setHasHydrated: (value: boolean) => void;
 }
 
-const useUserStoreBase = create<UserState>()(
+export const useUserStore = create<UserState>()(
     devtools(
         persist(
             (set) => ({
@@ -41,5 +40,3 @@ const useUserStoreBase = create<UserState>()(
         )
     )
 );
-
-export const useUserStore = createSelectors(useUserStoreBase);

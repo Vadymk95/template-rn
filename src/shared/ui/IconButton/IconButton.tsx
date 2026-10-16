@@ -54,9 +54,7 @@ export const IconButton = ({
         <Pressable
             accessibilityRole="button"
             accessibilityLabel={accessibilityLabel}
-            accessibilityState={{
-                disabled: isDisabled
-            }}
+            aria-disabled={isDisabled}
             disabled={isDisabled}
             hitSlop={8}
             {...(className ? { className } : {})}
