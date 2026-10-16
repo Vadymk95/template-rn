@@ -59,7 +59,7 @@ Imports flow **down-stack only** (app may use shared; shared must not import ent
 | -------------------------------------- | ----------------------------------------------- |
 | App entry                              | `expo-router/entry` (via `package.json` `main`) |
 | Root layout (providers, ErrorBoundary) | `src/app/_layout.tsx`                           |
-| Root stack & modal presentation        | `src/app/_RootStack.tsx`                        |
+| Root stack & modal presentation        | `src/widgets/root-stack/RootStack.tsx`          |
 | First visible screen (Start tab)       | `src/app/(tabs)/index.tsx`                      |
 | Tabs, in order: Start, Tasks, Settings | `src/app/(tabs)/_layout.tsx`                    |
 | Expo runtime config                    | `app.config.ts` (dynamic, env-driven)           |
@@ -108,7 +108,7 @@ Imports flow **down-stack only** (app may use shared; shared must not import ent
 | CI (GitHub Actions)           | `.github/workflows/ci.yml` (`verify:ci`, bundle check, advisory `expo-doctor`), `security.yml` (gitleaks, CodeQL, zizmor), `mutation.yml`; moments: `AGENTS.md` § Commands / the gate |
 | Local E2E smoke (Maestro)     | `.maestro/*.yaml` — not part of default CI; run when adopting flows                                                                                                                   |
 | Bundle metrics and budget     | `scripts/capture-bundle-metrics.mjs`, `npm run perf:*`, `scripts/perf-program.md` — baseline/check; `perf:check` runs in CI as the `bundle-budget` job                                |
-| Accessibility guard           | `src/test/a11y.ts` (`expectAccessibleControl`) + `src/test/uiA11yCoverage.test.ts` — every interactive `src/shared/ui` primitive asserts role and accessible name in its test         |
+| Accessibility guard           | `src/test/a11y.ts` (`expectAccessibleControl`) + `src/test/uiA11yCoverage.test.ts` — every interactive primitive asserts role and name; `src/test/webDom.ts` reads web DOM attributes |
 | Extending past the template   | `.cursor/brain/EXTENSIONS.md` — phased recipes: backend, auth, crash reporting, offline, OTA, push, deep links, SVG icons                                                             |
 | Path alias `@/*`              | `tsconfig.json` `paths` (single source of truth)                                                                                                                                      |
 

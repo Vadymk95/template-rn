@@ -131,10 +131,11 @@ The pre-commit hook only proves a `*.test.*` file exists. You judge whether it i
 ## 6. Accessibility and performance
 
 - `accessibilityLabel` on every icon-only control; `accessibilityRole` matching what the element does;
-  `accessibilityState` for selected / disabled / checked. A `Text` inside a `Pressable` is not a label.
+  `aria-selected` / `aria-disabled` / `aria-checked` for state, never `accessibilityState` (react-native-web
+  ignores it, so a browser never gets the state). A `Text` inside a `Pressable` is not a label.
 - Touch targets at least 44×44 — check `src/shared/lib/theme/controlSizes.ts` rather than eyeballing a
   padding value.
-- `Pressable` with `disabled` must also communicate it (`accessibilityState.disabled`), not just stop
+- `Pressable` with `disabled` must also communicate it (`aria-disabled`), not just stop
   responding.
 - Reduced motion resolves to the end state, not to a faster animation.
 - A growing list rendered with `.map()` instead of `FlatList`; a `FlatList` with no `keyExtractor`, or with

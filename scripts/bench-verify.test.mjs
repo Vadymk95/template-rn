@@ -124,3 +124,17 @@ describe('resolveScript', () => {
         assert.throws(() => resolveScript({}, 'verify'), /no `verify` script/);
     });
 });
+
+describe('the iteration loop', () => {
+    // `.npmrc` disables lifecycle scripts, so a fresh clone has no git hooks until `npm run prepare`.
+    // `verify:iter` is the loop that runs while working, long before `verify` does: when only `verify`
+    // checks the hooks, the first push goes out with no gate and prints nothing about it.
+    it('starts with the hooks check, so a clone without hooks fails before the first push', () => {
+        const iterate = resolveScript(scripts(), 'verify:iter');
+
+        assert.ok(
+            iterate.startsWith('node scripts/check-hooks.mjs && '),
+            `verify:iter must begin with the hooks check, got: ${iterate}`
+        );
+    });
+});

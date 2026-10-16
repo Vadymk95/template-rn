@@ -2,7 +2,6 @@ import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { render } from '@testing-library/react-native';
-import type { ReactNode } from 'react';
 
 import {
     START_GUIDE_COMMANDS,
@@ -11,26 +10,6 @@ import {
     START_GUIDE_STEPS
 } from '@/widgets/start-guide/constants';
 import { StartGuideScreen } from '@/widgets/start-guide/StartGuideScreen';
-
-jest.mock('react-native-safe-area-context', () => ({
-    SafeAreaProvider: ({ children }: { children: ReactNode }) => children,
-    SafeAreaConsumer: ({
-        children
-    }: {
-        children: (insets: {
-            top: number;
-            right: number;
-            bottom: number;
-            left: number;
-        }) => ReactNode;
-    }) => children({ top: 0, right: 0, bottom: 0, left: 0 }),
-    useSafeAreaInsets: () => ({
-        top: 0,
-        right: 0,
-        bottom: 0,
-        left: 0
-    })
-}));
 
 const REPO_ROOT = process.cwd();
 

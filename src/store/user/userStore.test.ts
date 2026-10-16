@@ -55,7 +55,7 @@ describe('useUserStore', () => {
     it('setHasHydrated drives useStoreReady for root layout gating', async () => {
         const { result } = await renderHook(() => ({
             ready: useStoreReady(),
-            hydrated: useUserStore.use._hasHydrated()
+            hydrated: useUserStore((state) => state._hasHydrated)
         }));
 
         await act(() => {

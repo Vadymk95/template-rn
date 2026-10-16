@@ -284,6 +284,45 @@ export default tseslint.config(
                         'TemplateElement[value.raw=/#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\\b/]',
                     message:
                         'No raw hex colours outside src/shared/lib/theme — use a token from COLOR_VALUES or a NativeWind class.'
+                },
+                // ─── Two bugs the types and the device-less tests cannot see ──────────
+                // These share the list above because a later `no-restricted-syntax` entry for the
+                // same files REPLACES an earlier one in flat config: a second entry would silently
+                // switch the hex-colour guard off. Add further selectors here.
+                //
+                // A call through a `.use` member (`useStore.use.field()`, the generated-selector
+                // pattern) is not named like a hook, so the React Compiler caches it in a block that
+                // runs on the first render only and React throws "Rendered fewer hooks than expected"
+                // on the next one.
+                {
+                    selector: "CallExpression[callee.object.property.name='use']",
+                    message:
+                        'Do not call a store through a `.use` member: the React Compiler cannot see that call as a hook and caches it, so the next render throws. Read the store with a selector: `useStore((state) => state.field)`, or `useShallow` for several fields.'
+                },
+                // react-native-web never maps `accessibilityState`, so the state is lost in a browser.
+                {
+                    selector: "JSXAttribute[name.name='accessibilityState']",
+                    message:
+                        'react-native-web ignores `accessibilityState`, so the state never reaches the DOM on web. Use the `aria-*` props: `aria-selected`, `aria-checked`, `aria-disabled`, `aria-busy`, `aria-expanded`.'
+                }
+            ]
+        }
+    },
+    // ─── Array methods the iOS engine does not have ─────────────────────────
+    // Measured on Expo Go 57.0.9 in the iOS Simulator: `typeof [].toSorted` is "undefined"
+    // (`toReversed`, `toSpliced` and `with` are functions). Web and Jest run on engines that have
+    // it, so the call passes every check and throws only on a device. `.oxlintrc.json` turns off
+    // the oxlint rule that demands it. Tests run on Node and are exempt.
+    {
+        files: ['src/**/*.{ts,tsx}'],
+        ignores: ['**/*.{test,spec}.{ts,tsx}', 'src/test/**'],
+        rules: {
+            'no-restricted-properties': [
+                'error',
+                {
+                    property: 'toSorted',
+                    message:
+                        'Array#toSorted is not available in Hermes on Expo SDK 57. Copy, then sort: `[...items].sort(...)`.'
                 }
             ]
         }

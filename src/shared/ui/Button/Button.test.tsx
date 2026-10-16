@@ -9,6 +9,9 @@ import { MAX_FONT_SCALE_IN_FIXED_CONTROL } from '@/shared/lib/theme/controlSizes
 import { Button } from '@/shared/ui/Button/Button';
 import { expectAccessibleControl } from '@/test/a11y';
 import { STRESS_FONT_SCALE } from '@/test/contentStress';
+import { renderOnWeb, tagAttributes } from '@/test/webDom';
+
+const loadButton = () => require('@/shared/ui/Button/Button').Button;
 
 describe('Button', () => {
     it('exposes a button role and its label to assistive technology', async () => {
@@ -72,15 +75,47 @@ describe('Button', () => {
         await disabledRender.unmount();
 
         const loadingRender = await render(<Button label="Loading" onPress={onPress} loading />);
-        const loadingButton = loadingRender.getByRole('button');
+        const loadingButton = loadingRender.getByRole('button', {
+            name: 'Loading',
+            busy: true,
+            disabled: true
+        });
 
         await fireEvent.press(loadingButton);
 
         expect(onPress).not.toHaveBeenCalled();
-        expect(loadingButton.props['accessibilityState']).toEqual({
-            busy: true,
-            disabled: true
+    });
+
+    it('announces busy and disabled while loading, and drops both afterwards', async () => {
+        const { getByRole, queryByRole, rerender } = await render(<Button label="Save" />);
+
+        expect(queryByRole('button', { name: 'Save', busy: true })).toBeNull();
+        expect(queryByRole('button', { name: 'Save', disabled: true })).toBeNull();
+
+        await rerender(<Button label="Save" loading />);
+        expect(getByRole('button', { name: 'Save', busy: true, disabled: true })).toBeTruthy();
+
+        await rerender(<Button label="Save" />);
+        expect(queryByRole('button', { name: 'Save', busy: true })).toBeNull();
+        expect(queryByRole('button', { name: 'Save', disabled: true })).toBeNull();
+    });
+
+    // react-native-web maps `aria-*` props to the DOM and ignores `accessibilityState`, so the busy
+    // state only reaches a browser (and its screen reader) when it is written as `aria-busy`.
+    it('puts its busy and disabled state on the DOM node as aria attributes on web', () => {
+        const loading = tagAttributes(renderOnWeb(loadButton, { label: 'Save', loading: true }));
+        const disabled = tagAttributes(renderOnWeb(loadButton, { label: 'Save', disabled: true }));
+        const idle = tagAttributes(renderOnWeb(loadButton, { label: 'Save' }));
+
+        expect(loading).toMatchObject({
+            role: 'button',
+            'aria-label': 'Save',
+            'aria-busy': 'true',
+            'aria-disabled': 'true'
         });
+        expect(disabled).toMatchObject({ 'aria-busy': 'false', 'aria-disabled': 'true' });
+        expect(idle).toMatchObject({ 'aria-busy': 'false' });
+        expect(idle).not.toHaveProperty('aria-disabled');
     });
 
     it('warns in development when custom content buttons have no accessible label', async () => {

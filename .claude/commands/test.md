@@ -27,9 +27,10 @@ parallel one.
   AsyncStorage, `expo-secure-store`, gesture handler, safe-area, `expo-router`, `expo-splash-screen`,
   Reanimated, NativeWind. **Add a shared mock there, not inline in a spec.** A second inline copy of an
   existing mock is a violation.
-- A recent nearby spec is the reference for imports and assertion style — `src/store/todo/todoStore.test.ts`
-  for stores, `src/features/todo/useTodoWorkspace.test.ts` for hooks,
-  `src/widgets/todo-workspace/TodoWorkspaceScreen.test.tsx` for screen-level integration.
+- A recent nearby spec is the reference for imports and assertion style — `src/store/user/userStore.test.ts`
+  for stores, `src/hooks/useStoreReady.test.ts` for hooks, `src/shared/ui/Input/Input.test.tsx` for
+  components (a role query with its state both ways, and `renderOnWeb` for what a browser receives),
+  `src/test/app/_layout.test.tsx` for screen-level integration.
 - `src/lib/api/safeFetch.test.ts` shows how a boundary is tested: mock the global `fetch`, feed it a
   payload that violates the Zod schema, assert the parse fails rather than the type assertion passing.
 

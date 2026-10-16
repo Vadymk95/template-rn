@@ -1,36 +1,16 @@
 import { render, waitFor } from '@testing-library/react-native';
-import type { ReactElement, ReactNode } from 'react';
+import type { ReactElement } from 'react';
 
 import RootLayout from '@/app/_layout';
 import { I18N_INIT_FALLBACK_COPY } from '@/shared/lib/constants/initFallbackCopy';
 
 jest.mock('../../../global.css', () => ({}));
 
-jest.mock('react-native-safe-area-context', () => ({
-    SafeAreaProvider: ({ children }: { children: ReactNode }) => children,
-    SafeAreaConsumer: ({
-        children
-    }: {
-        children: (insets: {
-            top: number;
-            right: number;
-            bottom: number;
-            left: number;
-        }) => ReactNode;
-    }) => children({ top: 0, right: 0, bottom: 0, left: 0 }),
-    useSafeAreaInsets: () => ({
-        top: 0,
-        right: 0,
-        bottom: 0,
-        left: 0
-    })
-}));
-
 jest.mock('@/hooks/useStoreReady', () => ({
     useStoreReady: (): boolean => true
 }));
 
-jest.mock('@/app/_RootStack', () => ({
+jest.mock('@/widgets/root-stack/RootStack', () => ({
     RootStack: (): ReactElement | null => null
 }));
 

@@ -111,9 +111,9 @@ The template ships the storage half: `src/lib/secureToken.ts` (`setAuthToken` / 
 
 - **Trigger:** the first screen that needs a signed-in user.
 - **Install:** nothing (Expo Router ships it).
-- **Where it plugs in:** `src/app/_RootStack.tsx` renders the root `<Stack>`. Wrap the signed-in screens in `<Stack.Protected guard={isSignedIn}>` and the sign-in screen in a guard with the opposite value; Expo Router redirects when the guard flips. The auth state already lives in `useUserStore` (`src/store/user/userStore.ts`: `username`, `setUser`, `logout`); extend it instead of adding a second auth store. `_RootStack.tsx` is in the app layer, which lint forbids from importing a store, so expose the flag through a hook under `src/hooks/` (the pattern of `useStoreReady`).
+- **Where it plugs in:** `src/widgets/root-stack/RootStack.tsx` renders the root `<Stack>`. Wrap the signed-in screens in `<Stack.Protected guard={isSignedIn}>` and the sign-in screen in a guard with the opposite value; Expo Router redirects when the guard flips. The auth state already lives in `useUserStore` (`src/store/user/userStore.ts`: `username`, `setUser`, `logout`); extend it instead of adding a second auth store. `RootStack.tsx` is a widget, and lint forbids a widget from importing a store, so expose the flag through a hook under `src/hooks/` (the pattern of `useStoreReady`).
 - **Config and why:** evaluate the guard only after hydration. `src/app/_layout.tsx` already holds the splash screen until `useStoreReady()` is true; keep the stack from rendering before the stored token has also been validated, or a signed-in user flashes the sign-in screen. "A token exists" is not "the user is signed in": validate it with one cheap authenticated call at boot and clear it on a 401 (opinion).
-- **Guard:** a unit test on the hook (signed out → false, hydrating → not rendered). The `expo-router` mock in `src/test/setup.ts` defines `Stack` as a plain function with no `Protected` member, so a test that renders `RootStack` needs that mock extended first. A Maestro flow beside `.maestro/smoke.yaml` for sign in → protected screen → sign out → sign-in screen (the only layer that sees real navigation).
+- **Guard:** a unit test on the hook (signed out → false, hydrating → not rendered). The `expo-router` mock in `src/test/setup.ts` defines `Stack` as a plain function with no `Protected` member, so a test that renders `RootStack` needs a mock with that member (`src/widgets/root-stack/RootStack.test.tsx` shows the shape). A Maestro flow beside `.maestro/smoke.yaml` for sign in → protected screen → sign out → sign-in screen (the only layer that sees real navigation).
 - **Security:** a client guard is UX, not authorization. The backend must reject every unauthorised request on its own.
 - **Do NOT:** use the `redirectTo` option of `Stack.Protected` (documented for SDK 58 and later, newer than this repo's SDK 57), or gate screens with a `useEffect` + `router.replace` (a flash of protected content first).
 - **Doc source:** [Expo Router protected routes](https://docs.expo.dev/router/advanced/protected).
@@ -352,7 +352,7 @@ For each row: native module means rebuild plus a `version` bump; add a Jest mock
 
 ### Intentionally NOT recommended
 
-- **Redux / MobX / a second state library.** Server state is TanStack Query, client state is Zustand with `createSelectors` (`AGENTS.md`).
+- **Redux / MobX / a second state library.** Server state is TanStack Query, client state is Zustand read with plain selectors (`AGENTS.md`).
 - **A Metro SVG transformer** for a handful of icons (7.1).
 - **`react-native-edge-to-edge`** (7.2): the platform default made it redundant.
 - **Hand-editing `ios/` or `android/`** to add a capability: config plugins in `app.config.ts` own that.

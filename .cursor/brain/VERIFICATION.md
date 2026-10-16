@@ -80,7 +80,8 @@ unrelated message. The hook reports and refuses; the remedy is one command.
 
 Three rungs, and the split is deliberate:
 
-- **`npm run verify:iter`** — the iteration rung: the cheap static checks (the type check is incremental), then only the tests git sees
+- **`npm run verify:iter`** — the iteration rung: the hooks check first (a clone without git hooks fails here, not at a push that
+  runs no gate), the cheap static checks (the type check is incremental), then only the tests git sees
   as affected by uncommitted work (stages: `scripts/gate-tiers.json`).
   `--onlyChanged` follows the module graph from changed files, so cross-cutting suites and
   `scripts/**` tests (`test:scripts`) surface at the push chain, not during iteration.

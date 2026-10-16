@@ -19,7 +19,7 @@ app  →  widgets  →  features  →  entities  →  shared
 
 | Layer        | Path(s) in this repo                        | Responsibility                                                                                       |
 | ------------ | ------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| **app**      | `src/app/**`                                | Expo Router: layouts, route files, providers wiring. **No business logic.** No direct store imports. |
+| **app**      | `src/app/**`                                | Expo Router: layouts, route files, providers wiring. **Route modules only** (every file is a route). **No business logic.** No direct store imports. |
 | **widgets**  | `src/widgets/**`                            | Composite UI blocks used across routes; compose **features** only (not stores).                      |
 | **features** | `src/features/**`, `src/hooks/**`           | User scenarios: queries, mutations, feature hooks, feature UI. May use **entities** + **shared**.    |
 | **entities** | `src/store/**`                              | Domain model + client state (Zustand slices, selectors). **No** imports from features/widgets/app.   |
