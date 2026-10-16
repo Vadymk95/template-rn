@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.2](https://github.com/Vadymk95/template-rn/compare/v0.3.1...v0.3.2) (2026-10-16)
+
+
+### Bug fixes
+
+* **app:** defects a real fork hit: route warning, web a11y state, store reads, iOS sort ([#54](https://github.com/Vadymk95/template-rn/issues/54)) ([aefb66d](https://github.com/Vadymk95/template-rn/commit/aefb66d38d31eb6d81d15abfd1d4d6562302c81b))
+
 ## [0.3.1](https://github.com/Vadymk95/template-rn/compare/v0.3.0...v0.3.1) (2026-10-16)
 
 
