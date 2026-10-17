@@ -46,6 +46,18 @@ The template's decisions are about the template. Your fork starts its own record
 - [ ] Keep `scripts/version-holds.json` and `scripts/check-version-holds.mjs`. The holds are facts about packages (SDK-pinned natives, Jest 29, Tailwind 3.4, TypeScript, ESLint), not about the template, and `verify` fails a manifest, lockfile or Dependabot `ignore` that drifts from them.
 - [ ] Re-check every hold against your own Dependabot PRs. A PR for a held package is the signal to test the hold's lift condition: lift it by editing `scripts/version-holds.json`, `package.json` and `.github/dependabot.yml` in one change, or close the PR.
 
+## CodeQL in a private fork
+
+`security.yml` runs `codeql` on every pull request and `.github/ruleset.json` requires its check,
+`CodeQL (JavaScript / TypeScript) (javascript-typescript)`. Code scanning is free on a public repository; a private
+one needs a GitHub Code Security license, which only a GitHub Team or GitHub Enterprise plan can buy. Without it the
+job fails with "Code scanning is not enabled for this repository", and a check that can never pass teaches people
+to ignore red. Sources, with the exact wording: `README.md` § Pipelines — and which ones survive a private fork.
+
+- [ ] Private repository: get the license, or delete the `codeql` job in `.github/workflows/security.yml` and the
+      required check `CodeQL (JavaScript / TypeScript) (javascript-typescript)` in `.github/ruleset.json` in one
+      commit. This template is public and keeps both.
+
 ## Placeholder replacement checklist
 
 Every fork must update these values before shipping. `file:line` refs are valid as of this commit; re-grep if files drift.
