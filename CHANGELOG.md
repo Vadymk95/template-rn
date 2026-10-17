@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.4](https://github.com/Vadymk95/template-rn/compare/v0.3.3...v0.3.4) (2026-10-17)
+
+
+### Maintenance
+
+* **deps:** bump @testing-library/react-native from 14.0.1 to 14.1.0 ([#56](https://github.com/Vadymk95/template-rn/issues/56)) ([d40c374](https://github.com/Vadymk95/template-rn/commit/d40c3745f4ed5122c738de03de2cefcc3ffbc233))
+
+
+### CI
+
+* **deps:** bump the actions group with 3 updates ([#57](https://github.com/Vadymk95/template-rn/issues/57)) ([746f15c](https://github.com/Vadymk95/template-rn/commit/746f15c4cdfcf7377ae882cca0521f499acfb0e2))
+
 ## [0.3.3](https://github.com/Vadymk95/template-rn/compare/v0.3.2...v0.3.3) (2026-10-17)
 
 
