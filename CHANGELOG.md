@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.3](https://github.com/Vadymk95/template-rn/compare/v0.3.2...v0.3.3) (2026-10-17)
+
+
+### Bug fixes
+
+* **gate:** self-tests keep expected failures out of the terminal; CodeQL note for forks ([#58](https://github.com/Vadymk95/template-rn/issues/58)) ([de44945](https://github.com/Vadymk95/template-rn/commit/de44945d47b42d4518b68e0e9b0074462fa7c8b8))
+
 ## [0.3.2](https://github.com/Vadymk95/template-rn/compare/v0.3.1...v0.3.2) (2026-10-16)
 
 
