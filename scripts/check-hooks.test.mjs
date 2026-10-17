@@ -20,9 +20,14 @@ const CLEAN_ENV = {
     CI: ''
 };
 
+/* Every child captures its output. `execFileSync` copies the child's stderr onto the test run's
+   unless `stdio` is given, and the refusals these cases provoke would then read like real failures
+   in every log; `run` hands the captured text back for the assertions. */
+const CAPTURE = ['ignore', 'pipe', 'pipe'];
+
 const makeRepo = () => {
     const dir = mkdtempSync(join(tmpdir(), 'check-hooks-'));
-    execFileSync('git', ['init', '-q'], { cwd: dir, env: CLEAN_ENV });
+    execFileSync('git', ['init', '-q'], { cwd: dir, env: CLEAN_ENV, stdio: CAPTURE });
     return dir;
 };
 
@@ -31,7 +36,8 @@ const run = (cwd, env = {}) => {
         const output = execFileSync('node', [SCRIPT], {
             cwd,
             encoding: 'utf8',
-            env: { ...CLEAN_ENV, ...env }
+            env: { ...CLEAN_ENV, ...env },
+            stdio: CAPTURE
         });
         return { code: 0, output };
     } catch (error) {
@@ -57,7 +63,8 @@ describe('check-hooks', () => {
         mkdirSync(join(repo, '.husky/_'), { recursive: true });
         execFileSync('git', ['config', 'core.hooksPath', '.husky/_'], {
             cwd: repo,
-            env: CLEAN_ENV
+            env: CLEAN_ENV,
+            stdio: CAPTURE
         });
         assert.equal(run(repo).code, 0);
     });
@@ -68,7 +75,8 @@ describe('check-hooks', () => {
         mkdirSync(join(repo, '.husky/_'), { recursive: true });
         execFileSync('git', ['config', 'core.hooksPath', '/tmp/nowhere/.husky/_'], {
             cwd: repo,
-            env: CLEAN_ENV
+            env: CLEAN_ENV,
+            stdio: CAPTURE
         });
         const verdict = run(repo);
         assert.equal(verdict.code, 1);
@@ -104,7 +112,8 @@ describe('check-hooks', () => {
         mkdirSync(join(repo, '.husky/_'), { recursive: true });
         execFileSync('git', ['config', 'core.hooksPath', '.husky/_'], {
             cwd: repo,
-            env: CLEAN_ENV
+            env: CLEAN_ENV,
+            stdio: CAPTURE
         });
         const otherRepo = makeRepo();
         cleanupDirs.push(otherRepo);
