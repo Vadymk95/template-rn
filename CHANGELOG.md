@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.3.4](https://github.com/Vadymk95/template-rn/compare/v0.3.3...v0.3.4) (2026-10-25)
+
+
+### Bug fixes
+
+* **deps:** bump zod, undici and body-parser for three high advisories ([#63](https://github.com/Vadymk95/template-rn/issues/63)) ([bcab665](https://github.com/Vadymk95/template-rn/commit/bcab66577679ffe883bce6e17f11ce422ac0aaa8))
+
+
+### Maintenance
+
+* **deps:** bump @testing-library/react-native from 14.0.1 to 14.1.0 ([#56](https://github.com/Vadymk95/template-rn/issues/56)) ([d40c374](https://github.com/Vadymk95/template-rn/commit/d40c3745f4ed5122c738de03de2cefcc3ffbc233))
+
+
+### Documentation
+
+* name the Actions switch a fork needs for release pull requests ([#65](https://github.com/Vadymk95/template-rn/issues/65)) ([d2e035c](https://github.com/Vadymk95/template-rn/commit/d2e035cdc6a8c1d3873019fa7285ed5e1dad6491))
+
+
+### CI
+
+* **deps:** bump the actions group with 3 updates ([#57](https://github.com/Vadymk95/template-rn/issues/57)) ([746f15c](https://github.com/Vadymk95/template-rn/commit/746f15c4cdfcf7377ae882cca0521f499acfb0e2))
+
 ## [0.3.3](https://github.com/Vadymk95/template-rn/compare/v0.3.2...v0.3.3) (2026-10-17)
 
 
