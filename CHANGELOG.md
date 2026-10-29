@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.5](https://github.com/Vadymk95/template-rn/compare/v0.3.4...v0.3.5) (2026-10-29)
+
+
+### Bug fixes
+
+* **gate:** lessons from a fork build: shared docs rules, iterate jest, git-root refusal ([#66](https://github.com/Vadymk95/template-rn/issues/66)) ([1f04842](https://github.com/Vadymk95/template-rn/commit/1f0484231ad335da6d5480900534485b3f2469de))
+
 ## [0.3.4](https://github.com/Vadymk95/template-rn/compare/v0.3.3...v0.3.4) (2026-10-25)
 
 
