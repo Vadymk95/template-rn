@@ -34,6 +34,8 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 
+import { isEntryPoint } from './is-entry-point.mjs';
+
 // Exempt list derived from THIS repo: the paths Jest already excludes from
 // `collectCoverageFrom` (app shell, env, i18n glue, shared constants tables,
 // locales, `_example*` seeds, test utils) plus declaration-only modules — tests,
@@ -242,6 +244,6 @@ const main = () => {
 };
 
 // Guarded so importing this module for a test does not shell out to git.
-if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href) {
+if (isEntryPoint(import.meta.url)) {
     main();
 }

@@ -39,6 +39,11 @@ dependency reinstall took 46.3 / 34.3 s and are the only rows over the 30 s
 `push` budget in `gate-tiers.json`, which is unchanged; `verify` alone 8.4-20.2 s; `verify:iter`
 2.5-4.1 s; one `test:one` file 8.3 s; the mutation run 2m02s (`mutation.yml`, outside the gate).
 
+After `verify:iter` gained its ESLint leg (2026-10-29; a scratch copy with three changed source files and
+warm caches, not traced): 3.7 s before and 4.7 s after. The leg alone took 4.1 s on a cold ESLint cache
+and 0.9 s warm; the widened test leg, the whole suite, took 3.4 s (36 suites). The iterate budget is 15 s
+(`gate-tiers.json`).
+
 ## The tracer — how it works (the RULES it enforces are the tier law)
 
 Every `verify*` and `test:one` run appends one TSV row to `.gate-trace.log` (gitignored);
@@ -81,10 +86,18 @@ unrelated message. The hook reports and refuses; the remedy is one command.
 Three rungs, and the split is deliberate:
 
 - **`npm run verify:iter`** — the iteration rung: the hooks check first (a clone without git hooks fails here, not at a push that
-  runs no gate), the cheap static checks (the type check is incremental), then only the tests git sees
+  runs no gate), the cheap static checks (the type check is incremental), then the files git sees as
+  changed through ESLint (staged, unstaged and untracked; the flags and cache of `npm run lint`, so the
+  type-aware rules run here and not first at the commit hook), then only the tests git sees
   as affected by uncommitted work (stages: `scripts/gate-tiers.json`).
-  `--onlyChanged` follows the module graph from changed files, so cross-cutting suites and
-  `scripts/**` tests (`test:scripts`) surface at the push chain, not during iteration.
+  `--onlyChanged` follows the module graph from changed files, so a changed file no test imports (the jest
+  block in `package.json`, `babel.config.js`, `tsconfig.json`, the NativeWind and Metro configs,
+  `src/test/setup.ts`) would select nothing and exit 0: `scripts/iterate-tests.mjs` runs the whole suite
+  when one of them is dirty, and `scripts/iterate-chain.test.mjs` fails a chain without that step. The
+  layer-scope test (`scripts/mutation-scope.test.mjs`) has its own step, by name, because nothing imports
+  it and no selection reaches it. Other cross-cutting suites and
+  `scripts/**` tests (`test:scripts`) still surface at the push chain, not during iteration. ESLint
+  ignores `.cursor/`: the leg lints untracked files, and nothing under it is product code.
 - **`npm run verify`** — every check that works OFFLINE. Stage order: `scripts/gate-tiers.json`
   (cheap independent stages first); the superset rule and the push/CI split:
   `AGENTS.md` § Commands / the gate; why: `DECISIONS.md` § The gate contract. It includes the TDD
@@ -203,8 +216,9 @@ Green means nothing until you know the gate can go red.
    directory, an empty result, or no network, not only on the failure it was written for.
 5. **Name the condition under which the green would have been RED.** If you cannot name one, the check
    proved nothing, and a check that cannot fail still gets recorded as evidence. Two real shapes here:
-   `jest --onlyChanged --passWithNoTests` (the iterate tier) exits 0 when the diff reaches no test at all,
-   so a green `verify:iter` on an untested change proves nothing; and `jest --coverage` prints
+   `jest --onlyChanged --passWithNoTests` (the iterate tier) exits 0 when the diff reaches no test at all
+   (a dirty config file is the exception: that tier then runs the whole suite), so a green `verify:iter`
+   on an untested source change proves nothing; and `jest --coverage` prints
    `Failed to collect coverage from <file>` for a file it could not parse and then exits 0 with a
    percentage over the smaller set, which is why `scripts/check-coverage.mjs` exists.
 6. **Check the cases that "cannot happen".** For UI that is the shortest copy allowed, the longest, one

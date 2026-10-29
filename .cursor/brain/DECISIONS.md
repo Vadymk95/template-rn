@@ -10,6 +10,7 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 | Expo Router over React Navigation standalone                           | 2026-04 | in force                               |
 | Expo SDK 57 baseline                                                   | 2026-07 | in force; SDK 58 held                  |
 | NativeWind 4.2 on Tailwind 3.4, not v5                                 | 2026-04 | in force; version hold                 |
+| Tailwind scans product code, not tests                                 | 2026-10 | in force                               |
 | Dependencies: the SDK list is the authority, holds are data            | 2026-10 | in force                               |
 | Override floors with major caps, dated allowances                      | 2026-10 | in force; allowances expire 2026-12-01 |
 | ESLint 10 and `eslint-config-expo`                                     | 2026-07 | in force                               |
@@ -18,6 +19,8 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 | Jest and jest-expo, not Vitest                                         | 2026-04 | in force                               |
 | Jest coverage thresholds and exclusions                                | 2026-04 | in force                               |
 | Gate-script specs run on `node:test`                                   | 2026-07 | in force                               |
+| One entry-point guard for every gate script                            | 2026-10 | in force                               |
+| Test servers bind ports below the ephemeral ranges                     | 2026-10 | in force                               |
 | `expo-secure-store` for tokens, AsyncStorage for cache                 | 2026-04 | in force                               |
 | No observability vendor in the template                                | 2026-04 | in force                               |
 | i18n and forms in the template, auth and crash reporting not           | 2026-04 | in force                               |
@@ -30,6 +33,7 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 | Native colour values mirror `global.css`                               | 2026-10 | in force                               |
 | The gate contract: `verify` is a superset of CI                        | 2026-07 | in force                               |
 | The gate chain has one readable home                                   | 2026-10 | in force                               |
+| The iterate chain lints, widens and pins its legs                      | 2026-10 | in force                               |
 | Fail-closed audit gate                                                 | 2026-07 | in force                               |
 | `docs:check` guards CI steps, ruleset contexts and its own trigger     | 2026-10 | in force                               |
 | TDD sibling gate on pre-commit, no auto-commit hook                    | 2026-07 | in force                               |
@@ -74,6 +78,13 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 - **Consequences**: the Tailwind v4 class-hygiene lint plugins used by the web templates do not apply here.
 - **Status**: in force; lifts with a stable NativeWind v5 (`tailwindcss` hold in `scripts/version-holds.json`).
 - **Evidence**: [PR #44](https://github.com/Vadymk95/template-rn/pull/44).
+
+## Tailwind scans product code, not tests
+
+- **Context**: NativeWind compiles the utilities Tailwind finds in the `content` files. `./src/**/*.{ts,tsx}` also matched every test file and `src/test` helper, so a word in one that spells a utility compiled a rule no screen uses. Measured with Tailwind's own CLI on the real tree and the real config: 14811 bytes of CSS, 14117 once the tests are left out; nine rules (`.block`, `.collapse`, `.container`, `.hidden`, `.invisible`, `.min-w-0`, `.px-2`, `.relative`, `.shrink`) came from tests and helpers only.
+- **Decision**: `content` keeps the `src` glob and negates `*.test.{ts,tsx}` and `src/test/**` (Tailwind 3.4 supports negated patterns). Everything at the top level stays unscanned, and a new folder under `src` is scanned until it is negated. The guard is a test, not a longer list: `scripts/tailwind-scan.test.mjs` copies the real `content` array into a throwaway tree of product files, test files and helpers, compiles it with Tailwind's own CLI (`postcss` is not a dependency here), and fails when a test file's utility compiles or a product file's does not. One glob per layer was rejected: a layer the list misses loses its styles with no error, because the tests do not render compiled CSS.
+- **Consequences**: the compiled CSS is a subset of what it was, so the bundle cannot grow from it; `scripts/perf-baseline.json` is unchanged (`npm run perf:check` fails on growth only) and no Hermes bundle was re-measured. `*.spec.*` files are not negated: none exist here.
+- **Status**: in force. **Evidence**: `scripts/tailwind-scan.test.mjs`.
 
 ## Dependencies: the SDK list is the authority, holds are data
 
@@ -126,6 +137,20 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 - **Context**: the gate scripts are executable ESM (`.mjs`); Jest 29 does not discover that extension or load real ESM without `--experimental-vm-modules`. In a sibling template, folding gate scripts into the app's coverage run dropped line coverage from 93% to 82% with no app change.
 - **Decision**: `npm run test:scripts` is `node --test "scripts/**/*.test.mjs"`, no config, outside `collectCoverageFrom`. The glob is quoted so Node expands it (an unquoted glob relies on the shell, which does not glob on Windows).
 - **Status**: in force. **Evidence**: [4a29b21](https://github.com/Vadymk95/template-rn/commit/4a29b21).
+
+## One entry-point guard for every gate script
+
+- **Context**: each gate script asked "was I started directly?" with `import.meta.url === new URL('file://' + process.argv[1]).href`. Through a symlink node gives the module the URL of its real path, and a `#`, `%` or `?` in the path is read as a fragment, a query or an escape, so the comparison failed: the script ran nothing and exited 0. For a check that is a pass that checked nothing.
+- **Decision**: `scripts/is-entry-point.mjs` exports `isEntryPoint(import.meta.url)`. It builds the URL with `pathToFileURL` and compares the entry as given and as its real path. Every script that runs a `main()` imports it in one shape and guards with `if (isEntryPoint(import.meta.url)) {`. `scripts/is-entry-point.test.mjs` pins the helper (symlinks, paths with `#`, `%`, `?` and a space, an imported module, no entry file) and fails any script that reads `argv[1]` itself or uses the helper in another shape.
+- **Consequences**: a new script copies the shape or the scan fails. Scripts that run at module load (`scripts/check-hooks.mjs`, `scripts/capture-bundle-metrics.mjs`) have no guard and stay outside the class. The helper is a byte copy of the sibling web template's, so a fix lands in each of them the same way.
+- **Status**: in force. **Evidence**: `scripts/is-entry-point.test.mjs`.
+
+## Test servers bind ports below the ephemeral ranges
+
+- **Context**: `server.listen(0)` takes a port from the OS's ephemeral range (32768 and up on Linux and macOS; one measured 55207 here), and macOS hands them out in sequence, so a test that binds one can land next to ports another process is walking. The one test here that binds a socket (`scripts/check-lock-age.test.mjs`, a local registry) shared that exposure.
+- **Decision**: `scripts/quiet-ports.mjs` hands out ports from 10000-19999, below every ephemeral range and clear of 20000-29999, where other tools' tests run. Each checkout takes a window of 100 ports picked by a hash of its path, and each test file that binds takes a lane of its own inside it (`check-lock-age` here), because `node --test` runs files in parallel. A lane nobody registered throws. `scripts/quiet-ports.test.mjs` pins the windows and lanes, and the registry test asserts its port is below 32768.
+- **Consequences**: a test that binds a port adds a lane to `LANES`. The module keeps the lanes of the sibling templates that have no test here, so it stays a byte copy of theirs.
+- **Status**: in force. **Evidence**: `scripts/quiet-ports.test.mjs`, `scripts/check-lock-age.test.mjs`.
 
 ## `expo-secure-store` for tokens, AsyncStorage for cache
 
@@ -227,6 +252,13 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
   a one-name alias statement in prose (a line saying one script is an alias of another). `docs:check` runs
   inside `verify` here too, because it ran only at pre-commit and weekly.
   **Evidence**: `scripts/docs-check.mjs` and its test, `scripts/gate-tiers.json`.
+
+## The iterate chain lints, widens and pins its legs
+
+- **Context**: the iterate chain ran no type-aware lint, so findings that need types first fired at the commit hook. A change to a file no test imports (the jest block in `package.json`, `babel.config.js`, `tsconfig.json`, the NativeWind and Metro configs, `src/test/setup.ts`) selected no test, and `--passWithNoTests` turned that into exit 0, so a broken config went green here and red at the push. `scripts/mutation-scope.test.mjs` reads configs as text and nothing imports it, so no selection reached it.
+- **Decision**: `scripts/lint-changed.mjs` runs ESLint, with the flags and cache of `npm run lint`, on what differs from HEAD plus untracked files; `.cursor/**` is ignored, since nothing under it is product code. `scripts/iterate-tests.mjs` selects tests by change, but runs the whole suite, without `--passWithNoTests`, when one of its named paths is dirty (staged, untracked, deleted or renamed away) or git cannot answer. The scope test is a plain `node` step, named by its file: a raw `node --test` step reads as a stage called `node`, and any line saying "the Node engine" then counts as retelling the chain. `scripts/iterate-chain.test.mjs` fails a chain that drops a leg or brings back a raw jest step; `scripts/iterate-tests.test.mjs` fails a listed path that no longer exists and a jest setup file the list lacks.
+- **Consequences**: measured on a scratch copy, three changed source files, warm caches: 3.7 s before, 4.7 s after; the ESLint leg alone 4.1 s on a cold cache and 0.9 s warm; the widened run, the whole suite, 3.4 s for 36 suites. The budget is 15 s (`scripts/gate-tiers.json`). A diff that touches no listed path keeps the module-graph selection, so a green run on an untested source change still proves nothing (`VERIFICATION.md` § Verification integrity).
+- **Status**: in force. **Evidence**: `scripts/iterate-chain.test.mjs`, `scripts/iterate-tests.test.mjs`, `scripts/lint-changed.test.mjs`.
 
 ## Fail-closed audit gate
 

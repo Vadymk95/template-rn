@@ -1350,6 +1350,43 @@ describe('checkQuarantine', () => {
             assert.deepEqual(checkQuarantine({ tests, today }), []);
         });
 
+        // Jest is the runner here, so `fit` and `xit` are real globals; only a name the file declares
+        // for itself is its own helper, and a call to it declares no test.
+        it('does not read a function the file declares as fit as a Jest focus', () => {
+            assert.deepEqual(findSwitchedOff('function fit(x) { return x; }\nfit(1);'), []);
+        });
+
+        it('does not read a const the file declares as xit as a Jest skip', () => {
+            assert.deepEqual(findSwitchedOff('const xit = () => {}; xit(2);'), []);
+        });
+
+        it('keeps the exemption to the declared name', () => {
+            const hits = findSwitchedOff("function fit() {}\nfit(1);\nxit('x', () => {});");
+
+            assert.deepEqual(
+                hits.map((hit) => hit.label),
+                ['xit']
+            );
+        });
+
+        it('still reads an imported fit as the Jest focus, which may be the global', () => {
+            const hits = findSwitchedOff("import { fit } from './h';\nfit('x', () => {});");
+
+            assert.deepEqual(
+                hits.map((hit) => [hit.label, hit.focused]),
+                [['fit', true]]
+            );
+        });
+
+        it('still reads a destructured fit as the Jest focus', () => {
+            const hits = findSwitchedOff("const { fit } = h;\nfit('x', () => {});");
+
+            assert.deepEqual(
+                hits.map((hit) => [hit.label, hit.focused]),
+                [['fit', true]]
+            );
+        });
+
         it('reads a call, not a word in a comment', () => {
             const prose = form('// never write it', '.skip or describe', '.skipIf in a spec');
             assert.deepEqual(checkQuarantine({ tests: [['i.test.ts', prose]], today }), []);

@@ -9,6 +9,10 @@ module.exports = function (api) {
         // production, breaking the contract silently. transform-remove-console
         // is now placed BEFORE worklets so dead `console.*` is stripped before
         // worklets pick over the AST.
+        //
+        // `exclude` is the set of console methods a release keeps: the logger writes through
+        // `warn` and `error`, and src/lib/logger.test.ts fails when it writes through a method
+        // that is not on this list.
         plugins: [
             ...(process.env.NODE_ENV === 'production'
                 ? [['transform-remove-console', { exclude: ['error', 'warn'] }]]

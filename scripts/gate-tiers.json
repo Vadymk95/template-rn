@@ -6,7 +6,7 @@
         "verify:iter": {
             "class": "code",
             "description": "iterate: the seconds-long check run per change",
-            "chain": "check-hooks -> lint:oxlint -> typecheck -> jest --onlyChanged --passWithNoTests"
+            "chain": "check-hooks -> lint:oxlint -> typecheck -> lint-changed -> iterate-tests -> mutation-scope.test"
         },
         "verify": {
             "class": "code",

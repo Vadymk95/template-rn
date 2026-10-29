@@ -19,6 +19,8 @@
  */
 import { spawnSync } from 'node:child_process';
 
+import { isEntryPoint } from './is-entry-point.mjs';
+
 /** Jest's own wording, copied from a measured run. */
 const DROPOUT_MARKER = 'Failed to collect coverage from';
 
@@ -67,6 +69,6 @@ const main = () => {
 };
 
 // Guarded so importing this module for a test does not run the suite.
-if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href) {
+if (isEntryPoint(import.meta.url)) {
     main();
 }
