@@ -1,6 +1,6 @@
 # DECISIONS — Why these, not others
 
-History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; this file holds only what is true today (entries ≤30 lines: context, decision, consequences, status, evidence), and a reversed decision is rewritten or deleted here, never archived.
+History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; this file holds only what is true today (entries ≤30 lines after their heading, one index row each, both held by `docs:check`: context, decision, consequences, status, evidence), and a reversed decision is rewritten or deleted here, never archived.
 
 ## Index
 
@@ -21,6 +21,7 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 | Gate-script specs run on `node:test`                                   | 2026-07 | in force                               |
 | One entry-point guard for every gate script                            | 2026-10 | in force                               |
 | Test servers bind ports below the ephemeral ranges                     | 2026-10 | in force                               |
+| Jest does not reset mocks between tests                                | 2026-10 | in force                               |
 | `expo-secure-store` for tokens, AsyncStorage for cache                 | 2026-04 | in force                               |
 | No observability vendor in the template                                | 2026-04 | in force                               |
 | i18n and forms in the template, auth and crash reporting not           | 2026-04 | in force                               |
@@ -33,6 +34,10 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 | Native colour values mirror `global.css`                               | 2026-10 | in force                               |
 | The gate contract: `verify` is a superset of CI                        | 2026-07 | in force                               |
 | The gate chain has one readable home                                   | 2026-10 | in force                               |
+| docs:check reads the tree as a clean checkout does                     | 2026-10 | in force                               |
+| The gate's strict flags are read from the commands                     | 2026-10 | in force                               |
+| Gate tests pin the git defaults their flags override                   | 2026-10 | in force                               |
+| The app sits at the git root                                           | 2026-10 | in force                               |
 | The iterate chain lints, widens and pins its legs                      | 2026-10 | in force                               |
 | Fail-closed audit gate                                                 | 2026-07 | in force                               |
 | `docs:check` guards CI steps, ruleset contexts and its own trigger     | 2026-10 | in force                               |
@@ -152,6 +157,14 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 - **Consequences**: a test that binds a port adds a lane to `LANES`. The module keeps the lanes of the sibling templates that have no test here, so it stays a byte copy of theirs.
 - **Status**: in force. **Evidence**: `scripts/quiet-ports.test.mjs`, `scripts/check-lock-age.test.mjs`.
 
+## Jest does not reset mocks between tests
+
+- **Context**: Jest keeps a mock's calls and implementation from one test to the next by default, so the order of the tests in a file can decide a verdict. `resetMocks: true` closes that, and it was measured on the whole suite first (Jest 29.7.0, 36 suites, 192 tests, 16 files that use `jest.fn` or `spyOn`, 2 that set a `...Once` value, 9 that reset by hand).
+- **Decision**: no `clearMocks`, `resetMocks` or `restoreMocks` in the jest block of `package.json`. A test that sets a return value, a spy or a `...Once` value on a shared mock resets it itself (9 test files do, by hand).
+- **Measured**: `--clearMocks` and `--restoreMocks`: all 192 green. `--resetMocks`: 5 suites and 15 tests red, every one from an implementation it wiped. 13 tests read `undefined` insets from the safe-area-context mock (`useSafeAreaInsets` and `useSafeAreaFrame` are `jest.fn(impl)`; `Cannot read properties of undefined (reading 'top')` in the start guide, todo workspace and `Screen` suites). One test, the user store's persisted payload, got `undefined` from the in-memory async-storage mock (12 `jest.fn` calls, 11 of them with an implementation). One called `.catch` on the `undefined` that the wiped `hideAsync` mock of `src/test/setup.ts` returned (`SplashScreen.hideAsync()` in `src/app/_layout.tsx`; `preventAutoHideAsync()` runs once at import, before the first reset).
+- **Consequences**: adopting `resetMocks` means rebuilding those implementations in a `beforeEach` of `src/test/setup.ts`; for the two library mocks that is a copy of the library's own mock code (the async-storage one is 107 lines) that drifts from the library, so it was not done. `clearMocks` and `restoreMocks` are green but leave a `mockReturnValue` or an unconsumed `...Once` on a module-level mock alive for the next test, which is the class that matters, so neither was adopted as a half measure. Revisit when the library mocks stop using `jest.fn(impl)`, or a Jest upgrade changes what `resetMocks` does (not measured here).
+- **Status**: in force. **Evidence**: `src/test/setup.ts`.
+
 ## `expo-secure-store` for tokens, AsyncStorage for cache
 
 - **Decision**: AsyncStorage is plaintext on both platforms; anything that grants API access goes to `expo-secure-store` (Keychain on iOS, EncryptedSharedPreferences on Android). Auth tokens are stored via `src/lib/secureToken.ts`, with only the username in Zustand persist.
@@ -204,9 +217,9 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 ## Raw hex and magic numbers are lint errors
 
 - **Context**: both were written conventions with no enforcement; a copied `#0a0a0a` sat in `navigationTheme.ts` next to a comment forbidding raw hex, while the token it mirrored was `#09090B`.
-- **Decision**: raw hex (`no-restricted-syntax`, string and template-literal selectors) is an error under `src/**` except `src/shared/lib/theme/**`; `@typescript-eslint/no-magic-numbers` is on with `-1 0 1 2 100 1000` plus enum members, array indexes, defaults and type indexes allowed, exempt in `src/shared/lib/theme/**`, root config files and tests (a test that imports the constant it asserts is tautological). `no-empty` is on with `allowEmptyCatch: false`.
+- **Decision**: raw hex (`no-restricted-syntax`, string and template-literal selectors) is an error under `src/**` except `src/shared/lib/theme/**`; `@typescript-eslint/no-magic-numbers` is on with `-1 0 1 2 100 1000` plus enum members, array indexes, defaults, type indexes and a numeric literal type declared as an alias (`type Gap = 3 | 5`; the same union written inline in a property type still counts) allowed, exempt in `src/shared/lib/theme/**`, root config files and tests (a test that imports the constant it asserts is tautological). `no-empty` is on with `allowEmptyCatch: false`.
 - **Consequences**: the tab bar tint now reads `useColorScheme()` and `getThemeColorValue`; `src/test/app/tabs-layout.test.tsx` guards it with a file-local `expo-router` mock, because the shared mock drops props.
-- **Status**: in force. **Evidence**: [6fbe2ae](https://github.com/Vadymk95/template-rn/commit/6fbe2ae), [4ae66e3](https://github.com/Vadymk95/template-rn/commit/4ae66e3) ([PR #38](https://github.com/Vadymk95/template-rn/pull/38)).
+- **Status**: in force. **Evidence**: [6fbe2ae](https://github.com/Vadymk95/template-rn/commit/6fbe2ae), [4ae66e3](https://github.com/Vadymk95/template-rn/commit/4ae66e3) ([PR #38](https://github.com/Vadymk95/template-rn/pull/38)), `scripts/lint-guards.test.mjs`.
 
 ## Native colour values mirror `global.css`
 
@@ -222,8 +235,7 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 
 ## The gate chain has one readable home
 
-- **Context**: the stage order was retold by hand in 24 places, unchecked: the pre-push comment dropped
-  `lock:age`.
+- **Context**: the stage order was retold by hand in 24 places, unchecked: the pre-push comment dropped `lock:age`.
 - **Decision**: `checks.<name>.chain` is derived from the script and `docs:check` fails on any difference
   (deleting the view left pointers without a page). Elsewhere a file names a script and its purpose and points
   at the view. A line outside it also fails when it names 3 or more distinct stages, or composes a script
@@ -253,6 +265,34 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
   inside `verify` here too, because it ran only at pre-commit and weekly.
   **Evidence**: `scripts/docs-check.mjs` and its test, `scripts/gate-tiers.json`.
 
+## docs:check reads the tree as a clean checkout does
+
+- **Context**: the disk answers differently on a machine that kept an emptied folder or an ignored file than on a clean checkout, so the same docs were green here and red in CI. A line number in a pointer moves with every edit and nothing can check it. An index and a cap that only prose states are exceeded one entry at a time, and a typed `_measured` count in `scripts/gate-tiers.json` (`2 on 2026-09-13` for the flow suite) has no check behind it.
+- **Decision**: a path in a doc resolves only to a file git lists (tracked, or new and not ignored) that is on disk, or to a folder holding one; this file is judged the same way, so an evidence link that points nowhere is red. A path that ends in a line number (`path:12`, `path:12-20`) is red: cite the symbol. This file keeps its shape: one index row per entry heading (compared without a `[YYYY-MM]` prefix; the `## Index` heading is not an entry) and at most 30 lines after a heading. Every run prints each suite's measurement (`suites.maestro: 2 file(s) of 4`), and a `_measured` key is a finding. Where git cannot list the files (no `.git`), the run says the path and line-pointer checks were skipped and leaves them out of its summary.
+- **Consequences**: the first run over this tree found one entry 31 lines long (the gate-chain entry, now one line shorter), no line pointer and no index row without its heading. One heading and its row carry the `[2026-05]` prefix, which is why both sides are compared without it. The flow suite counts files, so a second subject of an existing flow becomes steps in that flow's file, never a new yaml file.
+- **Status**: in force. **Evidence**: `scripts/docs-check.test.mjs`, `scripts/docs-check.mjs`.
+
+## The gate's strict flags are read from the commands
+
+- **Context**: `checks.<name>.chain` is derived from `package.json` and then compared with it, so a flag dropped from a script is dropped from the view the same way and both equality checks stay green.
+- **Decision**: `docs:check` expands every gate script through its `npm run` steps (the arguments a step passes after its own `--` land on the last command of the target script, as npm appends them) and requires the flags that make a tool strict: for the linters `--max-warnings 0` (the last value counts) and `--deny-warnings`; a jest run never watches (a fork on vitest needs `run`). `--passWithNoTests` may appear only in the iterate chain, the check `moments.iterate` names in `scripts/gate-tiers.json`. A command ends at `&&`, `||`, `;` or a newline outside quotes, and `NAME=value`, `cross-env`, `env` and `npx` are looked through. What a `node scripts/*.mjs` step spawns is not read.
+- **Consequences**: a lint that tolerates warnings, a test run that watches, or a "no tests found" pass is a gate that approves what it did not run. On this tree every gate command already carried its flags (`lint` has `--max-warnings 0`, `lint:oxlint` has `--deny-warnings` over `src`), and no `package.json` script carries `--passWithNoTests`: the iterate tier's jest runs from `scripts/iterate-tests.mjs`, whose arguments this rule does not read.
+- **Status**: in force. **Evidence**: `scripts/docs-check.test.mjs`, `scripts/docs-check.mjs`.
+
+## Gate tests pin the git defaults their flags override
+
+- **Context**: `scripts/check-gate-integrity.mjs` passes `--no-renames`, `--no-prefix`, `--no-color` and `-c core.quotepath=off` so its answer does not depend on the machine it runs on. A test guards such a flag only while git would otherwise do the opposite, and that depends on the developer's global config.
+- **Decision**: each fixture repository sets repository-local config that is the opposite of what each flag overrides (`diff.renames=true`, `diff.noprefix=false`, `core.quotepath=true`, `color.diff=always`). Repository-local config beats the global one, and the checker's own git reads it too.
+- **Consequences**: measured on a scratch copy under a global git config that agrees with every flag (`diff.renames=false`, `diff.noprefix=true`, `core.quotepath=false`, `color.diff=never`), over the four `check-gate-integrity.*.test.mjs` files (470 tests): with the old fixtures, deleting any one of the four flags left all 470 green; with the fixture defaults, deleting `--no-renames` failed 2 tests, `--no-prefix` 81, `--no-color` 85 and the quotepath override 2.
+- **Status**: in force. **Evidence**: `scripts/check-gate-integrity.fixtures.mjs`.
+
+## The app sits at the git root
+
+- **Context**: the gate scripts read git paths relative to the repository root (staged names, the hooks path, `ref:path`). From a subfolder they match nothing and say nothing, and the hooks check resolved the husky hooks folder against the folder it ran in, so an app installed in a subfolder passed while git ran no hook (the new test against the old script: exit 0 where it must refuse).
+- **Decision**: `scripts/check-hooks.mjs`, the first step of `verify` and `verify:iter`, refuses an app whose folder is not the git root, CI included, and says so in three lines. Supporting a subfolder would rewrite every script that reads git paths and need a test of its own for each; the refusal costs one line in the README rename checklist.
+- **Consequences**: an Expo app inside a monorepo is a plausible fork shape (inference), and that fork changes the gate scripts first. Not done: a subfolder port of the scripts, which is the operator's call.
+- **Status**: in force. **Evidence**: `scripts/check-hooks.test.mjs`.
+
 ## The iterate chain lints, widens and pins its legs
 
 - **Context**: the iterate chain ran no type-aware lint, so findings that need types first fired at the commit hook. A change to a file no test imports (the jest block in `package.json`, `babel.config.js`, `tsconfig.json`, the NativeWind and Metro configs, `src/test/setup.ts`) selected no test, and `--passWithNoTests` turned that into exit 0, so a broken config went green here and red at the push. `scripts/mutation-scope.test.mjs` reads configs as text and nothing imports it, so no selection reached it.
@@ -274,7 +314,7 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 
 ## TDD sibling gate on pre-commit, no auto-commit hook
 
-- **Decision**: `scripts/check-test-siblings.mjs` refuses a commit when a staged `src/**` file has no co-located `*.test.*` in the git index (an untracked test on disk does not count). It checks changed files only, a ratchet: existing untested files are not retroactively broken, the next edit to one needs a test. `verify` (so pre-push and CI) runs the same rule in `--range` mode against the HEAD tree, so a commit made with the hook skipped, or a PR from a clone without hooks, fails at push and in CI; the first commit of a repository has nothing to compare with and passes. Its exempt list derives from this repo's `collectCoverageFrom` plus declaration-only modules; `src/shared/lib/theme/**` is not exempt. The hook proves existence, never worth: the mutation check (revert the fix, the test must go red) lives in `test-driven-development.mdc`.
+- **Decision**: `scripts/check-test-siblings.mjs` refuses a commit when a staged `src/**` file has no co-located `*.test.*` in the git index (an untracked test on disk does not count). It checks changed files only, a ratchet: existing untested files are not retroactively broken, the next edit to one needs a test. `verify` (so pre-push and CI) runs the same rule in `--range` mode against the HEAD tree, so a commit made with the hook skipped, or a PR from a clone without hooks, fails at push and in CI; the first commit of a repository has nothing to compare with and passes, staged (no HEAD yet) or in a range (no base). Its exempt list derives from this repo's `collectCoverageFrom` plus declaration-only modules; `src/shared/lib/theme/**` is not exempt. The hook proves existence, never worth: the mutation check (revert the fix, the test must go red) lives in `test-driven-development.mdc`.
 - **Consequences**: pre-commit also runs the repo-wide cheap checks (the list is `.husky/pre-commit`), collecting all failures before deciding, because `lint-staged` restores the unstaged hunks of a partially staged file after fixing it. Not adopted: a hook that commits for you, which hides a formatting fix inside a commit nobody wrote; the hook prints the remedy (`npm run fix && git add -u`) instead.
 - **Status**: in force. **Evidence**: [88f5551](https://github.com/Vadymk95/template-rn/commit/88f5551).
 

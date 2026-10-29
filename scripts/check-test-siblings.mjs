@@ -25,10 +25,10 @@
 // Range base, same rule as scripts/check-lock-age.mjs: the merge-base of HEAD with origin/master
 // (or origin/main) on a developer machine, so a push is judged on everything it adds; `HEAD~1`
 // when CI is set (the PR merge commit's first parent, which needs `fetch-depth: 2`); `--base`
-// overrides. The first commit of a repository has nothing to compare with and passes with a note:
-// a project made with "Use this template" starts as one commit holding the whole template, and the
-// ratchet starts at its next change. A shallow clone that hides the parent is an ERROR, because
-// passing there would be a silent skip.
+// overrides. The first commit of a repository has nothing to compare with and passes with a note,
+// staged (no HEAD yet) or in a range (no base): a project made with "Use this template" starts as
+// one commit holding the whole template, and the ratchet starts at its next change. A shallow clone
+// that hides the parent is an ERROR, because passing there would be a silent skip.
 //
 // Exit: 0 clean · 1 a changed source file has no sibling · 2 the gate could not decide.
 import { execFileSync } from 'node:child_process';
@@ -97,12 +97,20 @@ const nulList = (output) => output.split('\0').filter(Boolean);
 
 const CHANGED = ['--name-only', '-z', '--diff-filter=ACMR'];
 
-/** Staged files and an `exists` that answers from the index. */
+/**
+ * Staged files and an `exists` that answers from the index; `{ root: true }` before the first
+ * commit, when there is nothing to compare with.
+ */
 export const readStaged = (git) => {
     const changed = git(['diff', '--cached', ...CHANGED]);
     const tracked = git(['ls-files', '-z']);
     if (changed === null || tracked === null) {
         return { error: 'cannot read the git index: is this a git repository?' };
+    }
+    // No HEAD means no commit yet: everything staged is new, a fork's first commit carries the whole
+    // template, and judging it would fail on every starter file that has no sibling.
+    if (git(['rev-parse', '--verify', '--quiet', 'HEAD^{commit}']) === null) {
+        return { root: true };
     }
     const inIndex = new Set(nulList(tracked));
     return {

@@ -12,7 +12,7 @@ Production-ready React Native + Expo starter: file-based routing, strict types, 
 ## Source of truth
 
 - **This file is canonical for every tool** (Cursor and Codex load it natively; Claude Code through the import in `CLAUDE.md`). Edit THIS file; never grow the shim.
-- **Code is ground truth; this file is a verifiable pointer.** A line that conflicts with the code is stale: follow the code, fix or flag the line in the same session.
+- **Code is ground truth; this file is a verifiable pointer.** A line that conflicts with the code is stale: follow the code, fix or flag the line in the same session. A pointer names a path and the symbol in it, never a line number: `docs:check` fails `path:12`.
 - **One canonical place per fact:** versions → `package.json`, commands → the table below, holds → `scripts/version-holds.json`, why → `.cursor/brain/DECISIONS.md`. Everything else points.
 
 ## Critical rules
@@ -43,7 +43,7 @@ npm run verify:ci    # the CI gate — husky pre-push AND CI both run it (`ci:lo
 npm run fix          # the one remedy: repo-wide autofix, then format
 npm run test:one -- <file> # one jest test file, through the tracer (not around it)
 npm run trace:report # findings from .gate-trace.log (forbidden moments, budgets, worktrees)
-npm run docs:check   # docs drift (paths, scripts, versions, command table, dead docs, the gate chain view and any retelling or composition of it); inside verify, weekly CI adds --weekly
+npm run docs:check   # docs drift (paths against the files git lists, line pointers, scripts, versions, command table, dead docs, the DECISIONS shape, the gate chain view, its strict flags and any retelling or composition of it); inside verify, weekly CI adds --weekly
 npm run bench:verify # per-step timings when the gate feels slow
 npm run test:mutation # StrykerJS strength gate — weekly `mutation.yml`, NOT in verify
 ```
@@ -76,7 +76,8 @@ list of the stages each gate script runs (`checks.<name>.chain`, checked against
   before the first deploy) runs the offline checks and loudly SKIPS the heavy stages; phase 1 (from the
   first deploy) runs the full `verify:ci`. A skipped stage is printed, never silent; flip the phase in one
   commit at the first deploy. A repo whose gate has no heavy stage runs the full `verify:ci` at push and
-  records in `gate-tiers.json` that a phase switch would gate nothing.
+  records in `gate-tiers.json` that a phase switch would gate nothing. With no remote there is no push
+  moment: the lead hand-runs the push chain once per slice on the main checkout; an implementer never does.
 - **CI** - phase-blind: always the full `verify:ci`, plus what only CI can do (the security workflow, the
   scheduled mutation job, a mandatory dev-smoke job where the repo has one).
 
@@ -116,17 +117,19 @@ moments, blown budgets, gate runs from a worktree). After a push, gate output in
 the contract: **silence is a failure, not a pass** - a push that printed no gate ran no gate, whatever the
 exit code says.
 
-**Ports.** A busy port means MOVE, never kill a server you did not start; the single-spec and measure
-scripts take the next free port. Only the push gate clears its own port.
+**Ports.** A busy port means MOVE, never kill a server you did not start; every script that starts its
+own server takes the next free port. Only the push gate clears its own port.
 
 ### Lanes - who runs what
 
 - **Main agent, inline.** Iterate and measure while working; the push runs the chain, never a hand-run.
-- **Implementer subagent.** Works in a hand-made `git worktree` OUTSIDE the repo directory, on its own
-  port, with `node_modules` symlinked from the main checkout. Iterate and measure only; the gate never
-  runs from a worktree (the tracer records it as a finding). The lead removes the worktree, checks the
-  branch out in the main checkout and pushes from there, so the gate runs once, at the push, for every
-  writer.
+- **Implementer subagent.** Works in a hand-made `git worktree` OUTSIDE the repo directory, on its own port,
+  with `node_modules` symlinked from the main checkout. Iterate and measure only; the gate never runs from a
+  worktree. The lead removes the worktree, checks the branch out in the main checkout and pushes from there,
+  so the gate runs once, at the push, for every writer. A lane never waits on a prompt: it writes only in its
+  worktree and its scratch folder (a planner or gate file change goes in the report as exact lines, which the lead
+  applies with the operator), reads with Read and Grep, and runs `git -C <dir>` and `npm run --prefix <dir>`
+  instead of `cd`, with no shell variable or `;` chain. Lane rules: `.cursor/templates/LANE.md`.
 - **Copilot coding agent.** Hand-over is a fully specified issue (goal as behaviour, paths in scope,
   acceptance, out of scope; use `.github/ISSUE_TEMPLATE/agent-task.yml` where the repo ships it), assigned
   to Copilot. It works on its own branch and opens a draft pull request; workflows on that PR start only
@@ -169,7 +172,7 @@ that lives only in a conversation is not a plan.
 ## Working agreements
 
 - **No browser lane**: a question only a rendered result can answer goes to `.maestro/` or a device (the substitute ladder closes `READING_INDEX.md`). The push runs the full `verify:ci` directly (`gate-tiers.json` `_phaseMeaning` says why); the by-hand prohibition also covers `ci:local` and `test:mutation`. Change the tracer's discipline by editing `scripts/gate-tiers.json`, never the analyser. The gate binds no port: if Metro's is busy, MOVE (`npx expo start --port <free>`), kill nothing.
-- **Bootstrap after clone**: `npm run prepare` once (`.npmrc` disables lifecycle scripts as a supply-chain guard, so husky does not self-install; `verify:iter` and `verify` fail loudly without hooks, and a push from a clone without them runs no gate). Dependency cooldown `.npmrc` `min-release-age=3` (days): a brand-new package or urgent patch needs `npm install <pkg> --min-release-age=0`. The lockfile obeys the same cooldown: `npm run lock:age` (a network-bound check) fails a changed `name@version` younger than `min-release-age`; a deliberate bypass bump is listed with a reason and an expiry in `scripts/lock-age-allowlist.json`.
+- **Bootstrap after clone**: `npm run prepare` once (`.npmrc` disables lifecycle scripts as a supply-chain guard, so husky does not self-install; `verify:iter` and `verify` fail loudly without hooks, and a push from a clone without them runs no gate). Dependency cooldown `.npmrc` `min-release-age=3` (days): a brand-new package or urgent patch needs `npm install <pkg> --min-release-age=0`. The lockfile obeys the same cooldown: `npm run lock:age` (a network-bound check) fails a changed `name@version` younger than `min-release-age`. Prefer waiting out the cooldown. An agent never runs the `--min-release-age=0` install and never edits `scripts/lock-age-allowlist.json` (an agent's classifier refuses both); the operator runs the bypass install and lists the row (reason, expiry no later than the day the version is old enough on its own).
 - **Zero warnings** (`eslint --max-warnings 0`, `oxlint --deny-warnings`): fix the cause; never downgrade a rule or sprinkle `eslint-disable`. A directive that must stay names its rules and carries `-- reason`; `oxlint-disable*` is banned. A rule wrong for a class of files gets a documented file-scoped override (`eslint.config.mjs`, or `overrides` in `.oxlintrc.json`).
 - **Complexity ratchet**: `complexity` 15 / `max-depth` 3 / `max-params` 4 / `max-lines-per-function` 120 / `max-lines` 200 over `src/**`, tests exempt. The numbers sit above the measured ceiling (`DECISIONS.md`), so a hit means new drift: split the function first; raising one needs a fresh measurement and a `DECISIONS.md` line.
 - **Mutation testing** (`npm run test:mutation`): coverage proves code RUNS, the score proves tests would CATCH a wrong implementation. `thresholds.break` in `stryker.config.json` is a measured floor: raise it after a good run, never lower it to go green.
@@ -181,7 +184,7 @@ that lives only in a conversation is not a plan.
 `scripts/version-holds.json` is the list (range, reason, lift condition, evidence). `scripts/check-version-holds.mjs`, inside `verify`, fails a manifest or lockfile outside a range and a missing Dependabot `ignore`. A hold lifts on its stated condition, never because `npm outdated` lists something newer. Why: `DECISIONS.md`. `scripts/check-engines-floor.mjs`, also inside `verify`, fails an `engines.node` or `.nvmrc` below the strictest `engines.node` in the lockfile (`engine-strict` refuses that install): a dependency bump that raises the floor raises both files in the same change. It also fails an `engines.npm` below the npm that a `.npmrc` key needs (`min-release-age`: 11.10, first bundled by Node 24.14.1, the `.nvmrc`), because an older npm ignores the key with a warning.
 
 - **Native/Expo packages are SDK-pinned** (`react`, `react-native`, `react-native-*`, `expo-*`, async-storage): versions come from `npx expo install --fix`, never from `npm outdated`. Lift: the SDK upgrade.
-- **`expo install --check` / `expo-doctor` can go red for a patch the cooldown holds**: wait out `min-release-age`, or take it once with `npm_config_min_release_age=0 npx expo install --fix` and record each version, publish date and provenance in `DECISIONS.md` and in `scripts/lock-age-allowlist.json` (reason + expiry; `lock:age` fails it otherwise). Never lower `min-release-age` in `.npmrc`; `EXPO_OFFLINE=1 npx expo install --check` stays green meanwhile.
+- **`expo install --check` / `expo-doctor` can go red for a patch the cooldown holds**: wait out `min-release-age`, or the operator takes it once with `npm_config_min_release_age=0 npx expo install --fix` and records each version, publish date and provenance in `DECISIONS.md` and in `scripts/lock-age-allowlist.json` (reason + expiry; `lock:age` fails it otherwise). Never lower `min-release-age` in `.npmrc`; `EXPO_OFFLINE=1 npx expo install --check` stays green meanwhile.
 - **`test-renderer` stays `~1.2.x`** (its 1.3 reconciler peers a newer React than the SDK pins). **Jest and `@types/jest` stay 29.x, `@babel/core` stays 7.x** (`jest-expo` is built on jest 29 internals). **Tailwind stays 3.4.x** (NativeWind 4 calls Tailwind 3 internals). **TypeScript stays `~6.0.x`** (typescript-eslint peer range). **`@types/react` stays level with the pinned `react`**.
 - **ESLint is 10.x**: the trailing block in `eslint.config.mjs` pins `settings.react.version` to a literal because `eslint-config-expo`'s `'detect'` crashes every React rule. Do not delete it or set it back to `'detect'`.
 - **`overrides` in `package.json` are security floors WITH major caps** (`">=fixed <next-major"`): an uncapped floor ages into its advisory's vulnerable range. Never write one without a cap, never remove a floor to quiet npm; a stale audit allowance fails the gate by design.
@@ -189,11 +192,7 @@ that lives only in a conversation is not a plan.
 
 ## Changes reach master through a pull request
 
-Branch, run the gate, push the branch, open a PR, merge when CI is green. Here `master` has a ruleset requiring the checks named in `.github/ruleset.json`, and the owner role can bypass it with a direct push: don't. **A fork inherits files, not settings:** it arrives with the whole gate and none of the enforcement until you switch it on (`README.md` § "What your fork does not inherit").
-
-## Commit format
-
-`type(scope): description`, English, imperative, max 96 chars, no `Co-authored-by` trailer (no hook checks the trailer). Types: `feat` `fix` `chore` `docs` `style` `refactor` `perf` `test` `revert` `build` `ci`.
+Branch, run the gate, push the branch, open a PR, merge when CI is green. Here `master` has a ruleset requiring the checks named in `.github/ruleset.json`, and the owner role can bypass it with a direct push: don't. **A fork inherits files, not settings:** it arrives with the whole gate and none of the enforcement until you switch it on (`README.md` § "What your fork does not inherit"). **Commit format**: `type(scope): description`, English, imperative, max 96 chars, no `Co-authored-by` trailer (no hook checks the trailer). Types: `feat` `fix` `chore` `docs` `style` `refactor` `perf` `test` `revert` `build` `ci`.
 
 ## Maintaining this file
 

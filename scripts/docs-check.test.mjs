@@ -24,7 +24,9 @@ import {
     checkCiRunSteps,
     checkCommandTable,
     checkDeadDocs,
+    checkDecisionShape,
     checkGateChains,
+    checkGateFlags,
     checkMemoryImports,
     checkQuarantine,
     checkPathsAndScripts,
@@ -48,6 +50,7 @@ import {
     gateVocabulary,
     isPullRequestTriggered,
     listMarkdownFiles,
+    listRepoFiles,
     listTestFiles,
     normalizeHeading,
     parseTraceRows,
@@ -60,7 +63,8 @@ import {
     scriptSteps,
     stageName,
     stagesNamed,
-    stepLabel
+    stepLabel,
+    suiteNotes
 } from './docs-check.mjs';
 
 const ctx = {
@@ -132,23 +136,247 @@ describe('scriptFamilies', () => {
     });
 });
 
+const gitEnvironment = () =>
+    Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('GIT_')));
+
+/**
+ * A throwaway git repository holding `files` (path -> text), staged; `check(root, git)` runs inside it.
+ * GIT_* leaves process.env for the call: a hook chain exports them, and a child git that inherits
+ * them answers for the real repository instead of this one.
+ */
+const withGitRepo = (files, check) => {
+    const root = mkdtempSync(path.join(tmpdir(), 'docs-check-git-'));
+    const git = (...args) =>
+        execFileSync('git', args, { cwd: root, env: gitEnvironment(), stdio: 'ignore' });
+    const saved = Object.entries(process.env).filter(([key]) => key.startsWith('GIT_'));
+    try {
+        git('init', '-q');
+        for (const [file, text] of Object.entries(files)) {
+            mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
+            writeFileSync(path.join(root, file), text);
+        }
+        git('add', '-A');
+        for (const [key] of saved) delete process.env[key];
+        check(root, git);
+    } finally {
+        for (const [key, value] of saved) process.env[key] = value;
+        rmSync(root, { recursive: true, force: true });
+    }
+};
+
 describe('checkPathsAndScripts', () => {
-    it('flags a missing script and a missing anchored path, skips history files', () => {
-        const docs = [
-            ['README.md', 'run `npm run nope` then open `scripts/missing.mjs` or `PLAN.md`'],
-            ['AGENTS.md', '`npm run verify:*` is fine, `npm run gone:*` is not'],
-            ['.cursor/brain/DECISIONS.md', 'old `scripts/gone.mjs`']
-        ];
-        const findings = checkPathsAndScripts({
+    const judge = (docs, extra = {}) =>
+        checkPathsAndScripts({
             docs,
             root: '/nowhere',
             scripts: { 'verify:iter': 'x' },
-            topDirs: new Set(['scripts'])
+            topDirs: new Set(['scripts']),
+            ...extra
         });
+
+    it('flags a missing script and a missing anchored path', () => {
+        const docs = [
+            ['README.md', 'run `npm run nope` then open `scripts/missing.mjs` or `PLAN.md`'],
+            ['AGENTS.md', '`npm run verify:*` is fine, `npm run gone:*` is not']
+        ];
+        const findings = judge(docs);
         assert.equal(findings.length, 3);
         assert.ok(findings[0].includes('npm run nope'));
         assert.ok(findings[1].includes('scripts/missing.mjs'));
         assert.ok(findings[2].includes('npm run gone:*'));
+    });
+
+    it('judges the paths a history file cites and leaves its scripts alone', () => {
+        const docs = [
+            [
+                '.cursor/brain/DECISIONS.md',
+                'old `scripts/gone.mjs`, `npm run gone` and `npm run gone:*`'
+            ]
+        ];
+        assert.deepEqual(judge(docs), [
+            '.cursor/brain/DECISIONS.md:1: `scripts/gone.mjs` does not exist in the tree'
+        ]);
+    });
+
+    describe('a line pointer', () => {
+        const here = { root: process.cwd() };
+        const finding = (file, token) =>
+            `${file}:1: \`${token}\` cites a line number — name the symbol instead, a line moves with every edit`;
+
+        it('is a finding on an anchored path, a range too, in a doc and in a history file', () => {
+            const docs = [
+                ['AGENTS.md', 'see `scripts/docs-check.mjs:12` and `scripts/docs-check.mjs:12-20`'],
+                ['.cursor/brain/DECISIONS.md', 'read `scripts/docs-check.mjs:7`']
+            ];
+            assert.deepEqual(judge(docs, here), [
+                finding('AGENTS.md', 'scripts/docs-check.mjs:12'),
+                finding('AGENTS.md', 'scripts/docs-check.mjs:12-20'),
+                finding('.cursor/brain/DECISIONS.md', 'scripts/docs-check.mjs:7')
+            ]);
+        });
+
+        it('leaves a path without one, a bare file name and a host with a port alone', () => {
+            const docs = [
+                [
+                    'AGENTS.md',
+                    'open `scripts/docs-check.mjs`, `docs-check.mjs:12` or `localhost:5173`'
+                ]
+            ];
+            assert.deepEqual(judge(docs, here), []);
+        });
+
+        it('is reported beside a missing path, so one run shows both', () => {
+            assert.deepEqual(judge([['README.md', 'at `scripts/missing.mjs:3`']]), [
+                finding('README.md', 'scripts/missing.mjs:3'),
+                'README.md:1: `scripts/missing.mjs:3` does not exist in the tree'
+            ]);
+        });
+
+        describe('into a file at the root', () => {
+            /** A throwaway folder holding the named empty files (nested names too); `check(root)` runs inside it. */
+            const withFiles = (names, check) => {
+                const root = mkdtempSync(path.join(tmpdir(), 'docs-check-root-'));
+                try {
+                    for (const name of names) {
+                        mkdirSync(path.dirname(path.join(root, name)), { recursive: true });
+                        writeFileSync(path.join(root, name), '');
+                    }
+                    check(root);
+                } finally {
+                    rmSync(root, { recursive: true, force: true });
+                }
+            };
+
+            it('is a finding on a file the root holds, in a doc and in a history file', () => {
+                const names = ['eslint.config.js', 'package.json'];
+                withFiles(names, (root) => {
+                    const docs = [
+                        ['AGENTS.md', 'the rules sit at `eslint.config.js:393`'],
+                        ['.cursor/brain/DECISIONS.md', 'read `package.json:12`']
+                    ];
+                    assert.deepEqual(judge(docs, { root, listed: new Set(names) }), [
+                        finding('AGENTS.md', 'eslint.config.js:393'),
+                        finding('.cursor/brain/DECISIONS.md', 'package.json:12')
+                    ]);
+                });
+            });
+
+            it('is a finding on a range into a file the root holds', () => {
+                const names = ['playwright.config.ts'];
+                withFiles(names, (root) => {
+                    const docs = [
+                        ['README.md', 'the projects start at `playwright.config.ts:49-60`']
+                    ];
+                    assert.deepEqual(judge(docs, { root, listed: new Set(names) }), [
+                        finding('README.md', 'playwright.config.ts:49-60')
+                    ]);
+                });
+            });
+
+            it('reads a leading ./ and a trailing colon as it does on a path', () => {
+                const names = ['package.json'];
+                withFiles(names, (root) => {
+                    const docs = [['AGENTS.md', 'see `./package.json:12` and `package.json:12:`']];
+                    assert.deepEqual(judge(docs, { root, listed: new Set(names) }), [
+                        finding('AGENTS.md', './package.json:12'),
+                        finding('AGENTS.md', 'package.json:12:')
+                    ]);
+                });
+            });
+
+            it('leaves a file the root holds alone when it is named without a line', () => {
+                const names = ['eslint.config.js', 'package.json'];
+                withFiles(names, (root) => {
+                    const docs = [['AGENTS.md', 'open `eslint.config.js` or `package.json`']];
+                    assert.deepEqual(judge(docs, { root, listed: new Set(names) }), []);
+                });
+            });
+
+            it('leaves a host with a port, a specifier and a time alone', () => {
+                const names = ['package.json'];
+                withFiles(names, (root) => {
+                    const docs = [
+                        [
+                            'AGENTS.md',
+                            'serve on `localhost:3000` or `127.0.0.1:4173`, use `node:24` at `10:30`'
+                        ]
+                    ];
+                    assert.deepEqual(judge(docs, { root, listed: new Set(names) }), []);
+                });
+            });
+
+            it('leaves a name alone that is not a file at the root, nested or missing', () => {
+                const names = ['package.json', 'scripts/docs-check.mjs'];
+                withFiles(names, (root) => {
+                    const docs = [['AGENTS.md', 'see `docs-check.mjs:12` or `vite.config.ts:49`']];
+                    assert.deepEqual(judge(docs, { root, listed: new Set(names) }), []);
+                });
+            });
+
+            it('judges what git lists: an ignored file on disk and a listed one that is gone', () => {
+                withFiles(['package.json', 'ignored.config.js'], (root) => {
+                    const listed = new Set(['package.json', 'gone.config.js']);
+                    const docs = [
+                        [
+                            'AGENTS.md',
+                            'at `package.json:1`, `ignored.config.js:2` and `gone.config.js:3`'
+                        ]
+                    ];
+                    assert.deepEqual(judge(docs, { root, listed }), [
+                        finding('AGENTS.md', 'package.json:1')
+                    ]);
+                });
+            });
+
+            it('reads the files a real repository lists: a tracked root file, not an ignored one', () => {
+                const tree = {
+                    '.gitignore': 'local.config.js\n',
+                    'local.config.js': '',
+                    'package.json': '{}'
+                };
+                withGitRepo(tree, (root) => {
+                    const docs = [['AGENTS.md', 'at `package.json:3` and `local.config.js:2`']];
+                    assert.deepEqual(judge(docs, { root, listed: listRepoFiles(root) }), [
+                        finding('AGENTS.md', 'package.json:3')
+                    ]);
+                });
+            });
+
+            it('lets the disk decide when git cannot list, and leaves a nested name alone', () => {
+                withFiles(['eslint.config.js', 'src/kept/a.ts'], (root) => {
+                    const docs = [
+                        [
+                            'AGENTS.md',
+                            'at `eslint.config.js:393`, `missing.config.js:5` and `src/kept/a.ts:3`'
+                        ]
+                    ];
+                    assert.deepEqual(judge(docs, { root, listed: null, topDirs: new Set() }), [
+                        finding('AGENTS.md', 'eslint.config.js:393')
+                    ]);
+                });
+            });
+
+            it('does not take a folder for a file, so a host named like one stays alone', () => {
+                const names = ['server/index.ts'];
+                withFiles(names, (root) => {
+                    const docs = [['AGENTS.md', 'the service answers on `server:3000`']];
+                    assert.deepEqual(judge(docs, { root, listed: new Set(names) }), []);
+                    assert.deepEqual(judge(docs, { root, listed: null }), []);
+                });
+            });
+
+            it('keeps flagging an anchored path beside it, in the order the doc names them', () => {
+                const names = ['package.json', 'src/main.ts'];
+                withFiles(names, (root) => {
+                    const docs = [['AGENTS.md', 'see `package.json:12` then `src/main.ts:7`']];
+                    const extra = { root, listed: new Set(names), topDirs: new Set(['src']) };
+                    assert.deepEqual(judge(docs, extra), [
+                        finding('AGENTS.md', 'package.json:12'),
+                        finding('AGENTS.md', 'src/main.ts:7')
+                    ]);
+                });
+            });
+        });
     });
 });
 
@@ -157,6 +385,59 @@ describe('pathExists', () => {
         assert.equal(pathExists(process.cwd(), 'scripts/docs-check'), true);
         assert.equal(pathExists(process.cwd(), 'scripts/docs-check.mjs'), true);
         assert.equal(pathExists(process.cwd(), 'scripts/nope'), false);
+    });
+
+    describe('against the files git lists', () => {
+        it('rejects a folder that holds no listed file, one whose files were deleted too', () => {
+            const files = { 'src/kept/a.ts': 'export {};\n', 'src/gone/b.ts': 'export {};\n' };
+            withGitRepo(files, (root) => {
+                mkdirSync(path.join(root, 'src/emptied'), { recursive: true });
+                // Deleted but not staged: the index still lists it, the disk no longer has it.
+                rmSync(path.join(root, 'src/gone/b.ts'));
+                const listed = listRepoFiles(root);
+                assert.equal(pathExists(root, 'src/kept', listed), true);
+                assert.equal(pathExists(root, 'src/kept/', listed), true);
+                assert.equal(pathExists(root, 'src/emptied', listed), false);
+                assert.equal(pathExists(root, 'src/gone', listed), false);
+                assert.equal(pathExists(root, 'src/gone/b.ts', listed), false);
+                // The same folders still resolve from the disk alone, which is the gap this closes.
+                assert.equal(pathExists(root, 'src/emptied'), true);
+            });
+        });
+
+        it('counts a new file that is not staged yet and refuses one git ignores', () => {
+            withGitRepo({ '.gitignore': 'ignored/\n', 'src/a.ts': 'export {};\n' }, (root) => {
+                mkdirSync(path.join(root, 'ignored'), { recursive: true });
+                writeFileSync(path.join(root, 'ignored/c.ts'), 'export {};\n');
+                writeFileSync(path.join(root, 'src/fresh.ts'), 'export {};\n');
+                const listed = listRepoFiles(root);
+                assert.equal(pathExists(root, 'src/fresh.ts', listed), true);
+                assert.equal(pathExists(root, 'ignored/c.ts', listed), false);
+                assert.equal(pathExists(root, 'ignored', listed), false);
+            });
+        });
+
+        it('still resolves a module without its extension and a folder by its index', () => {
+            const files = { 'src/lib/logger.ts': 'x', 'src/pages/home/index.tsx': 'x' };
+            withGitRepo(files, (root) => {
+                const listed = listRepoFiles(root);
+                assert.equal(pathExists(root, 'src/lib/logger', listed), true);
+                assert.equal(pathExists(root, 'src/pages/home', listed), true);
+                assert.equal(pathExists(root, 'src/lib/nope', listed), false);
+            });
+        });
+
+        it('falls back to the disk when git cannot list', () => {
+            const root = mkdtempSync(path.join(tmpdir(), 'docs-check-nogit-'));
+            try {
+                writeFileSync(path.join(root, 'a.ts'), 'export {};\n');
+                assert.equal(listRepoFiles(root), null);
+                assert.equal(pathExists(root, 'a.ts', null), true);
+                assert.equal(pathExists(root, 'b.ts', null), false);
+            } finally {
+                rmSync(root, { recursive: true, force: true });
+            }
+        });
     });
 });
 
@@ -430,6 +711,125 @@ describe('listMarkdownFiles', () => {
     });
 });
 
+describe('checkDecisionShape', () => {
+    const FILE = '.cursor/brain/DECISIONS.md';
+    /** A decisions file: an index table of `rows`, then one entry per [title, the lines after its heading]. */
+    const decisions = ({ rows, entries, indexHeading = false }) =>
+        [
+            '# Architectural Decisions',
+            '',
+            ...(indexHeading ? ['## Index', ''] : []),
+            '| Entry | Date | Status |',
+            '| ----- | ---- | ------ |',
+            ...rows.map((title) => `| ${title} | 2026-10 | in force |`),
+            '',
+            ...entries.flatMap(([title, lines]) => [`## [2026-10] ${title}`, ...lines, ''])
+        ].join('\n');
+    const body = (count) => Array.from({ length: count }, (_, index) => `line ${index + 1}`);
+    const shape = (text) => checkDecisionShape({ docs: [[FILE, text]] });
+    const lineOf = (text, needle) =>
+        text.split('\n').findIndex((line) => line.includes(needle)) + 1;
+
+    it('accepts one index row per entry heading', () => {
+        const text = decisions({
+            rows: ['Alpha', 'Beta'],
+            entries: [
+                ['Alpha', body(2)],
+                ['Beta', body(2)]
+            ]
+        });
+        assert.deepEqual(shape(text), []);
+    });
+
+    it('flags an entry heading that has no index row, at the heading', () => {
+        const text = decisions({
+            rows: ['Alpha'],
+            entries: [
+                ['Alpha', body(1)],
+                ['Beta', body(1)]
+            ]
+        });
+        assert.deepEqual(shape(text), [
+            `${FILE}:${lineOf(text, '## [2026-10] Beta')}: entry "Beta" has no row in the index table — add one that repeats the heading without its [YYYY-MM] prefix`
+        ]);
+    });
+
+    it('flags an index row that has no entry heading, at the row', () => {
+        const text = decisions({
+            rows: ['Alpha', 'Gamma'],
+            entries: [['Alpha', body(1)]]
+        });
+        assert.deepEqual(shape(text), [
+            `${FILE}:${lineOf(text, '| Gamma |')}: index row "Gamma" names no entry — a row repeats an entry heading without its [YYYY-MM] prefix; fix or drop it`
+        ]);
+    });
+
+    it('compares the titles without their [YYYY-MM] prefix, on both sides', () => {
+        const text = decisions({
+            rows: ['[2026-10] Alpha'],
+            entries: [['Alpha', body(1)]]
+        });
+        assert.deepEqual(shape(text), []);
+    });
+
+    it('matches every heading to one row, so a second heading of the same title needs its own', () => {
+        const entries = [
+            ['Alpha', body(1)],
+            ['Alpha', body(1)]
+        ];
+        const once = decisions({ rows: ['Alpha'], entries });
+        assert.equal(shape(once).length, 1);
+        assert.ok(shape(once)[0].includes('entry "Alpha" has no row'));
+        assert.deepEqual(shape(decisions({ rows: ['Alpha', 'Alpha'], entries })), []);
+    });
+
+    it('allows an entry 30 lines after its heading and flags 31', () => {
+        const entry = (lines) => decisions({ rows: ['Alpha'], entries: [['Alpha', lines]] });
+        assert.deepEqual(shape(entry(body(30))), []);
+        const long = entry(body(31));
+        assert.deepEqual(shape(long), [
+            `${FILE}:${lineOf(long, '## [2026-10] Alpha')}: entry "Alpha" runs 31 lines after its heading, over the cap of 30 — keep what is true today and point at the evidence for the rest`
+        ]);
+    });
+
+    it('counts the blank lines inside an entry, the one after the heading included', () => {
+        const entry = (lines) => decisions({ rows: ['Alpha'], entries: [['Alpha', lines]] });
+        assert.deepEqual(shape(entry(['', ...body(29)])), []);
+        assert.equal(shape(entry(['', ...body(30)])).length, 1);
+        assert.deepEqual(shape(entry([...body(15), '', ...body(14)])), []);
+        assert.equal(shape(entry([...body(15), '', ...body(15)])).length, 1);
+    });
+
+    it('does not count the blank lines that end an entry', () => {
+        const text = decisions({
+            rows: ['Alpha'],
+            entries: [['Alpha', [...body(30), '', '', '', '']]]
+        });
+        assert.deepEqual(shape(text), []);
+    });
+
+    it('ignores an Index heading and the table under it, however long', () => {
+        const titles = Array.from({ length: 35 }, (_, index) => `Entry ${index + 1}`);
+        const text = decisions({
+            rows: titles,
+            entries: titles.map((title) => [title, body(1)]),
+            indexHeading: true
+        });
+        assert.deepEqual(shape(text), []);
+    });
+
+    it('reads headings outside fenced code only', () => {
+        const fenced = ['```md', '## [2026-10] Not an entry', '```', ...body(1)];
+        const text = decisions({ rows: ['Alpha'], entries: [['Alpha', fenced]] });
+        assert.deepEqual(shape(text), []);
+    });
+
+    it('reads the decisions file and no other', () => {
+        const text = decisions({ rows: [], entries: [['Alpha', body(40)]] });
+        assert.deepEqual(checkDecisionShape({ docs: [['README.md', text]] }), []);
+    });
+});
+
 describe('run: section pointers', () => {
     const withRepo = (agents, check) => {
         const root = mkdtempSync(path.join(tmpdir(), 'docs-check-run-'));
@@ -457,6 +857,57 @@ describe('run: section pointers', () => {
     it('passes when every section pointer resolves', () => {
         withRepo('See `README.md` § Setup.\n', (findings) => {
             assert.deepEqual(findings, []);
+        });
+    });
+});
+
+describe('run: the files and the decisions file the checks read', () => {
+    const DECISIONS = '.cursor/brain/DECISIONS.md';
+    const table = ['| Entry | Date | Status |', '| ----- | ---- | ------ |'];
+    /** A repo whose docs are `docs` (path -> text), plus the files every run needs; `check(root, findings)` runs on it. */
+    const inRepo = (docs, check) => {
+        const files = {
+            'scripts/gate-tiers.json': '{}',
+            'package.json': '{"scripts":{}}',
+            'package-lock.json': '{"packages":{}}',
+            'README.md': '# Readme\n',
+            'src/kept/a.ts': 'export {};\n',
+            ...docs
+        };
+        withGitRepo(files, (root, git) => {
+            check(root, () => run({ root, today: '2026-10-09' }).findings, git);
+        });
+    };
+
+    it('judges a cited folder against the files git lists, not against the disk', () => {
+        inRepo({ 'AGENTS.md': 'Cites `src/kept/` and `src/emptied/`.\n' }, (root, findingsOf) => {
+            mkdirSync(path.join(root, 'src/emptied'), { recursive: true });
+            assert.deepEqual(findingsOf(), [
+                'AGENTS.md:1: `src/emptied/` does not exist in the tree'
+            ]);
+        });
+    });
+
+    it('fails the check on a decision whose evidence path is gone', () => {
+        const text = [...table, '| Alpha | 2026-10 | in force |', '', '## [2026-10] Alpha', ''];
+        const docs = {
+            'AGENTS.md': 'History: `.cursor/brain/DECISIONS.md`.\n',
+            [DECISIONS]: `${text.join('\n')}**Evidence:** \`src/gone.ts\`, \`src/kept/a.ts\`.\n`
+        };
+        inRepo(docs, (_root, findingsOf) => {
+            assert.deepEqual(findingsOf(), [
+                `${DECISIONS}:6: \`src/gone.ts\` does not exist in the tree`
+            ]);
+        });
+    });
+
+    it('fails the check on an entry that has no index row', () => {
+        const text = [...table, '', '## [2026-10] Alpha', '', 'Body.', ''].join('\n');
+        const docs = { 'AGENTS.md': 'History: `.cursor/brain/DECISIONS.md`.\n', [DECISIONS]: text };
+        inRepo(docs, (_root, findingsOf) => {
+            assert.deepEqual(findingsOf(), [
+                `${DECISIONS}:4: entry "Alpha" has no row in the index table — add one that repeats the heading without its [YYYY-MM] prefix`
+            ]);
         });
     });
 });
@@ -2409,6 +2860,177 @@ describe('checkSuiteBudgets', () => {
         assert.equal(findings.length, 1);
         assert.ok(findings[0].includes('test(s)'));
     });
+    it('rejects a hand-written _measured count, which goes stale unseen', () => {
+        const stale = { ...suite, max: count + 1, _measured: '7 on 2026-09-13' };
+        const findings = checkSuiteBudgets({ root, suites: { unit: stale } });
+        assert.equal(findings.length, 1);
+        assert.ok(findings[0].includes('suites.unit._measured'));
+        assert.ok(findings[0].includes('docs:check prints the measurement'));
+    });
+
+    describe('suiteNotes', () => {
+        it('reports what each suite measures against its ceiling, inside it or over it', () => {
+            const suites = { _description: 'not a suite', unit: { ...suite, max: count + 1 } };
+            assert.deepEqual(suiteNotes({ root, suites }), [
+                `suites.unit: ${count} file(s) of ${count + 1}`
+            ]);
+            assert.deepEqual(suiteNotes({ root, suites: { unit: { ...suite, max: 1 } } }), [
+                `suites.unit: ${count} file(s) of 1`
+            ]);
+        });
+        it('counts test calls when the suite is counted in tests', () => {
+            const calls = {
+                dir: 'scripts',
+                match: 'docs-check\\.test\\.mjs$',
+                count: 'tests',
+                max: 99999
+            };
+            const notes = suiteNotes({ root, suites: { calls } });
+            assert.equal(notes.length, 1);
+            assert.match(notes[0], /^suites\.calls: \d+ test\(s\) of 99999$/);
+        });
+        it('has no note for a suite whose directory is missing, which is a finding already', () => {
+            const gone = { gone: { dir: 'nowhere', match: '.', count: 'files', max: 1 } };
+            assert.deepEqual(suiteNotes({ root, suites: gone }), []);
+        });
+    });
+});
+
+describe('run: the suite measurement', () => {
+    it('prints the measurement of the end-to-end suite as a note', () => {
+        const suites = { flows: { dir: 'flows', match: '\\.yaml$', count: 'files', max: 4 } };
+        const files = {
+            'scripts/gate-tiers.json': JSON.stringify({ suites }),
+            'package.json': '{"scripts":{}}',
+            'package-lock.json': '{"packages":{}}',
+            'AGENTS.md': '# Agents\n',
+            'README.md': '# Readme\n',
+            'flows/a.yaml': 'appId: x\n',
+            'flows/b.yaml': 'appId: x\n',
+            'flows/c.txt': 'not a flow\n'
+        };
+        withGitRepo(files, (root) => {
+            const { findings, notes } = run({ root, today: '2026-10-09' });
+            assert.deepEqual(findings, []);
+            assert.deepEqual(notes, ['suites.flows: 2 file(s) of 4']);
+        });
+    });
+
+    it('counts test calls when the suite is counted in tests', () => {
+        const suites = { e2e: { dir: 'e2e', match: '\\.spec\\.ts$', count: 'tests', max: 4 } };
+        const files = {
+            'scripts/gate-tiers.json': JSON.stringify({ suites }),
+            'package.json': '{"scripts":{}}',
+            'package-lock.json': '{"packages":{}}',
+            'AGENTS.md': '# Agents\n',
+            'README.md': '# Readme\n',
+            'e2e/a.spec.ts': "test('a', () => {});\ntest('b', () => {});\ntest('c', () => {});\n"
+        };
+        withGitRepo(files, (root) => {
+            const { findings, notes } = run({ root, today: '2026-10-09' });
+            assert.deepEqual(findings, []);
+            assert.deepEqual(notes, ['suites.e2e: 3 test(s) of 4']);
+        });
+    });
+});
+
+describe('run: a tree git cannot list', () => {
+    // Resolved from the repo root, where `npm run test:scripts` runs the script tests.
+    const SCRIPT = path.resolve(process.cwd(), 'scripts/docs-check.mjs');
+    const SKIPPED =
+        'paths: SKIPPED — git could not list the files here (no .git, or a broken repository), so the path checks and line pointers into nested paths did not run; a line pointer into a file at the root is still judged, by what is on disk';
+    const files = {
+        'scripts/gate-tiers.json': '{}',
+        'package.json': '{"scripts":{}}',
+        'package-lock.json': '{"packages":{}}',
+        'AGENTS.md': 'Cites `src/gone.ts` and `src/kept/a.ts:3`.\n',
+        'README.md': '# Readme\n',
+        'src/kept/a.ts': 'export {};\n'
+    };
+    const clean = { ...files, 'AGENTS.md': '# Agents\n' };
+
+    /**
+     * `files` in a throwaway folder git cannot list: no repository in it, and none above it
+     * (GIT_CEILING_DIRECTORIES stops the search at the temp dir). GIT_* leaves process.env for the
+     * call, as in withGitRepo.
+     */
+    const withoutGit = (tree, check) => {
+        const root = mkdtempSync(path.join(tmpdir(), 'docs-check-nogit-'));
+        const saved = Object.entries(process.env).filter(([key]) => key.startsWith('GIT_'));
+        try {
+            for (const [file, text] of Object.entries(tree)) {
+                mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
+                writeFileSync(path.join(root, file), text);
+            }
+            for (const [key] of saved) delete process.env[key];
+            process.env.GIT_CEILING_DIRECTORIES = tmpdir();
+            check(root);
+        } finally {
+            delete process.env.GIT_CEILING_DIRECTORIES;
+            for (const [key, value] of saved) process.env[key] = value;
+            rmSync(root, { recursive: true, force: true });
+        }
+    };
+
+    /** The script's output lines; a non-zero exit makes execFileSync throw, so returning means exit 0. */
+    const cli = (root) =>
+        execFileSync(process.execPath, [SCRIPT, '--root', root], {
+            encoding: 'utf8',
+            stdio: ['ignore', 'pipe', 'pipe']
+        }).split('\n');
+    const summaryOf = (lines) => lines.find((line) => line.includes('no mechanical drift'));
+
+    it('says in a note that the path checks were skipped, and fails nothing', () => {
+        withoutGit(files, (root) => {
+            const { findings, notes } = run({ root, today: '2026-10-09' });
+            assert.deepEqual(findings, []);
+            assert.deepEqual(notes, [SKIPPED]);
+        });
+    });
+
+    it('still judges a line pointer into a file at the root, by the disk, and the note says so', () => {
+        const text = 'Cites `src/gone.ts`, `src/kept/a.ts:3` and `package.json:3`.\n';
+        withoutGit({ ...files, 'AGENTS.md': text }, (root) => {
+            const { findings, notes } = run({ root, today: '2026-10-09' });
+            assert.deepEqual(notes, [SKIPPED]);
+            assert.deepEqual(findings, [
+                'AGENTS.md:1: `package.json:3` cites a line number — name the symbol instead, a line moves with every edit'
+            ]);
+        });
+    });
+
+    it('still judges the npm script tokens, the part of the summary that stays', () => {
+        withoutGit({ ...files, 'AGENTS.md': 'Runs `npm run nope`.\n' }, (root) => {
+            assert.deepEqual(run({ root, today: '2026-10-09' }).findings, [
+                'AGENTS.md:1: `npm run nope` names an npm script that package.json does not have'
+            ]);
+        });
+    });
+
+    it('prints the skip, and a summary that leaves the paths out, with exit 0', () => {
+        withoutGit(files, (root) => {
+            const lines = cli(root);
+            assert.ok(lines.includes(`  ${SKIPPED}`));
+            assert.ok(summaryOf(lines).includes('scripts, sentinels'));
+            assert.ok(!summaryOf(lines).includes('paths'));
+        });
+    });
+
+    it('judges the same docs and claims the paths where git can list the files', () => {
+        withGitRepo(files, (root) => {
+            const { findings, notes } = run({ root, today: '2026-10-09' });
+            assert.deepEqual(notes, []);
+            assert.deepEqual(findings, [
+                'AGENTS.md:1: `src/gone.ts` does not exist in the tree',
+                'AGENTS.md:1: `src/kept/a.ts:3` cites a line number — name the symbol instead, a line moves with every edit'
+            ]);
+        });
+        withGitRepo(clean, (root) => {
+            const lines = cli(root);
+            assert.ok(!lines.some((line) => line.includes('paths: SKIPPED')));
+            assert.ok(summaryOf(lines).includes('paths, scripts, sentinels'));
+        });
+    });
 });
 
 describe('checkMemoryImports', () => {
@@ -2895,6 +3517,300 @@ describe('the gate chain view', () => {
             assert.deepEqual(named('the tsc strict pass'), []);
             assert.deepEqual(named('a.b'), ['typecheck']);
             assert.deepEqual(named('axb'), []);
+        });
+    });
+});
+
+describe('checkGateFlags', () => {
+    const scripts = {
+        verify: 'node scripts/gate-trace.mjs verify -- npm run verify:inner',
+        'verify:inner': 'npm run lint:oxlint && npm run lint && npm run test:coverage',
+        'verify:iter': 'node scripts/gate-trace.mjs verify:iter -- npm run verify:iter:inner',
+        'verify:iter:inner': 'npm run lint:oxlint && vitest run --changed --passWithNoTests',
+        'lint:oxlint': 'oxlint --config .oxlintrc.json --deny-warnings .',
+        lint: 'eslint . --max-warnings 0 --cache',
+        'test:coverage': 'node scripts/check-coverage.mjs',
+        test: 'vitest run',
+        'test:watch': 'vitest'
+    };
+    const checks = { verify: {}, 'verify:iter': {}, lint: {}, test: {} };
+    const flags = (over = {}, extra = {}) =>
+        checkGateFlags({ checks, scripts: { ...scripts, ...over }, ...extra });
+    const lacking = (holder, command, problem) =>
+        `package.json § scripts.${holder}: \`${command}\` ${problem}`;
+
+    it('accepts the strict flags the gate carries, and leaves a script no gate reaches alone', () => {
+        // `test:watch` is plain `vitest` on purpose: it is a desk tool, no check reaches it.
+        assert.deepEqual(flags(), []);
+    });
+
+    it('asks every eslint command in a gate for --max-warnings 0', () => {
+        const problem = 'lacks --max-warnings 0, so a lint warning passes the gate';
+        // `lint` is a check of its own and a step of `verify`: one finding, not two.
+        assert.deepEqual(flags({ lint: 'eslint . --cache' }), [
+            lacking('lint', 'eslint . --cache', problem)
+        ]);
+        assert.equal(flags({ lint: 'eslint . --max-warnings 5' }).length, 1);
+        assert.equal(flags({ lint: 'eslint . --max-warnings' }).length, 1);
+        assert.deepEqual(flags({ lint: 'eslint . --max-warnings 0 --fix' }), []);
+        assert.deepEqual(flags({ lint: 'eslint . --max-warnings=0' }), []);
+    });
+
+    it('catches what the chain view cannot: package.json and the view drift together', () => {
+        const raw = {
+            ...scripts,
+            'verify:inner': 'npm run lint:oxlint && eslint . && npm run test'
+        };
+        const registered = new Set(Object.keys(checks));
+        const view = Object.fromEntries(
+            Object.keys(checks).map((name) => [
+                name,
+                { chain: deriveChain({ scripts: raw, name, registered }) ?? undefined }
+            ])
+        );
+        assert.deepEqual(checkGateChains({ checks: view, scripts: raw }), []);
+        assert.deepEqual(checkGateFlags({ checks: view, scripts: raw }), [
+            lacking(
+                'verify:inner',
+                'eslint .',
+                'lacks --max-warnings 0, so a lint warning passes the gate'
+            )
+        ]);
+    });
+
+    it('asks every oxlint command in a gate for --deny-warnings', () => {
+        const problem = 'lacks --deny-warnings, so a lint warning passes the gate';
+        assert.deepEqual(flags({ 'lint:oxlint': 'oxlint .' }), [
+            lacking('lint:oxlint', 'oxlint .', problem)
+        ]);
+        assert.equal(flags({ 'lint:oxlint': 'npx --no-install oxlint .' }).length, 1);
+        assert.deepEqual(flags({ 'lint:oxlint': 'npx --no-install oxlint --deny-warnings .' }), []);
+    });
+
+    it('reads through environment assignments, npx and its flags, and a path to the binary', () => {
+        assert.equal(flags({ lint: 'NODE_ENV=ci npx --no-install eslint .' }).length, 1);
+        assert.deepEqual(flags({ lint: 'NODE_ENV=ci npx -y eslint . --max-warnings 0' }), []);
+        assert.equal(flags({ lint: './node_modules/.bin/eslint .' }).length, 1);
+        assert.deepEqual(flags({ lint: 'eslint-plugin-check .' }), []);
+    });
+
+    it('asks vitest in a gate to run once and jest not to watch', () => {
+        const watch = 'is not run-once (`vitest run`), so the gate would start watch mode';
+        assert.deepEqual(flags({ test: 'vitest' }), [lacking('test', 'vitest', watch)]);
+        assert.equal(flags({ test: 'CI=1 vitest --coverage' }).length, 1);
+        assert.deepEqual(flags({ test: 'vitest --run' }), []);
+        assert.deepEqual(flags({ test: 'vitest related src/a.ts --run' }), []);
+        assert.deepEqual(flags({ test: 'jest --watch' }), [
+            lacking('test', 'jest --watch', 'runs in watch mode, so the gate would never finish')
+        ]);
+        assert.equal(flags({ test: 'jest --watchAll' }).length, 1);
+        assert.deepEqual(flags({ test: 'jest --ci' }), []);
+    });
+
+    it('keeps --passWithNoTests to the iterate chain', () => {
+        const outside = 'vitest run --passWithNoTests';
+        const problem =
+            'carries --passWithNoTests outside the iterate chain (verify:iter), so a gate that finds no test passes';
+        assert.deepEqual(flags({ 'verify:inner': `npm run lint:oxlint && ${outside}` }), [
+            lacking('verify:inner', outside, problem)
+        ]);
+        assert.deepEqual(flags({ test: outside }), [lacking('test', outside, problem)]);
+    });
+
+    it('names the iterate chain from the moment it is given', () => {
+        const problem =
+            'carries --passWithNoTests outside the iterate chain (quick), so a gate that finds no test passes';
+        assert.deepEqual(flags({}, { iterate: 'quick' }), [
+            lacking('verify:iter:inner', 'vitest run --changed --passWithNoTests', problem)
+        ]);
+    });
+
+    it('flags --passWithNoTests in a script the iterate chain shares with another chain', () => {
+        const shared = { 'verify:inner': 'npm run lint:oxlint && npm run verify:iter:inner' };
+        const problem =
+            'carries --passWithNoTests outside the iterate chain (verify:iter), so a gate that finds no test passes';
+        assert.deepEqual(flags(shared), [
+            lacking('verify:iter:inner', 'vitest run --changed --passWithNoTests', problem)
+        ]);
+    });
+
+    it('passes over a check with no script and a step that names no script', () => {
+        const ghost = { ...checks, ghost: {} };
+        const gone = { 'verify:inner': 'npm run nope && npm run lint' };
+        assert.deepEqual(checkGateFlags({ checks: ghost, scripts: { ...scripts, ...gone } }), []);
+    });
+
+    describe('a flag the expansion must not lose', () => {
+        const watch = 'is not run-once (`vitest run`), so the gate would start watch mode';
+        const outside =
+            'carries --passWithNoTests outside the iterate chain (verify:iter), so a gate that finds no test passes';
+        const uses = (value) =>
+            `uses --max-warnings ${value} (the last one counts), so a lint warning passes the gate`;
+        // Strict on their own (test = `vitest run`, lint = `eslint . --max-warnings 0`), so a finding
+        // comes from the step under test.
+        const setup = { test: 'vitest run', lint: 'eslint . --max-warnings 0' };
+        const inner = (command) => flags({ ...setup, 'verify:inner': command });
+
+        it('judges what a step passes on through an npm run hop', () => {
+            const test = 'npm run test -- --passWithNoTests';
+            const lint = 'npm run lint -- --max-warnings 999';
+            assert.deepEqual(inner(`${test} && ${lint}`), [
+                lacking('verify:inner', test, outside),
+                lacking('verify:inner', lint, uses('999'))
+            ]);
+        });
+
+        it('hands the arguments to the last command of the script, the way npm appends them', () => {
+            const step = 'npm run check -- --max-warnings 999';
+            const eslintLast = { check: 'vitest run && eslint . --max-warnings 0' };
+            const vitestLast = { check: 'eslint . --max-warnings 0 && vitest run' };
+            assert.deepEqual(flags({ ...eslintLast, 'verify:inner': step }), [
+                lacking('verify:inner', step, uses('999'))
+            ]);
+            assert.deepEqual(flags({ ...vitestLast, 'verify:inner': step }), []);
+        });
+
+        it('leaves a flag with no `--` before it to npm, which reads it itself', () => {
+            assert.deepEqual(
+                inner('npm run test --passWithNoTests && npm run lint --max-warnings 999'),
+                []
+            );
+        });
+
+        it('carries the arguments through a hop that has a `--` of its own', () => {
+            const outer = { outer: 'npm run lint -- --cache' };
+            assert.equal(
+                flags({ ...outer, 'verify:inner': 'npm run outer -- --max-warnings 999' }).length,
+                1
+            );
+        });
+
+        it('stops at a script that hands its arguments on to itself', () => {
+            assert.deepEqual(
+                flags({ 'verify:inner': 'npm run loop', loop: 'npm run loop -- --x' }),
+                []
+            );
+        });
+
+        it('ends a command at a semicolon, a double bar, a tight `&&` and a newline', () => {
+            const finding = lacking('verify:inner', 'vitest --coverage', watch);
+            for (const chained of [
+                'tsc; vitest --coverage',
+                'tsc;vitest --coverage',
+                'tsc || vitest --coverage',
+                'tsc||vitest --coverage',
+                'tsc&&vitest --coverage',
+                'tsc\nvitest --coverage'
+            ]) {
+                assert.deepEqual(inner(chained), [finding], chained);
+            }
+            assert.deepEqual(inner('npm run lint; vitest || jest --watch'), [
+                lacking('verify:inner', 'vitest', watch),
+                lacking(
+                    'verify:inner',
+                    'jest --watch',
+                    'runs in watch mode, so the gate would never finish'
+                )
+            ]);
+        });
+
+        it('keeps a quoted separator inside its command', () => {
+            const double = 'vitest run -t "a;b || c" --passWithNoTests';
+            assert.deepEqual(inner(double), [lacking('verify:inner', double, outside)]);
+            assert.equal(inner("vitest run -t 'a;b || c' --passWithNoTests").length, 1);
+        });
+
+        it('looks through cross-env, env and bare assignments to the tool', () => {
+            for (const launch of ['cross-env CI=1', 'env CI=1', 'CI=1', 'npx cross-env CI=1 A=2']) {
+                const command = `${launch} vitest`;
+                assert.deepEqual(
+                    flags({ test: command }),
+                    [lacking('test', command, watch)],
+                    command
+                );
+            }
+            assert.deepEqual(flags({ test: 'cross-env CI=1 vitest run' }), []);
+            assert.equal(flags({ lint: 'cross-env CI=1 eslint .' }).length, 1);
+            const hop = 'cross-env CI=1 npm run lint -- --max-warnings 999';
+            assert.deepEqual(inner(hop), [lacking('verify:inner', hop, uses('999'))]);
+        });
+
+        it('follows npm test, npm t and npm run-script like npm run', () => {
+            // Only `verify` is a check here, so `test` is reached through the hop or not at all.
+            const reached = (command) =>
+                checkGateFlags({
+                    checks: { verify: {} },
+                    scripts: { ...scripts, test: 'vitest', 'verify:inner': command }
+                });
+            for (const command of [
+                'npm test',
+                'npm t',
+                'npm tst',
+                'npm run-script test',
+                'npm rum test',
+                'npm urn test',
+                'npm run --silent test',
+                'npm -s run test'
+            ]) {
+                assert.deepEqual(reached(command), [lacking('test', 'vitest', watch)], command);
+            }
+            const passing = 'npm test -- --passWithNoTests';
+            assert.deepEqual(inner(passing), [lacking('verify:inner', passing, outside)]);
+        });
+
+        it('takes the last --max-warnings as the value eslint uses', () => {
+            const raised = 'eslint . --max-warnings 0 --max-warnings 999';
+            assert.deepEqual(flags({ lint: raised }), [lacking('lint', raised, uses('999'))]);
+            assert.equal(flags({ lint: 'eslint . --max-warnings=0 --max-warnings=5' }).length, 1);
+            assert.equal(flags({ lint: 'eslint . --max-warnings 0 --max-warnings=5' }).length, 1);
+            assert.deepEqual(flags({ lint: 'eslint . --max-warnings 5 --max-warnings 0' }), []);
+            assert.deepEqual(flags({ lint: 'eslint . --max-warnings=5 --max-warnings=0' }), []);
+        });
+
+        it('lets the iterate chain pass --passWithNoTests through a hop, and no other chain', () => {
+            const step = 'npm run test -- --passWithNoTests';
+            const iterate = { 'verify:iter:inner': `npm run lint:oxlint && ${step}` };
+            assert.deepEqual(flags(iterate), []);
+            assert.deepEqual(
+                flags({ ...iterate, 'verify:inner': `npm run lint:oxlint && ${step}` }),
+                [lacking('verify:inner', step, outside)]
+            );
+        });
+    });
+
+    describe('the jest runner this template gates with', () => {
+        const watch = 'runs in watch mode, so the gate would never finish';
+        const jestScripts = {
+            ...scripts,
+            'verify:iter:inner': 'npm run lint:oxlint && jest --onlyChanged --passWithNoTests',
+            test: 'jest',
+            'test:watch': 'jest --watch'
+        };
+        const judged = (over = {}, extra = {}) =>
+            checkGateFlags({ checks, scripts: { ...jestScripts, ...over }, ...extra });
+
+        it('accepts jest run once, and --passWithNoTests only in the iterate chain', () => {
+            assert.deepEqual(judged(), []);
+        });
+
+        it('flags jest in watch mode in a gate, and leaves the desk script alone', () => {
+            assert.deepEqual(judged({ test: 'jest --watch' }), [
+                lacking('test', 'jest --watch', watch)
+            ]);
+            assert.deepEqual(judged({ test: 'jest --watchAll=true' }), [
+                lacking('test', 'jest --watchAll=true', watch)
+            ]);
+        });
+
+        it('flags --passWithNoTests on a jest command outside the iterate chain', () => {
+            const outside = 'jest --passWithNoTests';
+            assert.deepEqual(judged({ 'verify:inner': `npm run lint:oxlint && ${outside}` }), [
+                lacking(
+                    'verify:inner',
+                    outside,
+                    'carries --passWithNoTests outside the iterate chain (verify:iter), so a gate that finds no test passes'
+                )
+            ]);
         });
     });
 });
@@ -3911,7 +4827,7 @@ describe('retellingSources', () => {
 
 describe('run: the gate chain', () => {
     /** A temp repo whose package.json defines `verify` and whose gate-tiers.json carries `tiers`. */
-    const withRepo = ({ tiers, readme }, check) => {
+    const withRepo = ({ tiers, readme, oxlint = 'oxlint --deny-warnings .' }, check) => {
         const root = mkdtempSync(path.join(tmpdir(), 'docs-check-chain-'));
         try {
             mkdirSync(path.join(root, 'scripts'));
@@ -3926,7 +4842,7 @@ describe('run: the gate chain', () => {
                         verify: 'node scripts/gate-trace.mjs verify -- npm run verify:inner',
                         'verify:inner':
                             'node scripts/check-hooks.mjs && npm run lint:oxlint && npm run build',
-                        'lint:oxlint': 'oxlint .',
+                        'lint:oxlint': oxlint,
                         build: 'vite build'
                     }
                 })
@@ -3948,6 +4864,15 @@ describe('run: the gate chain', () => {
     it('passes when the chain view matches and no doc retells it', () => {
         withRepo({ tiers: tiers(chain), readme: '# Readme\n\nSee the gate.\n' }, (findings) => {
             assert.deepEqual(findings, []);
+        });
+    });
+
+    it('fails the check on a gate command that lost its strict flag', () => {
+        const withoutFlag = { tiers: tiers(chain), readme: '# Readme\n', oxlint: 'oxlint .' };
+        withRepo(withoutFlag, (findings) => {
+            assert.deepEqual(findings, [
+                'package.json § scripts.lint:oxlint: `oxlint .` lacks --deny-warnings, so a lint warning passes the gate'
+            ]);
         });
     });
 
@@ -4017,7 +4942,7 @@ describe('run: the files the retelling check reads', () => {
                         verify: 'node scripts/gate-trace.mjs verify -- npm run verify:inner',
                         'verify:inner':
                             'node scripts/check-hooks.mjs && npm run lint:oxlint && npm run build',
-                        'lint:oxlint': 'oxlint .',
+                        'lint:oxlint': 'oxlint --deny-warnings .',
                         build: 'vite build'
                     }
                 })
@@ -4112,7 +5037,7 @@ describe('run: compositions', () => {
         'verify:ci': 'node scripts/gate-trace.mjs verify:ci -- npm run verify:ci:inner',
         'verify:ci:inner': 'npm run audit:gate && npm run verify',
         'verify:native': 'npm run verify:ci && npm run doctor',
-        'lint:oxlint': 'oxlint .',
+        'lint:oxlint': 'oxlint --deny-warnings .',
         'audit:gate': 'node scripts/audit-gate.mjs',
         doctor: 'expo-doctor'
     };
@@ -4229,7 +5154,7 @@ describe('run: compositions', () => {
             'verify:enterprise':
                 'node scripts/gate-trace.mjs verify:enterprise -- npm run verify:enterprise:inner',
             'verify:enterprise:inner': 'node scripts/check-hooks.mjs && npm run lint:oxlint',
-            'lint:oxlint': 'oxlint .'
+            'lint:oxlint': 'oxlint --deny-warnings .'
         };
         const registered = {
             checks: {

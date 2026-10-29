@@ -151,13 +151,13 @@
         "held": ">=10.12.0 <11",
         "reason": "A new ESLint major outruns the plugin peers that package.json overrides map to $eslint; the repo is on 10.x with a literal react version in the flat config.",
         "lift": "The plugins in the tree peer the next ESLint major.",
-        "evidence": "eslint.config.mjs:466"
+        "evidence": "https://github.com/Vadymk95/template-rn/commit/2beb9f2"
     },
     {
         "package": "@eslint/js",
         "held": ">=10.0.1 <11",
         "reason": "Level with the ESLint hold.",
         "lift": "Lifts with the eslint hold.",
-        "evidence": "eslint.config.mjs:466"
+        "evidence": "https://github.com/Vadymk95/template-rn/commit/2beb9f2"
     }
 ]

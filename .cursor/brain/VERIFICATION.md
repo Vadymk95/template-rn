@@ -8,9 +8,9 @@ runs: `scripts/gate-tiers.json` (`checks.<name>.chain`), not repeated here.
 ## The moments
 
 - **Iterate** — `npm run verify:iter`, per change, seconds.
-- **Docs, rules, commands, brain, tier data** (`*.md`, `*.mdc`, `scripts/gate-tiers.json`) — `npm run docs:check` (the pre-commit hook runs it when such files are staged, and `verify` runs it on every push; `--weekly`, the scheduled Docs workflow's flag, runs the same checks so a quarantine that expires while nobody pushes still turns it red; it also refuses a focused test, an unconditional way to switch a test off (`.skip`, `.fixme`, an expected failure such as `.fails` or `.failing`, a constant `.skipIf(true)`) without `quarantine until YYYY-MM-DD` + reason (the date at most 30 days out and red ON the date itself), a gate chain view in `scripts/gate-tiers.json` that differs from `package.json`, a hand-written retelling or composition of the chain (a line naming three or more of its stages, or two parts of one script), and an agent-memory import: an `@` pointer in `CLAUDE.md` or `AGENTS.md` that names a file, which Claude Code would load into every session; write it as a backticked path instead).
+- **Docs, rules, commands, brain, tier data** (`*.md`, `*.mdc`, `scripts/gate-tiers.json`) — `npm run docs:check` (the pre-commit hook runs it when such files are staged, and `verify` runs it on every push; `--weekly`, the scheduled Docs workflow's flag, runs the same checks so a quarantine that expires while nobody pushes still turns it red; it also refuses a focused test, an unconditional way to switch a test off (`.skip`, `.fixme`, an expected failure such as `.fails` or `.failing`, a constant `.skipIf(true)`) without `quarantine until YYYY-MM-DD` + reason (the date at most 30 days out and red ON the date itself), a gate chain view in `scripts/gate-tiers.json` that differs from `package.json`, a gate command that lost a strict flag (the linters' `--max-warnings 0` and `--deny-warnings`, a jest run that watches) or carries `--passWithNoTests` outside the iterate chain, a path that names an emptied folder, an ignored file or a line number (cite the symbol), a `DECISIONS.md` entry without an index row, a row without an entry, or an entry over 30 lines, a hand-written retelling or composition of the chain (a line naming three or more of its stages, or two parts of one script), and an agent-memory import: an `@` pointer in `CLAUDE.md` or `AGENTS.md` that names a file, which Claude Code would load into every session; write it as a backticked path instead).
   Tests are linted by jest rules at the `verify` layer: `jest/no-focused-tests` is an error, so a `.only` stops at pre-commit and at `verify`; `jest/no-disabled-tests` is a warning, so a `.skip` passes the pre-commit `eslint --fix` (it has no `--max-warnings`) and goes red at the gate, whose lint pass runs with `--max-warnings 0`
-- **Proposing a new Maestro flow** — the suite is counted in invariants, not screens (`AGENTS.md` § the gate); `npm run docs:check` reports the suite against the ceiling in `scripts/gate-tiers.json` § suites
+- **Proposing a new Maestro flow** — the suite is counted in invariants, not screens (`AGENTS.md` § the gate), by flow files, so a second subject of an invariant that already has a flow becomes steps in that flow's file, never a new yaml file; the ceiling is raised only with a measurement and a `DECISIONS.md` line. `npm run docs:check` prints the suite's measurement and reports it against the ceiling in `scripts/gate-tiers.json` § suites
 - **Commit** — the pre-commit hook (below). Nothing by hand.
 - **Push** — the pre-push hook runs `verify:ci`. Never run it, or any other full gate, by hand;
   `ci:local` additionally needs local native tooling and takes minutes.
@@ -70,7 +70,7 @@ CAN fail is mutation-proving's job.
 ## What the git hooks enforce
 
 - **pre-commit** — `lint-staged` (the tools it runs: `package.json`) on the staged
-  files, then the TDD sibling gate (`scripts/check-test-siblings.mjs`, staged files against the index), then
+  files, then the TDD sibling gate (`scripts/check-test-siblings.mjs`, staged files against the index; the first commit of a repository, with no HEAD yet, is not judged, as in range mode with no base), then
   the **repo-wide** cheap checks (the list is `.husky/pre-commit`), all of them run before the
   hook decides so one attempt reports everything. Why the repo-wide pass exists:
   `DECISIONS.md` § TDD sibling gate on pre-commit. Remedy: `npm run fix && git add -u`.
@@ -208,7 +208,9 @@ Green means nothing until you know the gate can go red.
 1. **Capture the exit code without a pipe**: `npm run verify:iter > /tmp/verify.log 2>&1; echo $?`. Piping
    to `tail` returns the PIPE's status, so a failed build reads as a pass.
 2. **Mutation-check the tests**: if mentally reverting your change leaves the suite green, the test is
-   worthless. Writing a test is the TDD step; proving it would have failed is this one.
+   worthless. Do it in your head, not on disk: do not edit the code, run the tests and restore it. A
+   physical mutation is for a NEW gate only (item 3), and a pure file move needs none. Writing a test is
+   the TDD step; proving it would have failed is this one.
 3. **Prove a new gate gates**: break it on purpose once (an expired entry in
    `scripts/audit-allowlist.json`, a raw hex in a component, a staged `src` logic file with no `*.test.*`
    sibling) and watch it refuse. Then revert the sabotage.

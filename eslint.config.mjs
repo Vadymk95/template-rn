@@ -230,7 +230,8 @@ export default tseslint.config(
                     ignoreReadonlyClassProperties: true,
                     ignoreArrayIndexes: true,
                     ignoreDefaultValues: true,
-                    ignoreTypeIndexes: true
+                    ignoreTypeIndexes: true,
+                    ignoreNumericLiteralTypes: true
                 }
             ],
             'import-x/order': [

@@ -30,7 +30,9 @@ scheme collides with the template on a device and breaks deep links.
 - **`LICENSE`**: MIT is fine for an open-source fork; for a **proprietary/commercial**
   app delete `LICENSE` and set `package.json` `"license": "UNLICENSED"` (the repo is
   already `private`)
-- **Assets, EAS project id, and the Todo example slice**: the full `file:line` checklist
+- **Repository layout**: keep the app at the git root. `scripts/check-hooks.mjs` refuses to run from a
+  subfolder of the repository, because every gate script reads git paths relative to the repository root.
+- **Assets, EAS project id, and the Todo example slice**: the full checklist
   lives in **`docs/template-reset.md`**.
 
 ---
@@ -190,7 +192,7 @@ checks and will fail the PR the same way.
 
 ```bash
 npm run verify:iter   # the iterate moment: the seconds-long check
-npm run docs:check    # mechanical doc drift: paths, scripts, sentinels, versions, command table, dead docs, agent-memory imports
+npm run docs:check    # mechanical doc drift: paths against the files git lists, line pointers, scripts, sentinels, versions, command table, dead docs, the DECISIONS shape, strict gate flags, agent-memory imports
 ```
 
 Drill-downs on a specific failure (none of these is a moment):

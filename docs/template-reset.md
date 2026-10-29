@@ -60,36 +60,36 @@ to ignore red. Sources, with the exact wording: `README.md` § Pipelines — and
 
 ## Placeholder replacement checklist
 
-Every fork must update these values before shipping. `file:line` refs are valid as of this commit; re-grep if files drift.
+Every fork must update these values before shipping. Each item names the file and the symbol in it, never a line number (a line moves with every edit); search for the symbol if it has moved.
 
 ### Bundle identifiers (iOS + Android)
 
-- [ ] `app.config.ts:11` — replace `com.example.templatern.dev`
-- [ ] `app.config.ts:12` — replace `com.example.templatern.preview`
-- [ ] `app.config.ts:13` — replace `com.example.templatern`
+- [ ] `app.config.ts` `getBundleId()` — replace `com.example.templatern.dev`
+- [ ] `app.config.ts` `getBundleId()` — replace `com.example.templatern.preview`
+- [ ] `app.config.ts` `getBundleId()` — replace `com.example.templatern`
 
 ### App display names
 
-- [ ] `app.config.ts:17` — replace `Template RN (Dev)`
-- [ ] `app.config.ts:18` — replace `Template RN (Preview)`
-- [ ] `app.config.ts:19` — replace `Template RN`
+- [ ] `app.config.ts` `getAppName()` — replace `Template RN (Dev)`
+- [ ] `app.config.ts` `getAppName()` — replace `Template RN (Preview)`
+- [ ] `app.config.ts` `getAppName()` — replace `Template RN`
 
 ### Slug and deep link scheme
 
-- [ ] `app.config.ts:25` — replace slug `template-rn`
-- [ ] `app.config.ts:29` — replace scheme `templatern` (lowercase, no spaces; forms `yourapp://` URLs)
-- [ ] `package.json:2` — align `name` with the new slug
+- [ ] `app.config.ts` `slug` — replace slug `template-rn`
+- [ ] `app.config.ts` `scheme` — replace scheme `templatern` (lowercase, no spaces; forms `yourapp://` URLs)
+- [ ] `package.json` `name` — align it with the new slug
 
 ### Assets (replace the 70-byte placeholder PNGs)
 
-- [ ] `assets/icon.png` — 1024×1024 app icon; referenced at `app.config.ts:28`
-- [ ] `assets/splash.png` — splash image; referenced at `app.config.ts:32` and `app.config.ts:79`
-- [ ] `assets/adaptive-icon.png` — Android foreground; referenced at `app.config.ts:65`, paired with `backgroundColor` at line 66
+- [ ] `assets/icon.png` — 1024×1024 app icon; referenced by `icon` in `app.config.ts`
+- [ ] `assets/splash.png` — splash image; referenced by the `expo-splash-screen` plugin options in `app.config.ts`
+- [ ] `assets/adaptive-icon.png` — Android foreground; referenced by `android.adaptiveIcon.foregroundImage` in `app.config.ts`, paired with its `backgroundColor`
 
 ### EAS (only if using EAS Build / Update)
 
 - [ ] Run `eas project:create`, capture the project ID
-- [ ] Set `EAS_PROJECT_ID` in CI secrets and local `.env` for OTA; `app.config.ts` gates `extra.eas` and `updates.url` on its presence (lines 89–99)
+- [ ] Set `EAS_PROJECT_ID` in CI secrets and local `.env` for OTA; `app.config.ts` gates `extra.eas` and `updates.url` on its presence (`easProjectId` in `app.config.ts`)
 - [ ] Update `eas.json` profiles if the slug or per-profile env changed
 
 ### Legal
@@ -98,7 +98,7 @@ Every fork must update these values before shipping. `file:line` refs are valid 
 
 ### Example / demo content to strip
 
-- [ ] `src/shared/locales/en/todo.json` — delete if removing the Todo slice, then mirror the deletion in `src/shared/lib/i18n/constants.ts:14`, `src/shared/lib/i18n/index.ts`, `src/shared/lib/i18n/resources.ts`
+- [ ] `src/shared/locales/en/todo.json` — delete if removing the Todo slice, then mirror the deletion in `src/shared/lib/i18n/constants.ts` (`DEFAULT_NAMESPACES`), `src/shared/lib/i18n/index.ts`, `src/shared/lib/i18n/resources.ts`
 - [ ] `src/widgets/start-guide/` and `src/shared/locales/en/start.json` — the first tab's content; mirror the locale deletion in the same three i18n files, and replace what `src/app/(tabs)/index.tsx` mounts (its tab entry lives in `src/app/(tabs)/_layout.tsx`)
 - [ ] `.cursor/brain/MAP.md` ("Start guide" and "Todo vertical slice"), `README.md` (the `src/` tree), `.cursor/brain/PROJECT_CONTEXT.md` (Architecture) — rewrite the lines `npm run docs:check` reports once the slices are gone
 - [ ] `.maestro/smoke.yaml`, `.maestro/create-task.yaml` — hardcoded Todo copy and `testID`s; rewrite or delete with the slice

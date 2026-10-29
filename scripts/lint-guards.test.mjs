@@ -44,6 +44,15 @@ const restrictedProperties = async (code, filePath) => {
     return result.messages.filter(({ ruleId }) => ruleId === 'no-restricted-properties');
 };
 
+const magicNumbers = async (code, filePath) => {
+    const [result] = await eslint.lintText(code, { filePath });
+    const fatal = result.messages.filter(({ fatal: isFatal }) => isFatal);
+
+    assert.deepEqual(fatal, [], 'the snippet must parse');
+
+    return result.messages.filter(({ ruleId }) => ruleId === '@typescript-eslint/no-magic-numbers');
+};
+
 // The same snippet through oxlint with this repo's config. The snippet is written outside the repo
 // (oxlint needs no TypeScript project), and the rule codes come back as `plugin(rule)`.
 const oxlintCodes = (code) => {
@@ -213,5 +222,34 @@ describe('array methods the iOS engine lacks', () => {
         // `debugger` proves oxlint ran with this repo's config and can still report.
         assert.ok(codes.includes('eslint(no-debugger)'), codes.join(', '));
         assert.ok(!codes.includes('unicorn(no-array-sort)'), codes.join(', '));
+    });
+});
+
+describe('a numeric literal type is not a magic number', () => {
+    // `type Gap = 3 | 5` names its numbers already; the rule used to ask for a constant behind each.
+    it('accepts a union of numeric literal types declared as an alias', async () => {
+        const found = await magicNumbers('export type Gap = 3 | 5;\n', TS_FILE);
+
+        assert.deepEqual(found, []);
+    });
+
+    it('still counts the same numbers used as values', async () => {
+        const found = await magicNumbers(
+            'export const scale = (n: number): number => n * 3 + 5;\n',
+            TS_FILE
+        );
+
+        assert.equal(found.length, 2);
+    });
+
+    // The option covers a union that is the whole alias; one written inside a property type is not
+    // covered, which is why the rule note tells the author to name it as an alias.
+    it('still counts a union written inline in a property type', async () => {
+        const found = await magicNumbers(
+            'export interface Props {\n    max?: 4 | 5;\n}\n',
+            TS_FILE
+        );
+
+        assert.equal(found.length, 2);
     });
 });
