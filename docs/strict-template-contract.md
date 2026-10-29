@@ -66,7 +66,7 @@ A change is not done until:
 
 1. structure still matches the layer contract
 2. user copy is in the right place
-3. lint, typecheck, formatting, and tests pass for the intended scope
+3. lint, typecheck, formatting, and tests pass for the intended scope; a lint-only residual is proven by the lint run being red on the unfixed copy
 4. the push gate (`verify:ci`) ran and printed its stages — it runs at push, never by hand
 5. docs / brain files are updated if the architectural contract changed
 

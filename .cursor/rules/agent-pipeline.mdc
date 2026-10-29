@@ -38,7 +38,7 @@ priority: 100
 - Capture the exit code **without a pipe**: `cmd > log 2>&1; echo $?`. The rest of the integrity checklist (prove the gate can go red, name the condition under which green would have been red): `.cursor/brain/VERIFICATION.md` § Verification integrity.
 - Findings autofix can handle: `npm run fix && git add -u`. Never lower a severity or move a threshold to reach green.
 - Failure: no symptom patches; trace the root cause (types, runtime, native tooling), fix at the source, re-run.
-- Self-review the diff: plan alignment, scope, public exports. Router: typed `href`s. Query: handle `isPending` / `isError` for user-visible fetches.
+- Self-review the diff: plan alignment, scope, public exports; find importers by symbol, never by path (an `@/` directory import or a barrel hides the file). Router: typed `href`s. Query: handle `isPending` / `isError` for user-visible fetches.
 
 ## Step 5: Brain sync
 

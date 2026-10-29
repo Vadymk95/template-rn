@@ -195,10 +195,16 @@ describe('the CLI against a real git repository', () => {
 
     const git = (cwd, ...args) => gitWith(cwd, {}, ...args);
 
-    const makeRepo = () => {
-        const root = mkdtempSync(path.join(tmpdir(), 'siblings-'));
+    /** A repository with no commit yet. */
+    const initRepo = (prefix) => {
+        const root = mkdtempSync(path.join(tmpdir(), prefix));
         roots.push(root);
         git(root, 'init', '-q', '-b', 'master');
+        return root;
+    };
+
+    const makeRepo = () => {
+        const root = initRepo('siblings-');
         write(root, 'README.md', 'seed\n');
         commitAll(root, 'seed');
         return root;
@@ -365,6 +371,46 @@ describe('the CLI against a real git repository', () => {
             assert.equal(run(root, ['src/lib/a.ts']).status, 1);
             assert.equal(run(root, ['src/lib/b.ts']).status, 0);
         });
+
+        // A fork's first commit is the whole template, starter files with no sibling included, and
+        // there is no earlier commit to compare with, so nothing is judged (range mode does the same).
+        it('says so, and passes, on the first commit of a repository', () => {
+            const root = initRepo('siblings-first-');
+            write(root, 'src/lib/starter.ts');
+            git(root, 'add', '-A');
+
+            const result = run(root);
+
+            assert.equal(result.status, 0);
+            assert.match(result.stdout, /first commit/);
+        });
+
+        it('judges the second commit again', () => {
+            const root = initRepo('siblings-second-');
+            write(root, 'src/lib/starter.ts');
+            commitAll(root, 'first');
+            write(root, 'src/lib/added.ts');
+            git(root, 'add', '-A');
+
+            const result = run(root);
+
+            assert.equal(result.status, 1);
+            assert.match(result.stderr, /src\/lib\/added\.ts/);
+            assert.doesNotMatch(result.stderr, /src\/lib\/starter\.ts/);
+        });
+
+        // `git rev-parse HEAD` fails outside a repository too, so only the index guard above the
+        // first-commit check keeps "no repository" from reading as "first commit" and passing. The
+        // ceiling stops git from finding a repository above the temporary folder.
+        it('fails loudly outside a git repository, never reads it as a first commit', () => {
+            const root = mkdtempSync(path.join(tmpdir(), 'siblings-nogit-'));
+            roots.push(root);
+
+            const result = run(root, [], { GIT_CEILING_DIRECTORIES: tmpdir() });
+
+            assert.equal(result.status, 2);
+            assert.match(result.stderr, /cannot read the git index/);
+        });
     });
 
     describe('range mode reads the head tree', () => {
@@ -499,9 +545,7 @@ describe('the CLI against a real git repository', () => {
         // including logic files that predate this gate. Failing its first CI run would hand every
         // new project a red pipeline for code it did not write; the ratchet starts at the next change.
         it('passes with a note on the first commit of a repository, which has nothing to compare with', () => {
-            const root = mkdtempSync(path.join(tmpdir(), 'siblings-root-'));
-            roots.push(root);
-            git(root, 'init', '-q', '-b', 'master');
+            const root = initRepo('siblings-root-');
             write(root, 'src/lib/legacy.ts');
             commitAll(root, 'first commit');
 

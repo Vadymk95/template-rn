@@ -13,6 +13,10 @@ const report = {
     }
 };
 
+// A release build strips every console call except the methods in the `exclude` list of
+// transform-remove-console (babel.config.js): `warn` and `error`. A level that must reach the
+// console in production has to be on that list; logger.test.ts fails when the logger writes
+// through a console method that is not on it.
 export const logger = {
     debug(message: string, context?: LogContext) {
         if (isProd) return;

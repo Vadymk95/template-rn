@@ -8,9 +8,9 @@ runs: `scripts/gate-tiers.json` (`checks.<name>.chain`), not repeated here.
 ## The moments
 
 - **Iterate** — `npm run verify:iter`, per change, seconds.
-- **Docs, rules, commands, brain, tier data** (`*.md`, `*.mdc`, `scripts/gate-tiers.json`) — `npm run docs:check` (the pre-commit hook runs it when such files are staged, and `verify` runs it on every push; `--weekly`, the scheduled Docs workflow's flag, runs the same checks so a quarantine that expires while nobody pushes still turns it red; it also refuses a focused test, an unconditional way to switch a test off (`.skip`, `.fixme`, an expected failure such as `.fails` or `.failing`, a constant `.skipIf(true)`) without `quarantine until YYYY-MM-DD` + reason (the date at most 30 days out and red ON the date itself), a gate chain view in `scripts/gate-tiers.json` that differs from `package.json`, a hand-written retelling or composition of the chain (a line naming three or more of its stages, or two parts of one script), and an agent-memory import: an `@` pointer in `CLAUDE.md` or `AGENTS.md` that names a file, which Claude Code would load into every session; write it as a backticked path instead).
+- **Docs, rules, commands, brain, tier data** (`*.md`, `*.mdc`, `scripts/gate-tiers.json`) — `npm run docs:check` (the pre-commit hook runs it when such files are staged, and `verify` runs it on every push; `--weekly`, the scheduled Docs workflow's flag, runs the same checks so a quarantine that expires while nobody pushes still turns it red; it also refuses a focused test, an unconditional way to switch a test off (`.skip`, `.fixme`, an expected failure such as `.fails` or `.failing`, a constant `.skipIf(true)`) without `quarantine until YYYY-MM-DD` + reason (the date at most 30 days out and red ON the date itself), a gate chain view in `scripts/gate-tiers.json` that differs from `package.json`, a gate command that lost a strict flag (the linters' `--max-warnings 0` and `--deny-warnings`, a jest run that watches) or carries `--passWithNoTests` outside the iterate chain, a path that names an emptied folder, an ignored file or a line number (cite the symbol), a `DECISIONS.md` entry without an index row, a row without an entry, or an entry over 30 lines, a hand-written retelling or composition of the chain (a line naming three or more of its stages, or two parts of one script), and an agent-memory import: an `@` pointer in `CLAUDE.md` or `AGENTS.md` that names a file, which Claude Code would load into every session; write it as a backticked path instead).
   Tests are linted by jest rules at the `verify` layer: `jest/no-focused-tests` is an error, so a `.only` stops at pre-commit and at `verify`; `jest/no-disabled-tests` is a warning, so a `.skip` passes the pre-commit `eslint --fix` (it has no `--max-warnings`) and goes red at the gate, whose lint pass runs with `--max-warnings 0`
-- **Proposing a new Maestro flow** — the suite is counted in invariants, not screens (`AGENTS.md` § the gate); `npm run docs:check` reports the suite against the ceiling in `scripts/gate-tiers.json` § suites
+- **Proposing a new Maestro flow** — the suite is counted in invariants, not screens (`AGENTS.md` § the gate), by flow files, so a second subject of an invariant that already has a flow becomes steps in that flow's file, never a new yaml file; the ceiling is raised only with a measurement and a `DECISIONS.md` line. `npm run docs:check` prints the suite's measurement and reports it against the ceiling in `scripts/gate-tiers.json` § suites
 - **Commit** — the pre-commit hook (below). Nothing by hand.
 - **Push** — the pre-push hook runs `verify:ci`. Never run it, or any other full gate, by hand;
   `ci:local` additionally needs local native tooling and takes minutes.
@@ -39,6 +39,11 @@ dependency reinstall took 46.3 / 34.3 s and are the only rows over the 30 s
 `push` budget in `gate-tiers.json`, which is unchanged; `verify` alone 8.4-20.2 s; `verify:iter`
 2.5-4.1 s; one `test:one` file 8.3 s; the mutation run 2m02s (`mutation.yml`, outside the gate).
 
+After `verify:iter` gained its ESLint leg (2026-10-29; a scratch copy with three changed source files and
+warm caches, not traced): 3.7 s before and 4.7 s after. The leg alone took 4.1 s on a cold ESLint cache
+and 0.9 s warm; the widened test leg, the whole suite, took 3.4 s (36 suites). The iterate budget is 15 s
+(`gate-tiers.json`).
+
 ## The tracer — how it works (the RULES it enforces are the tier law)
 
 Every `verify*` and `test:one` run appends one TSV row to `.gate-trace.log` (gitignored);
@@ -65,7 +70,7 @@ CAN fail is mutation-proving's job.
 ## What the git hooks enforce
 
 - **pre-commit** — `lint-staged` (the tools it runs: `package.json`) on the staged
-  files, then the TDD sibling gate (`scripts/check-test-siblings.mjs`, staged files against the index), then
+  files, then the TDD sibling gate (`scripts/check-test-siblings.mjs`, staged files against the index; the first commit of a repository, with no HEAD yet, is not judged, as in range mode with no base), then
   the **repo-wide** cheap checks (the list is `.husky/pre-commit`), all of them run before the
   hook decides so one attempt reports everything. Why the repo-wide pass exists:
   `DECISIONS.md` § TDD sibling gate on pre-commit. Remedy: `npm run fix && git add -u`.
@@ -81,10 +86,18 @@ unrelated message. The hook reports and refuses; the remedy is one command.
 Three rungs, and the split is deliberate:
 
 - **`npm run verify:iter`** — the iteration rung: the hooks check first (a clone without git hooks fails here, not at a push that
-  runs no gate), the cheap static checks (the type check is incremental), then only the tests git sees
+  runs no gate), the cheap static checks (the type check is incremental), then the files git sees as
+  changed through ESLint (staged, unstaged and untracked; the flags and cache of `npm run lint`, so the
+  type-aware rules run here and not first at the commit hook), then only the tests git sees
   as affected by uncommitted work (stages: `scripts/gate-tiers.json`).
-  `--onlyChanged` follows the module graph from changed files, so cross-cutting suites and
-  `scripts/**` tests (`test:scripts`) surface at the push chain, not during iteration.
+  `--onlyChanged` follows the module graph from changed files, so a changed file no test imports (the jest
+  block in `package.json`, `babel.config.js`, `tsconfig.json`, the NativeWind and Metro configs,
+  `src/test/setup.ts`) would select nothing and exit 0: `scripts/iterate-tests.mjs` runs the whole suite
+  when one of them is dirty, and `scripts/iterate-chain.test.mjs` fails a chain without that step. The
+  layer-scope test (`scripts/mutation-scope.test.mjs`) has its own step, by name, because nothing imports
+  it and no selection reaches it. Other cross-cutting suites and
+  `scripts/**` tests (`test:scripts`) still surface at the push chain, not during iteration. ESLint
+  ignores `.cursor/`: the leg lints untracked files, and nothing under it is product code.
 - **`npm run verify`** — every check that works OFFLINE. Stage order: `scripts/gate-tiers.json`
   (cheap independent stages first); the superset rule and the push/CI split:
   `AGENTS.md` § Commands / the gate; why: `DECISIONS.md` § The gate contract. It includes the TDD
@@ -195,7 +208,9 @@ Green means nothing until you know the gate can go red.
 1. **Capture the exit code without a pipe**: `npm run verify:iter > /tmp/verify.log 2>&1; echo $?`. Piping
    to `tail` returns the PIPE's status, so a failed build reads as a pass.
 2. **Mutation-check the tests**: if mentally reverting your change leaves the suite green, the test is
-   worthless. Writing a test is the TDD step; proving it would have failed is this one.
+   worthless. Do it in your head, not on disk: do not edit the code, run the tests and restore it. A
+   physical mutation is for a NEW gate only (item 3), and a pure file move needs none. Writing a test is
+   the TDD step; proving it would have failed is this one.
 3. **Prove a new gate gates**: break it on purpose once (an expired entry in
    `scripts/audit-allowlist.json`, a raw hex in a component, a staged `src` logic file with no `*.test.*`
    sibling) and watch it refuse. Then revert the sabotage.
@@ -203,8 +218,9 @@ Green means nothing until you know the gate can go red.
    directory, an empty result, or no network, not only on the failure it was written for.
 5. **Name the condition under which the green would have been RED.** If you cannot name one, the check
    proved nothing, and a check that cannot fail still gets recorded as evidence. Two real shapes here:
-   `jest --onlyChanged --passWithNoTests` (the iterate tier) exits 0 when the diff reaches no test at all,
-   so a green `verify:iter` on an untested change proves nothing; and `jest --coverage` prints
+   `jest --onlyChanged --passWithNoTests` (the iterate tier) exits 0 when the diff reaches no test at all
+   (a dirty config file is the exception: that tier then runs the whole suite), so a green `verify:iter`
+   on an untested source change proves nothing; and `jest --coverage` prints
    `Failed to collect coverage from <file>` for a file it could not parse and then exits 0 with a
    percentage over the smaller set, which is why `scripts/check-coverage.mjs` exists.
 6. **Check the cases that "cannot happen".** For UI that is the shortest copy allowed, the longest, one

@@ -6,7 +6,7 @@
         "verify:iter": {
             "class": "code",
             "description": "iterate: the seconds-long check run per change",
-            "chain": "check-hooks -> lint:oxlint -> typecheck -> jest --onlyChanged --passWithNoTests"
+            "chain": "check-hooks -> lint:oxlint -> typecheck -> lint-changed -> iterate-tests -> mutation-scope.test"
         },
         "verify": {
             "class": "code",
@@ -108,13 +108,12 @@
         }
     },
     "suites": {
-        "_description": "Ceilings on the device suite. It is counted in INVARIANTS, not screens (AGENTS.md \u00a7 the gate): a route earns a Maestro flow only when it brings an invariant the existing specs do not measure. A suite over its ceiling is a finding, and so is a ceiling more than twice the measurement \u2014 that high it flags nothing. Raise a number on a measurement plus a DECISIONS.md line, like a size budget.",
+        "_description": "Ceilings on the device suite. It is counted in INVARIANTS, not screens (AGENTS.md \u00a7 the gate): a route earns a Maestro flow only when it brings an invariant the existing specs do not measure. A suite over its ceiling is a finding, and so is a ceiling more than twice the measurement \u2014 that high it flags nothing. A second subject of an existing invariant becomes steps in that flow's file, never a new yaml file: files are what is counted. Raise a number on a measurement plus a DECISIONS.md line, like a size budget.",
         "maestro": {
             "dir": ".maestro",
             "match": "\\.yaml$",
             "count": "files",
-            "max": 4,
-            "_measured": "2 on 2026-09-13"
+            "max": 4
         }
     },
     "moments": {

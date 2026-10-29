@@ -54,7 +54,7 @@
         "maestro": "maestro test .maestro",
         "prepare": "husky",
         "verify:inner": "node scripts/check-hooks.mjs && node scripts/check-version-holds.mjs && node scripts/check-engines-floor.mjs && node scripts/check-test-siblings.mjs --range && node scripts/docs-check.mjs && npm run lint:oxlint && npm run format:check && npm run typecheck && npm run lint && npm run test:scripts && npm run test:coverage",
-        "verify:iter:inner": "node scripts/check-hooks.mjs && npm run lint:oxlint && npm run typecheck && jest --onlyChanged --passWithNoTests",
+        "verify:iter:inner": "node scripts/check-hooks.mjs && npm run lint:oxlint && npm run typecheck && node scripts/lint-changed.mjs && node scripts/iterate-tests.mjs && node scripts/mutation-scope.test.mjs",
         "verify:ci:inner": "npm run audit:gate && npm run lock:age && npm run verify",
         "trace:report": "node scripts/trace-report.mjs",
         "test:one": "node scripts/gate-trace.mjs test:one -- npx --no-install jest",

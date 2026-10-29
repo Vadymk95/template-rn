@@ -38,7 +38,7 @@ export type OrderStatus = (typeof ORDER_STATUS)[keyof typeof ORDER_STATUS];
 
 ## 4. ESLint: what is enforced, not just recommended
 
-- **Magic numbers** — `@typescript-eslint/no-magic-numbers` across `src/**`. `-1 0 1 2 100 1000`, enum members, array indexes, default values and type indexes are allowed; anything else needs a name in the location the table above gives. Off in `src/shared/lib/theme/**` (the number IS the token), in tests (a test that imports the constant it asserts is tautological) and in root config files.
+- **Magic numbers** — `@typescript-eslint/no-magic-numbers` across `src/**`. `-1 0 1 2 100 1000`, enum members, array indexes, default values and type indexes are allowed, and so is a numeric literal type declared as an alias (`type Gap = 3 | 5`); the same union written inline in a property type (`max?: 4 | 5`) still counts, so name it as an alias. Anything else needs a name in the location the table above gives. Off in `src/shared/lib/theme/**` (the number IS the token), in tests (a test that imports the constant it asserts is tautological) and in root config files.
 - **Raw hex colours** — `no-restricted-syntax` blocks hex in string AND template literals everywhere under `src/**` except `src/shared/lib/theme/**`. Colours come from a NativeWind class or from `COLOR_VALUES`. The rule exists because a copied literal had already drifted from the token.
 - **FSD layer imports** — `boundaries/dependencies`, see `fsd-layers.mdc`.
 

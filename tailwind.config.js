@@ -1,6 +1,9 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-    content: ['./src/**/*.{ts,tsx}'],
+    // Product code only: a class name in a test file or a test helper would compile into a rule no
+    // screen uses. A new folder under src/ is scanned until it is negated here;
+    // scripts/tailwind-scan.test.mjs pins both directions.
+    content: ['./src/**/*.{ts,tsx}', '!./src/**/*.test.{ts,tsx}', '!./src/test/**'],
     presets: [require('nativewind/preset')],
     darkMode: 'class',
     theme: {

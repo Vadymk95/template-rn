@@ -106,6 +106,50 @@ describe('check-hooks', () => {
         assert.equal(run(repo, { CI: 'true' }).code, 0);
     });
 
+    describe('an app that sits in a subfolder of its git repository', () => {
+        /* The gate's scripts read git paths as relative to the repository root: staged names, the
+           hooks path, `ref:path`. From a subfolder they match nothing and say nothing, and this
+           check itself resolved .husky/_ against the folder it ran in, so a fully "installed" app
+           there passed while git ran no hook. The app sits at the root or the check refuses. */
+        const subfolderApp = () => {
+            const repo = makeRepo();
+            cleanupDirs.push(repo);
+            const app = join(repo, 'app');
+            mkdirSync(join(app, '.husky/_'), { recursive: true });
+            execFileSync('git', ['config', 'core.hooksPath', '.husky/_'], {
+                cwd: app,
+                env: CLEAN_ENV,
+                stdio: CAPTURE
+            });
+            return app;
+        };
+
+        it('refuses, and says the app must sit at the git root', () => {
+            const verdict = run(subfolderApp());
+            assert.equal(verdict.code, 1);
+            assert.ok(verdict.output.includes('the app must sit at the git root'));
+            assert.ok(verdict.output.includes('"app/"'));
+        });
+
+        it('refuses on CI as well, the early exit does not come first', () => {
+            const verdict = run(subfolderApp(), { CI: 'true' });
+            assert.equal(verdict.code, 1);
+            assert.ok(verdict.output.includes('the app must sit at the git root'));
+        });
+
+        it('answers for the CWD repo even when a hook-exported GIT_DIR points at another repo', () => {
+            const app = subfolderApp();
+            const otherRepo = makeRepo();
+            cleanupDirs.push(otherRepo);
+            const verdict = run(app, {
+                GIT_DIR: join(otherRepo, '.git'),
+                GIT_WORK_TREE: otherRepo
+            });
+            assert.equal(verdict.code, 1);
+            assert.ok(verdict.output.includes('the app must sit at the git root'));
+        });
+    });
+
     it('answers for the CWD repo even when a hook-exported GIT_DIR points at another repo', () => {
         const repo = makeRepo();
         cleanupDirs.push(repo);

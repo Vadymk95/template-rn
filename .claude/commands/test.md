@@ -9,7 +9,8 @@ passing if the behaviour were reverted. Those cement the flow instead of guardin
 ## 1. Scope to the change
 
 ```bash
-git diff --name-only origin/master...HEAD
+git diff --name-only origin/HEAD...HEAD
+# origin/HEAD is the default branch; if it is unset, run git remote set-head origin -a once
 git status --short
 ```
 
@@ -41,8 +42,10 @@ a deliberately hidden node such as a dialog backdrop.
 
 ## 3. Decide the coverage LEVEL before writing
 
-Grep each changed module's consumers. If it is used in more than one place, or its behaviour depends on
-what a parent wires into it (store, provider, navigation params, props), unit tests alone are **not**
+Find each changed module's importers by SYMBOL (`rg -w <exportName>`), never by file path: a directory
+import (`@/shared/lib/i18n`) or a barrel re-export hides the path. If it is used in more than one place,
+or its behaviour depends on what a parent wires into it (store, provider, navigation params, props), unit
+tests alone are **not**
 enough — render it through the real parent path as well. A component whose unit tests are green and which
 breaks when mounted inside a screen is the exact failure this rule exists for.
 

@@ -73,6 +73,9 @@ export default tseslint.config(
             'ios/**',
             'android/**',
             'coverage/**',
+            // Tracked for rules, plans and templates; nothing under it is product code, and an agent's
+            // scratch script there must not red `npm run lint` or the iterate chain's ESLint leg.
+            '.cursor/**',
             // An agent worktree created under the repository root is a full SECOND CHECKOUT, and
             // every ignore above is root-anchored, so its copies walk straight past them. Same
             // class as the `.stryker-tmp` line above, and measured with a probe file on
@@ -227,7 +230,8 @@ export default tseslint.config(
                     ignoreReadonlyClassProperties: true,
                     ignoreArrayIndexes: true,
                     ignoreDefaultValues: true,
-                    ignoreTypeIndexes: true
+                    ignoreTypeIndexes: true,
+                    ignoreNumericLiteralTypes: true
                 }
             ],
             'import-x/order': [
