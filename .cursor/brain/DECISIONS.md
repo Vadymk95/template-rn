@@ -55,6 +55,7 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 | Audit backlog: what the template adopts and defers                     | 2026-04 | in force                               |
 | React Compiler silent-bailout awareness                                | 2026-05 | in force                               |
 | REJECT list: explicit non-adoption                                     | 2026-05 | in force                               |
+| Gate checks refuse a value they cannot judge                           | 2026-11 | in force                               |
 
 ## Expo managed over bare React Native
 
@@ -417,3 +418,23 @@ Read before proposing a tool that was already considered.
 | `react-native-accessibility-engine` | skip           | last release 2022-11-15, and it peers `react-test-renderer`, which React 19 deprecates; evaluated 2026-10-09                   |
 
 - **Status**: in force. **Evidence**: [31a9d36](https://github.com/Vadymk95/template-rn/commit/31a9d36).
+
+## Gate checks refuse a value they cannot judge
+
+- **Decision**:
+    - `audit-gate` judges an advisory by its own rating; the package it was reached through stands in only when npm
+      printed none, and an advisory reached through two packages is listed once, at its highest rating. A low advisory
+      behind a high package is no longer red; a critical one behind a low package is.
+    - `docs:check` refuses a suite in `gate-tiers.json` whose `max` is not a positive integer or that lacks `dir`,
+      `match` or `count`, reads `docs/` as a doc folder, and judges `file.ext:12:5` like `:12`.
+    - `check-version-holds` takes a URL or the path of an existing file as evidence, never a path with a line number.
+    - `gate:integrity` finds its base itself (`origin/master`, else `origin/main`) and exits 2 when neither exists; an
+      explicit `--base` is used as given.
+    - A test pins `--no-renames` in the suppression read, and where a template has `.size-limit.json`, every entry must
+      carry a byte `limit` and `brotli: true`.
+- **Consequences**: each gap let a gate pass, or fail, for the wrong reason. A comparison with an absent, NaN or
+  string ceiling is false both ways, so the suite was never judged. size-limit enforces an entry only when it has a
+  limit. A renamed file's added lines drop out of the `AM` diff filter unless rename detection is off. A hard-coded
+  `origin/master` fails where the default branch is `main`. An advisory took the rating of whatever package it came
+  through.
+- **Status**: in force. **Evidence**: `scripts/audit-gate.test.mjs`, `scripts/docs-check.test.mjs`, `scripts/check-version-holds.test.mjs`, `scripts/check-gate-integrity.suppressions-3.test.mjs`.
