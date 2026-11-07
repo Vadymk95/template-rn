@@ -189,6 +189,7 @@
         "brace-expansion": ">=5.0.12 <6",
         "fast-uri": ">=4.1.2 <5",
         "handlebars": ">=4.7.10 <5",
+        "node-forge": ">=1.4.1 <2",
         "eslint-plugin-react": {
             "eslint": "$eslint"
         },
