@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.6](https://github.com/Vadymk95/template-rn/compare/v0.3.5...v0.3.6) (2026-11-07)
+
+
+### Bug fixes
+
+* **gate:** audit severity, intent-to-add siblings, bundle budget input checks, node-forge floor ([#70](https://github.com/Vadymk95/template-rn/issues/70)) ([873f70b](https://github.com/Vadymk95/template-rn/commit/873f70b2ff7b51c845a22608f86e653e03278ec3))
+
 ## [0.3.5](https://github.com/Vadymk95/template-rn/compare/v0.3.4...v0.3.5) (2026-10-29)
 
 
