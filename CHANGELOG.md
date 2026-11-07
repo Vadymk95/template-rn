@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.7](https://github.com/Vadymk95/template-rn/compare/v0.3.6...v0.3.7) (2026-11-07)
+
+
+### Maintenance
+
+* **deps:** bump the minor-and-patch group across 1 directory with 17 updates ([#69](https://github.com/Vadymk95/template-rn/issues/69)) ([3c351a1](https://github.com/Vadymk95/template-rn/commit/3c351a1c6cc3a02488b3336e4febc00108a6f793))
+
+
+### CI
+
+* **deps:** bump the actions group across 1 directory with 3 updates ([#61](https://github.com/Vadymk95/template-rn/issues/61)) ([694fd0b](https://github.com/Vadymk95/template-rn/commit/694fd0b0d6a35e082099315d5c672c87ec532fba))
+
 ## [0.3.6](https://github.com/Vadymk95/template-rn/compare/v0.3.5...v0.3.6) (2026-11-07)
 
 
