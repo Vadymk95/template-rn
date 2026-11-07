@@ -70,7 +70,7 @@ CAN fail is mutation-proving's job.
 ## What the git hooks enforce
 
 - **pre-commit** — `lint-staged` (the tools it runs: `package.json`) on the staged
-  files, then the TDD sibling gate (`scripts/check-test-siblings.mjs`, staged files against the index; the first commit of a repository, with no HEAD yet, is not judged, as in range mode with no base), then
+  files, then the TDD sibling gate (`scripts/check-test-siblings.mjs`, staged files against the index, where a path counts only when HEAD has it or the index adds it (an intent-to-add mark does not); the first commit of a repository, with no HEAD yet, is not judged, as in range mode with no base), then
   the **repo-wide** cheap checks (the list is `.husky/pre-commit`), all of them run before the
   hook decides so one attempt reports everything. Why the repo-wide pass exists:
   `DECISIONS.md` § TDD sibling gate on pre-commit. Remedy: `npm run fix && git add -u`.

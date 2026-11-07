@@ -19,7 +19,7 @@ Web Vitals (LCP, INP, CLS) do not apply to native RN; this is the closest **CI-f
 2. Compare printed `hermesBundleBytes` to `scripts/perf-baseline.json` (v1 = iOS-only legacy; v2 = both platforms).
 3. If the change **intentionally** shifts size and you accept the new baseline: `npm run perf:baseline` (writes **v2** with iOS + Android).
 
-Gate (runs in CI as the `bundle-budget` job of `ci.yml`, outside `verify` because the export is heavy): `npm run perf:check` — compares **both** platforms to a **v2** baseline; fails if either `.hbc` exceeds baseline by more than `PERF_THRESHOLD_PCT` (default 5%). Hermes `.hbc` size can jitter slightly between exports; keep the threshold > 0% or refresh the baseline after intentional dependency upgrades.
+Gate (runs in CI as the `bundle-budget` job of `ci.yml`, outside `verify` because the export is heavy): `npm run perf:check` — compares **both** platforms to a **v2** baseline; fails if either `.hbc` exceeds baseline by more than `PERF_THRESHOLD_PCT` (default 5%). Hermes `.hbc` size can jitter slightly between exports; keep the threshold > 0% or refresh the baseline after intentional dependency upgrades. The check refuses, instead of passing, a `PERF_THRESHOLD_PCT` that is not a number of 0 or more (empty included) and a measured or baseline size that is not a finite positive number; a baseline of an unrecognised shape is restored from master, not rewritten by hand.
 
 **Legacy:** v1 baselines still work with `perf:capture` + `--check --platform ios` via the script directly; migrate with `npm run perf:baseline`.
 

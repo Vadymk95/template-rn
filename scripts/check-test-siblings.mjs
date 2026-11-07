@@ -9,8 +9,9 @@
 //
 // Two places ask, with two different sources of truth, and neither is the working tree:
 //   - staged mode (pre-commit): the changed files are the staged ones and a sibling counts only
-//     when it is in the git INDEX. A test that sits untracked on disk is not part of the commit,
-//     so it must not satisfy the gate for a commit that leaves it behind.
+//     when it is in the git INDEX with content (in HEAD or staged as an addition). A test that sits
+//     untracked on disk, or is only marked with `git add -N`, is not part of the commit, so it must
+//     not satisfy the gate for a commit that leaves it behind.
 //   - range mode (inside `verify`, so pre-push and CI): the changed files are the ones `base...head`
 //     added, copied, renamed or modified, and a sibling counts only when it is in the HEAD tree.
 //     This is what catches a commit made with the hook skipped or a PR from a clone that never
@@ -112,7 +113,23 @@ export const readStaged = (git) => {
     if (git(['rev-parse', '--verify', '--quiet', 'HEAD^{commit}']) === null) {
         return { root: true };
     }
-    const inIndex = new Set(nulList(tracked));
+    // `git add -N` puts a path in `ls-files` with nothing staged, and the commit then holds no such
+    // file. A path counts only when HEAD has it or the index adds it, and not when the index deletes
+    // it (intent-to-add on a path that HEAD has reads as a deletion). `--no-renames`: a renamed spec
+    // is an addition here, not an `R`.
+    const stagedDiff = (filter) =>
+        git(['diff', '--cached', '--no-renames', '--name-only', '-z', `--diff-filter=${filter}`]);
+    const committed = git(['ls-tree', '-r', '-z', '--name-only', 'HEAD']);
+    const added = stagedDiff('A');
+    const deleted = stagedDiff('D');
+    if (committed === null || added === null || deleted === null) {
+        return { error: 'cannot read the git index: is this a git repository?' };
+    }
+    const real = new Set([...nulList(committed), ...nulList(added)]);
+    for (const file of nulList(deleted)) {
+        real.delete(file);
+    }
+    const inIndex = new Set(nulList(tracked).filter((file) => real.has(file)));
     return {
         files: nulList(changed),
         exists: (file) => inIndex.has(file),

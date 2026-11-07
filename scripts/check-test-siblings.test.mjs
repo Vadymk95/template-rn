@@ -267,6 +267,72 @@ describe('the CLI against a real git repository', () => {
             assert.equal(run(root).status, 0);
         });
 
+        // `git add -N` lists a path in the index with empty content, but a commit made from it holds no
+        // such file: `git ls-files` names it while `git diff --cached` does not. It must not count.
+        it('fails when the sibling is only marked with intent-to-add', () => {
+            const root = makeRepo();
+            write(root, 'src/lib/pending.ts');
+            write(root, 'src/lib/pending.test.ts');
+            git(root, 'add', 'src/lib/pending.ts');
+            git(root, 'add', '-N', 'src/lib/pending.test.ts');
+
+            const result = run(root);
+
+            assert.equal(result.status, 1);
+            assert.match(result.stderr, /src\/lib\/pending\.ts/);
+        });
+
+        it('passes once an intent-to-add sibling is really staged', () => {
+            const root = makeRepo();
+            write(root, 'src/lib/pending.ts');
+            write(root, 'src/lib/pending.test.ts');
+            git(root, 'add', 'src/lib/pending.ts');
+            git(root, 'add', '-N', 'src/lib/pending.test.ts');
+            git(root, 'add', 'src/lib/pending.test.ts');
+
+            assert.equal(run(root).status, 0);
+        });
+
+        it('fails when a committed sibling was removed from the index and re-marked with intent-to-add', () => {
+            const root = makeRepo();
+            write(root, 'src/lib/tested.ts');
+            write(root, 'src/lib/tested.test.ts');
+            commitAll(root, 'add tested');
+            write(root, 'src/lib/tested.ts', 'export const value = 2;\n');
+            git(root, 'add', 'src/lib/tested.ts');
+            git(root, 'rm', '-q', '--cached', 'src/lib/tested.test.ts');
+            git(root, 'add', '-N', 'src/lib/tested.test.ts');
+
+            const result = run(root);
+
+            assert.equal(result.status, 1);
+            assert.match(result.stderr, /src\/lib\/tested\.ts/);
+        });
+
+        it('passes when the sibling was staged and then deleted from the working tree', () => {
+            // The commit takes the index, which still holds the staged file.
+            const root = makeRepo();
+            write(root, 'src/lib/tested.ts');
+            write(root, 'src/lib/tested.test.ts');
+            git(root, 'add', 'src/lib/tested.ts', 'src/lib/tested.test.ts');
+            rmSync(path.join(root, 'src/lib/tested.test.ts'));
+
+            assert.equal(run(root).status, 0);
+        });
+
+        it('passes when the sibling arrives as a rename of a committed file', () => {
+            // A rename is not an addition for git unless renames are switched off.
+            const root = makeRepo();
+            const spec = "it('works', () => {});\n".repeat(20);
+            write(root, 'src/lib/old.test.ts', spec);
+            commitAll(root, 'add old spec');
+            write(root, 'src/lib/moved.ts');
+            git(root, 'mv', 'src/lib/old.test.ts', 'src/lib/moved.test.ts');
+            git(root, 'add', 'src/lib/moved.ts');
+
+            assert.equal(run(root).status, 0);
+        });
+
         it('fails when the commit removes the sibling from the index', () => {
             const root = makeRepo();
             write(root, 'src/lib/tested.ts');
