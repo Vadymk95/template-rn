@@ -21,7 +21,7 @@ priority: 100
 
 ## Step 2: Simulation
 
-- More than three steps: use `sequential-thinking` (`totalThoughts >= 3`) with one adversarial thought (iOS vs Android, cold start, offline, OTA). Without `context7`, use the official docs.
+- More than three steps: write the plan in the reply and run one adversarial pass over it before the first edit (iOS vs Android, cold start, offline, OTA). Without `context7`, use the official docs.
 - Critique: `@/` imports only; Zustand for client state, TanStack Query for server data, `useState` for component-only state; no magic strings or untyped external payloads; the ghost principle (every line serves the task, no drive-by refactors).
 - Per non-trivial function, trace 1-2 mental test cases (happy path and an edge); a failing trace revises the plan.
 - Gate by **risk, not LOC** (`workflow.mdc` § The Approval Law); trivial leaf edits proceed.

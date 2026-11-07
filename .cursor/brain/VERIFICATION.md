@@ -70,7 +70,7 @@ CAN fail is mutation-proving's job.
 ## What the git hooks enforce
 
 - **pre-commit** — `lint-staged` (the tools it runs: `package.json`) on the staged
-  files, then the TDD sibling gate (`scripts/check-test-siblings.mjs`, staged files against the index; the first commit of a repository, with no HEAD yet, is not judged, as in range mode with no base), then
+  files, then the TDD sibling gate (`scripts/check-test-siblings.mjs`, staged files against the index, where a path counts only when HEAD has it or the index adds it (an intent-to-add mark does not); the first commit of a repository, with no HEAD yet, is not judged, as in range mode with no base), then
   the **repo-wide** cheap checks (the list is `.husky/pre-commit`), all of them run before the
   hook decides so one attempt reports everything. Why the repo-wide pass exists:
   `DECISIONS.md` § TDD sibling gate on pre-commit. Remedy: `npm run fix && git add -u`.
@@ -206,9 +206,12 @@ substitute ladder closes `READING_INDEX.md`.
 Green means nothing until you know the gate can go red.
 
 1. **Capture the exit code without a pipe**: `npm run verify:iter > /tmp/verify.log 2>&1; echo $?`. Piping
-   to `tail` returns the PIPE's status, so a failed build reads as a pass.
+   to `tail` returns the PIPE's status, so a failed build reads as a pass. Write a re-run to its own
+   numbered log (`/tmp/verify-2.log`), never over the first red log, and quote that first red in the
+   hand-back.
 2. **Mutation-check the tests**: if mentally reverting your change leaves the suite green, the test is
-   worthless. Do it in your head, not on disk: do not edit the code, run the tests and restore it. A
+   worthless. Do it in your head, not on disk (the implementer's check; the reviewer's step is in
+   `.claude/commands/review.md`): do not edit the code, run the tests and restore it. A
    physical mutation is for a NEW gate only (item 3), and a pure file move needs none. Writing a test is
    the TDD step; proving it would have failed is this one.
 3. **Prove a new gate gates**: break it on purpose once (an expired entry in

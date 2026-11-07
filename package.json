@@ -30,7 +30,7 @@
         "format:check": "prettier --check . --cache --cache-location .prettiercache",
         "audit:gate": "node scripts/audit-gate.mjs",
         "lock:age": "node scripts/check-lock-age.mjs",
-        "gate:integrity": "node scripts/check-gate-integrity.mjs --base origin/master",
+        "gate:integrity": "node scripts/check-gate-integrity.mjs",
         "verify": "node scripts/gate-trace.mjs verify -- npm run verify:inner",
         "verify:iter": "node scripts/gate-trace.mjs verify:iter -- npm run verify:iter:inner",
         "verify:ci": "node scripts/gate-trace.mjs verify:ci -- npm run verify:ci:inner",
@@ -189,6 +189,7 @@
         "brace-expansion": ">=5.0.12 <6",
         "fast-uri": ">=4.1.2 <5",
         "handlebars": ">=4.7.10 <5",
+        "node-forge": ">=1.4.1 <2",
         "eslint-plugin-react": {
             "eslint": "$eslint"
         },

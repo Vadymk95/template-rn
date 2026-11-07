@@ -49,6 +49,7 @@ import {
     gateStages,
     gateVocabulary,
     isPullRequestTriggered,
+    listDocFiles,
     listMarkdownFiles,
     listRepoFiles,
     listTestFiles,
@@ -112,6 +113,14 @@ describe('classifyToken', () => {
             value: 'src/env.ts'
         });
         assert.deepEqual(classifyToken('src/env.ts:12-14', ctx), {
+            kind: 'path',
+            value: 'src/env.ts'
+        });
+        assert.deepEqual(classifyToken('src/env.ts:12:5', ctx), {
+            kind: 'path',
+            value: 'src/env.ts'
+        });
+        assert.deepEqual(classifyToken('./src/env.ts:12:5,', ctx), {
             kind: 'path',
             value: 'src/env.ts'
         });
@@ -215,6 +224,27 @@ describe('checkPathsAndScripts', () => {
             ]);
         });
 
+        it('is a finding with a column too, `:12:5`, and still one for `:12` and `:12-14`', () => {
+            const docs = [
+                [
+                    'AGENTS.md',
+                    'see `scripts/docs-check.mjs:12:5`, `scripts/docs-check.mjs:12` and `scripts/docs-check.mjs:12-14`'
+                ]
+            ];
+            assert.deepEqual(judge(docs, here), [
+                finding('AGENTS.md', 'scripts/docs-check.mjs:12:5'),
+                finding('AGENTS.md', 'scripts/docs-check.mjs:12'),
+                finding('AGENTS.md', 'scripts/docs-check.mjs:12-14')
+            ]);
+        });
+
+        it('reads a column pointer to a missing path as both findings, not as a different path', () => {
+            assert.deepEqual(judge([['README.md', 'at `scripts/missing.mjs:3:9`']]), [
+                finding('README.md', 'scripts/missing.mjs:3:9'),
+                'README.md:1: `scripts/missing.mjs:3:9` does not exist in the tree'
+            ]);
+        });
+
         it('leaves a path without one, a bare file name and a host with a port alone', () => {
             const docs = [
                 [
@@ -257,6 +287,16 @@ describe('checkPathsAndScripts', () => {
                     assert.deepEqual(judge(docs, { root, listed: new Set(names) }), [
                         finding('AGENTS.md', 'eslint.config.js:393'),
                         finding('.cursor/brain/DECISIONS.md', 'package.json:12')
+                    ]);
+                });
+            });
+
+            it('is a finding on a line and column into a file the root holds', () => {
+                const names = ['eslint.config.js'];
+                withFiles(names, (root) => {
+                    const docs = [['AGENTS.md', 'the rules sit at `eslint.config.js:393:7`']];
+                    assert.deepEqual(judge(docs, { root, listed: new Set(names) }), [
+                        finding('AGENTS.md', 'eslint.config.js:393:7')
                     ]);
                 });
             });
@@ -885,6 +925,48 @@ describe('run: the files and the decisions file the checks read', () => {
             assert.deepEqual(findingsOf(), [
                 'AGENTS.md:1: `src/emptied/` does not exist in the tree'
             ]);
+        });
+    });
+
+    it('reads a docs/ folder as docs, so a dead path in it is a finding', () => {
+        const docs = {
+            'AGENTS.md': 'Notes: `docs/notes.md`.\n',
+            'docs/notes.md': 'Cites `src/kept/a.ts` and `src/gone.ts`.\n'
+        };
+        inRepo(docs, (_root, findingsOf) => {
+            assert.deepEqual(findingsOf(), [
+                'docs/notes.md:1: `src/gone.ts` does not exist in the tree'
+            ]);
+        });
+    });
+
+    it('passes a docs/ folder whose paths all resolve, and a repo with no docs/ folder', () => {
+        inRepo(
+            {
+                'AGENTS.md': 'Notes: `docs/notes.md`.\n',
+                'docs/notes.md': 'Cites `src/kept/a.ts`.\n'
+            },
+            (_root, findingsOf) => {
+                assert.deepEqual(findingsOf(), []);
+            }
+        );
+        inRepo({ 'AGENTS.md': '# Agents\n' }, (_root, findingsOf) => {
+            assert.deepEqual(findingsOf(), []);
+        });
+    });
+
+    it('reads only the doc extensions of docs/, and only the files directly in it', () => {
+        const docs = {
+            'AGENTS.md': 'Notes: `docs/notes.md`.\n',
+            'docs/notes.md': 'Fine.\n',
+            'docs/data.json': '{"p": "`src/gone.ts`"}\n',
+            'docs/nested/deep.md': 'Cites `src/gone.ts`.\n'
+        };
+        inRepo(docs, (root, findingsOf) => {
+            assert.ok(listDocFiles(root).includes('docs/notes.md'));
+            assert.ok(!listDocFiles(root).includes('docs/data.json'));
+            assert.ok(!listDocFiles(root).includes('docs/nested/deep.md'));
+            assert.deepEqual(findingsOf(), []);
         });
     });
 
@@ -2825,7 +2907,7 @@ describe('checkSuiteBudgets', () => {
     const suite = { dir: 'scripts', match: '\\.test\\.mjs$', count: 'files' };
     /* The fixture derives the count from this repo's own script suites: a hand-written number would go
        stale the next time a script test is added. */
-    const overCeiling = checkSuiteBudgets({ root, suites: { unit: { ...suite, max: 0 } } })[0];
+    const overCeiling = checkSuiteBudgets({ root, suites: { unit: { ...suite, max: 1 } } })[0];
     const count = Number(/: (\d+) file/.exec(overCeiling)?.[1] ?? 0);
     it('passes a suite inside its ceiling', () => {
         assert.ok(count > 0);
@@ -2854,7 +2936,7 @@ describe('checkSuiteBudgets', () => {
             root,
             suites: {
                 _description: 'not a suite',
-                calls: { dir: 'scripts', match: 'docs-check\\.test\\.mjs$', count: 'tests', max: 0 }
+                calls: { dir: 'scripts', match: 'docs-check\\.test\\.mjs$', count: 'tests', max: 1 }
             }
         });
         assert.equal(findings.length, 1);
@@ -2866,6 +2948,82 @@ describe('checkSuiteBudgets', () => {
         assert.equal(findings.length, 1);
         assert.ok(findings[0].includes('suites.unit._measured'));
         assert.ok(findings[0].includes('docs:check prints the measurement'));
+    });
+
+    describe('a suite that cannot be judged', () => {
+        const valid = { ...suite, max: count + 1 };
+        const finding = (suiteValue) =>
+            checkSuiteBudgets({ root, suites: { unit: suiteValue } }).join('\n');
+
+        for (const [name, max] of [
+            ['zero', 0],
+            ['negative', -1],
+            ['fractional', 1.5],
+            ['a string', '3'],
+            ['not a number', Number.NaN],
+            ['infinite', Number.POSITIVE_INFINITY],
+            ['null', null]
+        ]) {
+            it(`refuses a \`max\` that is ${name}, and names the suite and the field`, () => {
+                const text = finding({ ...suite, max });
+                assert.ok(text.includes('suites.unit'));
+                assert.ok(text.includes('`max`'));
+                assert.ok(text.includes('positive integer'));
+            });
+        }
+
+        it('refuses an absent `max`', () => {
+            const { max: _absent, ...withoutMax } = valid;
+            assert.ok(finding(withoutMax).includes('`max`'));
+        });
+
+        for (const field of ['dir', 'match', 'count']) {
+            it(`refuses a suite with no \`${field}\``, () => {
+                const { [field]: _absent, ...partial } = valid;
+                const text = finding(partial);
+                assert.ok(text.includes('suites.unit'));
+                assert.ok(text.includes(`\`${field}\``));
+            });
+        }
+
+        for (const [field, value] of [
+            ['dir', ''],
+            ['dir', 5],
+            ['match', ''],
+            ['match', '('],
+            ['count', 'lines']
+        ]) {
+            it(`refuses a \`${field}\` of ${JSON.stringify(value)}`, () => {
+                assert.ok(finding({ ...valid, [field]: value }).includes(`\`${field}\``));
+            });
+        }
+
+        it('refuses a suite that is not an object', () => {
+            assert.ok(finding('e2e').includes('suites.unit'));
+            assert.ok(finding(null).includes('suites.unit'));
+        });
+
+        it('names every bad field of one suite, and judges the others independently', () => {
+            const findings = checkSuiteBudgets({
+                root,
+                suites: { bad: { ...suite, max: 0, match: '' }, fine: valid }
+            });
+            assert.equal(findings.length, 2);
+            assert.ok(findings.every((line) => line.includes('suites.bad')));
+        });
+
+        it('accepts a ceiling of exactly one and the whole number it measures', () => {
+            assert.equal(finding({ ...valid, max: count + 1 }), '');
+            assert.equal(finding({ ...valid, max: count }), '');
+        });
+
+        it('leaves the measurement note out for a suite it cannot read', () => {
+            const { dir: _absent, ...noDir } = valid;
+            assert.deepEqual(suiteNotes({ root, suites: { unit: noDir, other: valid } }), [
+                `suites.other: ${count} file(s) of ${count + 1}`
+            ]);
+            assert.deepEqual(suiteNotes({ root, suites: { unit: 'e2e' } }), []);
+        });
     });
 
     describe('suiteNotes', () => {

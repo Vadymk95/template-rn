@@ -15,6 +15,8 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSy
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { isEntryPoint } from './is-entry-point.mjs';
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const BASELINE_PATH = join(__dirname, 'perf-baseline.json');
@@ -22,7 +24,63 @@ const BASELINE_PATH = join(__dirname, 'perf-baseline.json');
 const ATLAS_IOS = join(ROOT, '.atlas');
 const ATLAS_ANDROID = join(ROOT, '.atlas-android');
 
-const DEFAULT_THRESHOLD_PCT = Number(process.env['PERF_THRESHOLD_PCT'] ?? 5);
+const DEFAULT_THRESHOLD_PCT = 5;
+
+/**
+ * The allowed growth in percent: the default when the variable is unset, NaN when it is set to
+ * something that is not a number (an empty string would read as 0 through `Number`), so `checkPair`
+ * can refuse it instead of a typo silently turning the budget off.
+ */
+export function readThresholdPct(env) {
+    const raw = env['PERF_THRESHOLD_PCT'];
+    if (raw === undefined) {
+        return DEFAULT_THRESHOLD_PCT;
+    }
+    return raw.trim() === '' ? Number.NaN : Number(raw);
+}
+
+// Number.isFinite is false for a string, null and undefined, so no typeof check is needed.
+const isPositiveFinite = (value) => Number.isFinite(value) && value > 0;
+
+/**
+ * Judges one platform's bundle against its baseline. Pure: returns { ok, message } and prints
+ * nothing. A comparison with a NaN limit is false in both directions, so a missing or mistyped
+ * number would pass as "within budget"; every input must be a usable number before it is compared.
+ *
+ * @param {{ name: string, currentBytes: unknown, baseBytes: unknown, thresholdPct: unknown }} input
+ * @returns {{ ok: boolean, message: string }}
+ */
+export function checkPair({ name, currentBytes, baseBytes, thresholdPct }) {
+    if (!isPositiveFinite(currentBytes)) {
+        return {
+            ok: false,
+            message: `[perf] FAIL ${name}: measured bundle bytes is not a finite positive number (got ${String(currentBytes)})`
+        };
+    }
+    if (!isPositiveFinite(baseBytes)) {
+        return {
+            ok: false,
+            message: `[perf] FAIL ${name}: baseline bytes in scripts/perf-baseline.json is not a finite positive number (got ${String(baseBytes)})`
+        };
+    }
+    if (!Number.isFinite(thresholdPct) || thresholdPct < 0) {
+        return {
+            ok: false,
+            message: `[perf] FAIL ${name}: PERF_THRESHOLD_PCT is not a finite number of 0 or more (got ${String(thresholdPct)})`
+        };
+    }
+    const limit = Math.floor(baseBytes * (1 + thresholdPct / 100));
+    if (currentBytes > limit) {
+        return {
+            ok: false,
+            message: `[perf] FAIL ${name}: ${currentBytes} > baseline+${thresholdPct}% (${limit}, baseline ${baseBytes})`
+        };
+    }
+    return {
+        ok: true,
+        message: `[perf] OK ${name}: within +${thresholdPct}% of baseline (${baseBytes} bytes)`
+    };
+}
 
 function parseArgs(argv) {
     const flags = new Set(argv.filter((a) => a.startsWith('-')));
@@ -123,6 +181,7 @@ function loadBaseline() {
 }
 
 function main() {
+    const thresholdPct = readThresholdPct(process.env);
     const args = parseArgs(process.argv.slice(2));
     if (args.help) {
         console.log(`Usage:
@@ -131,7 +190,7 @@ function main() {
   node scripts/capture-bundle-metrics.mjs --check [--platform ios|all]
 
 Env:
-  PERF_THRESHOLD_PCT   Regressions allowed (default: ${DEFAULT_THRESHOLD_PCT})
+  PERF_THRESHOLD_PCT   Regressions allowed (default: ${DEFAULT_THRESHOLD_PCT}, a number of 0 or more)
   PERF_PLATFORM        Default platform if --platform omitted
 `);
         process.exit(0);
@@ -198,18 +257,10 @@ Env:
             process.exit(2);
         }
 
-        const checkPair = (name, currentBytes, baseBytes) => {
-            const limit = Math.floor(baseBytes * (1 + DEFAULT_THRESHOLD_PCT / 100));
-            if (currentBytes > limit) {
-                console.error(
-                    `[perf] FAIL ${name}: ${currentBytes} > baseline+${DEFAULT_THRESHOLD_PCT}% (${limit}, baseline ${baseBytes})`
-                );
-                return false;
-            }
-            console.error(
-                `[perf] OK ${name}: within +${DEFAULT_THRESHOLD_PCT}% of baseline (${baseBytes} bytes)`
-            );
-            return true;
+        const judge = (name, currentBytes, baseBytes) => {
+            const result = checkPair({ name, currentBytes, baseBytes, thresholdPct });
+            console.error(result.message);
+            return result.ok;
         };
 
         if (baseline.schemaVersion === 2 && baseline.platforms) {
@@ -219,15 +270,15 @@ Env:
                 );
                 process.exit(2);
             }
-            const iosOk = checkPair(
+            const iosOk = judge(
                 'ios',
                 report.platforms.ios.metrics.hermesBundleBytes,
-                baseline.platforms.ios.metrics.hermesBundleBytes
+                baseline.platforms.ios?.metrics?.hermesBundleBytes
             );
-            const androidOk = checkPair(
+            const androidOk = judge(
                 'android',
                 report.platforms.android.metrics.hermesBundleBytes,
-                baseline.platforms.android.metrics.hermesBundleBytes
+                baseline.platforms.android?.metrics?.hermesBundleBytes
             );
             if (!iosOk || !androidOk) {
                 process.exit(1);
@@ -240,24 +291,25 @@ Env:
                 process.exit(2);
             }
             if (
-                !checkPair(
-                    'ios',
-                    report.metrics.hermesBundleBytes,
-                    baseline.metrics.hermesBundleBytes
-                )
+                !judge('ios', report.metrics.hermesBundleBytes, baseline.metrics.hermesBundleBytes)
             ) {
                 process.exit(1);
             }
         } else {
-            console.error('[perf] --check: unrecognized baseline shape');
+            console.error(
+                '[perf] --check: unrecognized baseline shape. Restore scripts/perf-baseline.json from master'
+            );
             process.exit(2);
         }
     }
 }
 
-try {
-    main();
-} catch (e) {
-    console.error(e instanceof Error ? e.message : e);
-    process.exit(1);
+// Guarded so importing this module for a test does not run an export or read a baseline.
+if (isEntryPoint(import.meta.url)) {
+    try {
+        main();
+    } catch (e) {
+        console.error(e instanceof Error ? e.message : e);
+        process.exit(1);
+    }
 }

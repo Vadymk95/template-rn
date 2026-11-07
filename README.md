@@ -215,7 +215,7 @@ npm run perf:capture:all         # export + metrics, both platforms
 npm run perf:baseline            # write scripts/perf-baseline.json
 npm run perf:check               # compare against the baseline
 npm run audit:gate               # fail-closed dependency audit with a self-expiring allowlist (needs the network)
-npm run gate:integrity           # lists the gate files and suppressions this branch changes vs origin/master (CI: PR base)
+npm run gate:integrity           # lists the gate files and suppressions this branch changes vs the default branch, origin/master else origin/main (CI: PR base)
 ```
 
 The full chain belongs to the pre-push hook and CI (`AGENTS.md` § Commands / the gate).
