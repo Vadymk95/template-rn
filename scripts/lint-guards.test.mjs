@@ -253,3 +253,162 @@ describe('a numeric literal type is not a magic number', () => {
         assert.equal(found.length, 2);
     });
 });
+
+describe('a timer started in an effect is released by its cleanup', () => {
+    // A real source file's path: type-aware linting only accepts files the TypeScript project knows.
+    const SOURCE_FILE = 'src/hooks/useStoreReady.ts';
+    const ERROR_SEVERITY = 2;
+
+    // React Native has no DOM listeners or observers, so only the two timer rules apply. Each case is
+    // a hook that starts the timer and returns nothing, and the same hook with the cleanup returned. A
+    // timer that outlives its component keeps running after unmount and holds the component's state.
+    const CASES = [
+        {
+            rule: 'react-web-api/no-leaked-interval',
+            leaking: [
+                "import { useEffect } from 'react';",
+                'export const useTick = (onTick: () => void): void => {',
+                '    useEffect(() => {',
+                '        setInterval(onTick, 500);',
+                '    }, [onTick]);',
+                '};',
+                ''
+            ],
+            released: [
+                "import { useEffect } from 'react';",
+                'export const useTick = (onTick: () => void): void => {',
+                '    useEffect(() => {',
+                '        const id = setInterval(onTick, 500);',
+                '        return () => clearInterval(id);',
+                '    }, [onTick]);',
+                '};',
+                ''
+            ]
+        },
+        {
+            rule: 'react-web-api/no-leaked-timeout',
+            leaking: [
+                "import { useEffect } from 'react';",
+                'export const useDelay = (onDone: () => void): void => {',
+                '    useEffect(() => {',
+                '        setTimeout(onDone, 500);',
+                '    }, [onDone]);',
+                '};',
+                ''
+            ],
+            released: [
+                "import { useEffect } from 'react';",
+                'export const useDelay = (onDone: () => void): void => {',
+                '    useEffect(() => {',
+                '        const id = setTimeout(onDone, 500);',
+                '        return () => clearTimeout(id);',
+                '    }, [onDone]);',
+                '};',
+                ''
+            ]
+        }
+    ];
+
+    const found = async (lines, rule) => {
+        const config = await eslint.calculateConfigForFile(SOURCE_FILE);
+
+        // A rule the config leaves off reports nothing, which must never read as a pass.
+        assert.ok(config.rules?.[rule], `${rule} must be configured`);
+
+        const [result] = await eslint.lintText(lines.join('\n'), { filePath: SOURCE_FILE });
+
+        assert.deepEqual(
+            result.messages.filter(({ fatal }) => fatal),
+            [],
+            'the snippet must parse'
+        );
+
+        return result.messages.filter(({ ruleId }) => ruleId === rule);
+    };
+
+    for (const { rule, leaking, released } of CASES) {
+        it(`${rule} is an error`, async () => {
+            const config = await eslint.calculateConfigForFile(SOURCE_FILE);
+
+            assert.equal(config.rules?.[rule]?.[0], ERROR_SEVERITY);
+        });
+
+        it(`${rule} flags an effect that never releases it`, async () => {
+            assert.equal((await found(leaking, rule)).length, 1);
+        });
+
+        it(`${rule} accepts the effect that returns the cleanup`, async () => {
+            assert.deepEqual(await found(released, rule), []);
+        });
+    }
+});
+
+describe('state derived from other state is computed during render', () => {
+    const RULE = 'react-hooks/set-state-in-effect';
+    const DERIVED_FILE = 'src/hooks/useStoreReady.ts';
+
+    const derived = async (lines) => {
+        const config = await eslint.calculateConfigForFile(DERIVED_FILE);
+
+        assert.ok(config.rules?.[RULE], `${RULE} must be configured`);
+
+        const [result] = await eslint.lintText(lines.join('\n'), { filePath: DERIVED_FILE });
+
+        assert.deepEqual(
+            result.messages.filter(({ fatal }) => fatal),
+            [],
+            'the snippet must parse'
+        );
+
+        return result.messages.filter(({ ruleId }) => ruleId === RULE);
+    };
+
+    // Covered by the rule the config already has: no second plugin is needed for this form.
+    it('flags a state value that an effect rebuilds from other values', async () => {
+        const found = await derived([
+            "import { useEffect, useState } from 'react';",
+            'export const useFullName = (first: string, last: string): string => {',
+            "    const [full, setFull] = useState('');",
+            '    useEffect(() => {',
+            "        setFull(first + ' ' + last);",
+            '    }, [first, last]);',
+            '    return full;',
+            '};',
+            ''
+        ]);
+
+        assert.equal(found.length, 1);
+    });
+
+    it('accepts the value computed while rendering', async () => {
+        const found = await derived([
+            "export const useFullName = (first: string, last: string): string => first + ' ' + last;",
+            ''
+        ]);
+
+        assert.deepEqual(found, []);
+    });
+
+    // Known gap, recorded as a test so a later rule that closes it turns this case red on purpose:
+    // a state copy of a prop with no effect at all is something no rule of the config reports.
+    it('reports a state copy of a prop that has no effect under no rule (known gap)', async () => {
+        const [result] = await eslint.lintText(
+            [
+                "import { useState } from 'react';",
+                'export const useCopy = (props: { value: string }): string => {',
+                '    const [value] = useState(props.value);',
+                '    return value;',
+                '};',
+                ''
+            ].join('\n'),
+            { filePath: DERIVED_FILE }
+        );
+
+        assert.deepEqual(
+            result.messages.filter(({ fatal }) => fatal),
+            [],
+            'the snippet must parse'
+        );
+        assert.deepEqual(result.messages, [], 'no rule of the config reports the copy');
+    });
+});
