@@ -91,3 +91,96 @@ describe('lint-staged covers every file the format check reads', { timeout: 60_0
         assert.equal(matchesGlob('*.{mjs,cjs}', 'scripts/a.txt'), false);
     });
 });
+
+// The commit hook runs oxlint on the staged files of a code glob. oxlint exits 1 with "No files found
+// to lint" when every file it is given matches `.oxlintrc.json` `ignorePatterns`, so a commit that
+// stages only such files (a root config, a script) would fail the hook for no lint reason. The flag
+// below turns that into a clean exit. These cases pick, for each ignore pattern that matches a tracked
+// file the oxlint glob selects, one such file, and run the configured command on all of them at once,
+// the way lint-staged does.
+const UNMATCHED_FLAG = '--no-error-on-unmatched-pattern';
+const NO_FILES_MESSAGE = 'No files found to lint';
+
+const lintStagedConfig = () => JSON.parse(readFileSync('package.json', 'utf8'))['lint-staged'];
+
+const oxlintCommands = () => {
+    const found = [];
+
+    for (const [glob, commands] of Object.entries(lintStagedConfig())) {
+        for (const command of [commands].flat()) {
+            if (/^oxlint(\s|$)/.test(command)) found.push({ glob, command });
+        }
+    }
+
+    return found;
+};
+
+// oxlint reads `ignorePatterns` as gitignore lines: a name without a slash matches at any depth, and
+// a directory name ignores everything below it.
+const matchesIgnorePattern = (pattern, file) =>
+    [pattern, `${pattern}/**`].some((candidate) =>
+        picomatch(candidate, {
+            dot: true,
+            matchBase: !pattern.includes('/'),
+            posixSlashes: true
+        })(file)
+    );
+
+const runOxlint = (command, files) => {
+    const [, ...flags] = command.split(/\s+/);
+    const run = spawnSync('node_modules/.bin/oxlint', [...flags, ...files], {
+        cwd: process.cwd(),
+        encoding: 'utf8',
+        env: gitEnvironment(),
+        stdio: ['ignore', 'pipe', 'pipe']
+    });
+
+    return { status: run.status, output: `${run.stdout}${run.stderr}` };
+};
+
+describe(
+    'the staged oxlint pass survives a commit of only ignored files',
+    { timeout: 60_000 },
+    () => {
+        const patterns = JSON.parse(
+            readFileSync('.oxlintrc.json', 'utf8').replace(/^\s*\/\/.*$/gm, '')
+        ).ignorePatterns;
+
+        it('finds an oxlint command in lint-staged', () => {
+            assert.ok(oxlintCommands().length > 0, 'lint-staged must run oxlint on some glob');
+        });
+
+        for (const { glob, command } of oxlintCommands()) {
+            it(`exits 0 for files only ignorePatterns exclude (${glob})`, () => {
+                const selected = trackedFiles().filter((file) => matchesGlob(glob, file));
+                const sample = [];
+
+                for (const pattern of patterns) {
+                    const match = selected.find((file) => matchesIgnorePattern(pattern, file));
+
+                    if (match && !sample.includes(match)) sample.push(match);
+                }
+
+                assert.ok(
+                    sample.length > 0,
+                    `no tracked file of ${glob} is ignored by oxlint; cover the case another way`
+                );
+
+                // Precondition: without the flag these files really are all ignored, so the case below
+                // cannot pass for lack of an ignored file.
+                const without = command
+                    .split(/\s+/)
+                    .filter((word) => word !== UNMATCHED_FLAG)
+                    .join(' ');
+                const bare = runOxlint(without, sample);
+
+                assert.equal(bare.status, 1, `${sample.join(', ')}: ${bare.output}`);
+                assert.match(bare.output, new RegExp(NO_FILES_MESSAGE));
+
+                const configured = runOxlint(command, sample);
+
+                assert.equal(configured.status, 0, `${sample.join(', ')}: ${configured.output}`);
+            });
+        }
+    }
+);
