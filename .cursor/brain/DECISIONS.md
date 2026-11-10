@@ -465,8 +465,11 @@ Read before proposing a tool that was already considered.
   has a parser for, and asserts that each matches at least one `lint-staged` glob, matched the way lint-staged does
   (picomatch with `matchBase` for a pattern without a slash). A failure lists the unmatched files. `.mjs`, `.cjs`
   and `.css` joined the prettier-only glob `*.{json,md,yml,yaml,mjs,cjs,css}`.
-- **Consequences**: `.mjs` and `.cjs` are NOT in the code glob here, unlike the web templates. ESLint lints them, but
-  `.oxlintrc.json` `ignorePatterns` cover `scripts/**` and `*.config.mjs`, and oxlint exits 1 with "No files found to
-  lint" when every file it is given is ignored, so a commit staging only such a file would fail the hook. A change
-  that moves them to the code glob must first stop oxlint ignoring them, or run it only on the files it lints.
+- **Consequences**: `.mjs` and `.cjs` are in the code glob `*.{ts,tsx,js,jsx,mjs,cjs}`, like the web templates, so
+  ESLint lints them at commit. `.oxlintrc.json` `ignorePatterns` cover `scripts/**`, `*.config.js` and `*.config.mjs`,
+  and oxlint exits 1 with "No files found to lint" when every file it is given is ignored, which would fail a commit
+  that stages only such files. The oxlint command carries `--no-error-on-unmatched-pattern` and the ESLint command
+  `--no-warn-ignored` (an ignored file otherwise prints a warning). The second case of
+  `scripts/lint-staged-coverage.test.mjs` proves it: one tracked file per ignore pattern, the command without the
+  flag must exit 1, the configured command must exit 0.
 - **Status**: in force. **Evidence**: `scripts/lint-staged-coverage.test.mjs`, `package.json` `lint-staged`.

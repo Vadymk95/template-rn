@@ -138,12 +138,12 @@
         "yaml": "^2.9.1"
     },
     "lint-staged": {
-        "*.{ts,tsx,js,jsx}": [
-            "oxlint --config .oxlintrc.json --fix",
-            "eslint --fix --cache --cache-location .eslintcache",
+        "*.{ts,tsx,js,jsx,mjs,cjs}": [
+            "oxlint --config .oxlintrc.json --fix --no-error-on-unmatched-pattern",
+            "eslint --fix --no-warn-ignored --cache --cache-location .eslintcache",
             "prettier --write --cache --cache-location .prettiercache"
         ],
-        "*.{json,md,yml,yaml,mjs,cjs,css}": [
+        "*.{json,md,yml,yaml,css}": [
             "prettier --write --cache --cache-location .prettiercache"
         ]
     },
