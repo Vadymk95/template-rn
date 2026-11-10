@@ -121,6 +121,7 @@
         "eslint-plugin-prettier": "^5.5.7",
         "eslint-plugin-react-compiler": "^19.1.0-rc.2",
         "eslint-plugin-react-hooks": "^7.1.1",
+        "eslint-plugin-react-web-api": "5.28.8",
         "expo-atlas": "^0.4.3",
         "expo-doctor": "^1.20.1",
         "husky": "^9.1.7",
@@ -142,7 +143,7 @@
             "eslint --fix --cache --cache-location .eslintcache",
             "prettier --write --cache --cache-location .prettiercache"
         ],
-        "*.{json,md,yml,yaml}": [
+        "*.{json,md,yml,yaml,mjs,cjs,css}": [
             "prettier --write --cache --cache-location .prettiercache"
         ]
     },

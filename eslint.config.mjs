@@ -9,6 +9,7 @@ import jestPlugin from 'eslint-plugin-jest';
 import prettierConfig from 'eslint-config-prettier';
 import prettierPlugin from 'eslint-plugin-prettier';
 import reactCompiler from 'eslint-plugin-react-compiler';
+import reactWebApi from 'eslint-plugin-react-web-api';
 import templatePlugin from './tooling/eslint-plugin-template/index.mjs';
 import tseslint from 'typescript-eslint';
 
@@ -149,6 +150,7 @@ export default tseslint.config(
             boundaries,
             prettier: prettierPlugin,
             'react-compiler': reactCompiler,
+            'react-web-api': reactWebApi,
             template: templatePlugin
         },
         rules: {
@@ -245,6 +247,15 @@ export default tseslint.config(
             'import-x/no-cycle': 'error',
             'import-x/no-default-export': 'off',
             'react-compiler/react-compiler': 'error',
+
+            // ─── Timers started in an effect ─────────────────────────────────
+            // A timer that outlives its component keeps running after unmount and holds the
+            // component's state. React Native has no DOM listeners or observers, so only the two
+            // timer rules of the plugin are enabled, each by name and never as a preset.
+            // Catches a setInterval in an effect with no clearInterval in the cleanup.
+            'react-web-api/no-leaked-interval': 'error',
+            // Catches a setTimeout in an effect with no clearTimeout in the cleanup.
+            'react-web-api/no-leaked-timeout': 'error',
             'boundaries/dependencies': [
                 'error',
                 {

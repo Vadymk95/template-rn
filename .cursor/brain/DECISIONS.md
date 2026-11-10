@@ -56,6 +56,8 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 | React Compiler silent-bailout awareness                                | 2026-05 | in force                               |
 | REJECT list: explicit non-adoption                                     | 2026-05 | in force                               |
 | Gate checks refuse a value they cannot judge                           | 2026-11 | in force                               |
+| A timer started in an effect is released                               | 2026-11 | in force                               |
+| The commit hook formats every file the format check reads              | 2026-11 | in force                               |
 
 ## Expo managed over bare React Native
 
@@ -438,3 +440,33 @@ Read before proposing a tool that was already considered.
   `origin/master` fails where the default branch is `main`. An advisory took the rating of whatever package it came
   through.
 - **Status**: in force. **Evidence**: `scripts/audit-gate.test.mjs`, `scripts/docs-check.test.mjs`, `scripts/check-version-holds.test.mjs`, `scripts/check-gate-integrity.suppressions-3.test.mjs`.
+
+## A timer started in an effect is released
+
+- **Context**: types, Jest and the other lint rules all pass on an effect that starts a `setInterval` or a `setTimeout`
+  and returns no cleanup. The leak shows only as work that keeps running after the screen unmounts, holding its state.
+- **Decision**: `react-web-api/no-leaked-interval` and `react-web-api/no-leaked-timeout` of `eslint-plugin-react-web-api`
+  (pinned exactly) are errors over `src/**/*.{ts,tsx}`, the files the React Compiler rule covers. Named rules, never a
+  preset, so a new rule in a release cannot change the gate. The plugin's other four rules (event listener, fetch,
+  IntersectionObserver, ResizeObserver) are not enabled: they guard DOM APIs that React Native does not have. A state
+  value rebuilt from other values in an effect is already reported by `react-hooks/set-state-in-effect`, so no second
+  effect plugin was added.
+- **Consequences**: `scripts/lint-guards.test.mjs` lints a leaking and a released hook for each rule and asserts the
+  error severity, plus a derived-state case and a recorded gap: a state copy of a prop with no effect
+  (`useState(props.value)`) is reported by no rule.
+- **Status**: in force. **Evidence**: `scripts/lint-guards.test.mjs`, `eslint.config.mjs`.
+
+## The commit hook formats every file the format check reads
+
+- **Context**: `format:check` runs `prettier --check .`, which reads every tracked file prettier has a parser for,
+  while `lint-staged` formats only the files its globs match. `.mjs` files matched neither glob, so a commit passed
+  the hook unformatted and the push failed the format check (seen in a sibling template on 2026-11-07).
+- **Decision**: `scripts/lint-staged-coverage.test.mjs` takes every tracked file that prettier does not ignore and
+  has a parser for, and asserts that each matches at least one `lint-staged` glob, matched the way lint-staged does
+  (picomatch with `matchBase` for a pattern without a slash). A failure lists the unmatched files. `.mjs`, `.cjs`
+  and `.css` joined the prettier-only glob `*.{json,md,yml,yaml,mjs,cjs,css}`.
+- **Consequences**: `.mjs` and `.cjs` are NOT in the code glob here, unlike the web templates. ESLint lints them, but
+  `.oxlintrc.json` `ignorePatterns` cover `scripts/**` and `*.config.mjs`, and oxlint exits 1 with "No files found to
+  lint" when every file it is given is ignored, so a commit staging only such a file would fail the hook. A change
+  that moves them to the code glob must first stop oxlint ignoring them, or run it only on the files it lints.
+- **Status**: in force. **Evidence**: `scripts/lint-staged-coverage.test.mjs`, `package.json` `lint-staged`.
