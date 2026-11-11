@@ -7,7 +7,7 @@
 // Changed-only by design, so it RATCHETS: files already in the tree without a
 // sibling are not retroactively broken, but the next edit to one demands a test.
 //
-// Two places ask, with two different sources of truth, and neither is the working tree:
+// Three places ask, with different sources of truth; two of them are never the working tree:
 //   - staged mode (pre-commit): the changed files are the staged ones and a sibling counts only
 //     when it is in the git INDEX with content (in HEAD or staged as an addition). A test that sits
 //     untracked on disk, or is only marked with `git add -N`, is not part of the commit, so it must
@@ -16,11 +16,16 @@
 //     added, copied, renamed or modified, and a sibling counts only when it is in the HEAD tree.
 //     This is what catches a commit made with the hook skipped or a PR from a clone that never
 //     had the hook installed.
+//   - changed mode (the iterate chain): the changed files are what the working tree differs by from
+//     HEAD plus the untracked ones, and a sibling counts when it is on disk. Nothing is staged yet
+//     while the author works, so the disk is the only place the test can be; the commit hook then
+//     asks for it in the index.
 //
 // Usage:
 //   node scripts/check-test-siblings.mjs                 # staged files vs the index (pre-commit)
 //   node scripts/check-test-siblings.mjs --range         # base...HEAD vs the HEAD tree (inside verify)
 //       [--base <ref>] [--head <ref>]
+//   node scripts/check-test-siblings.mjs --changed       # working tree vs HEAD, tests on disk (iterate chain)
 //   node scripts/check-test-siblings.mjs <file> [file…]  # given files vs the disk (for tests)
 //
 // Range base, same rule as scripts/check-lock-age.mjs: the merge-base of HEAD with origin/master
@@ -34,8 +39,10 @@
 // Exit: 0 clean · 1 a changed source file has no sibling · 2 the gate could not decide.
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
+import path from 'node:path';
 
 import { isEntryPoint } from './is-entry-point.mjs';
+import { changedFiles } from './lint-changed.mjs';
 
 // Exempt list derived from THIS repo: the paths Jest already excludes from
 // `collectCoverageFrom` (app shell, env, i18n glue, shared constants tables,
@@ -202,12 +209,27 @@ export const readRange = ({ git, env, baseRef, headRef }) => {
     };
 };
 
+/** What the working tree changed against HEAD; a sibling counts when it is on disk. */
+export const readChanged = (cwd) => {
+    try {
+        return {
+            files: changedFiles({ cwd }),
+            exists: (file) => existsSync(path.join(cwd, file)),
+            subject: 'changed source files (working tree against HEAD)'
+        };
+    } catch (error) {
+        return { error: error instanceof Error ? error.message : String(error) };
+    }
+};
+
 const parseArguments = (argv) => {
-    const parsed = { range: false, base: null, head: null, files: [] };
+    const parsed = { range: false, changed: false, base: null, head: null, files: [] };
     for (let index = 0; index < argv.length; index += 1) {
         const argument = argv[index];
         if (argument === '--range') {
             parsed.range = true;
+        } else if (argument === '--changed') {
+            parsed.changed = true;
         } else if (argument === '--base' || argument === '--head') {
             const value = argv[index + 1];
             if (!value || value.startsWith('--')) {
@@ -220,6 +242,9 @@ const parseArguments = (argv) => {
         } else {
             parsed.files.push(argument);
         }
+    }
+    if (parsed.changed && (parsed.range || parsed.base || parsed.head || parsed.files.length > 0)) {
+        return { error: '--changed cannot be combined with --range, --base, --head or file names' };
     }
     return parsed;
 };
@@ -238,6 +263,8 @@ const main = () => {
     let source;
     if (args.files.length > 0) {
         source = { files: args.files, exists: existsSync, subject: 'source files' };
+    } else if (args.changed) {
+        source = readChanged(process.cwd());
     } else {
         const git = makeGit(process.cwd());
         source = args.range
