@@ -58,7 +58,8 @@
         "verify:ci:inner": "npm run audit:gate && npm run lock:age && npm run verify",
         "trace:report": "node scripts/trace-report.mjs",
         "test:one": "node scripts/gate-trace.mjs test:one -- npx --no-install jest",
-        "docs:check": "node scripts/gate-trace.mjs docs:check -- node scripts/docs-check.mjs"
+        "docs:check": "node scripts/gate-trace.mjs docs:check -- node scripts/docs-check.mjs",
+        "fork:init": "node scripts/fork-init.mjs"
     },
     "dependencies": {
         "@expo/vector-icons": "^15.1.1",
