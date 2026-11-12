@@ -42,12 +42,12 @@ priority: 100
 
 ## Step 5: Brain sync
 
-| Brain file        | Update when                                        |
-| ----------------- | -------------------------------------------------- |
-| `MAP.md`          | Routes, stores, or major folders change            |
-| `DECISIONS.md`    | Architectural trade-offs or intentional deviations |
-| `SKELETONS.md`    | New high-risk surfaces or mitigations              |
-| `VERIFICATION.md` | New mandatory checks or scripts                    |
+| Brain file        | Update when                                                                                                                                                                       |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MAP.md`          | STRUCTURE changes: a new layer, entry point, data flow or state boundary; a new page, route or store inside the existing structure changes nothing here, the code is the registry |
+| `DECISIONS.md`    | Architectural trade-offs or intentional deviations                                                                                                                                |
+| `SKELETONS.md`    | New high-risk surfaces or mitigations                                                                                                                                             |
+| `VERIFICATION.md` | New mandatory checks or scripts                                                                                                                                                   |
 
 If nothing changed, state **`Brain sync: none needed.`** Marking work complete without this declaration is forbidden.
 

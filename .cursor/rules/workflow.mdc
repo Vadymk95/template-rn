@@ -9,16 +9,17 @@ priority: 90
 
 ## The Approval Law
 
-| Risk surface                                                                                                            | Protocol                                     |
-| ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| Trivial leaf edit — no danger zone, no contract change                                                                  | Proceed with brief notification              |
-| Danger-zone / SKELETONS surface, store / domain-state change, env, `app.config`, router `_layout`, or contract / public-export change | Present plan → wait for approval → implement |
-| New cross-cutting pattern                                                                                               | Always present plan first                    |
+| Risk surface                                                                                                                                                | Protocol                                                           |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Trivial leaf edit — no danger zone, no contract change                                                                                                      | Proceed with brief notification                                    |
+| One slice that only ADDS (a new screen, store, query, route), no danger zone, no existing contract changed                                                  | Proceed; the acceptance criteria open the pull request description |
+| Changes an EXISTING contract (store / domain-state shape, env, `app.config`, router `_layout`, contract / public export) or touches a SKELETONS danger zone | Present plan → wait for approval → implement                       |
+| Two or more slices, or a new cross-cutting pattern                                                                                                          | `SPEC.md` + `PLAN.md`, approved as a pull-request review           |
 
-**FORBIDDEN**: Starting non-trivial implementation before approval when the table requires it.
+**FORBIDDEN**: changing an existing contract or entering a danger zone before approval.
 In autonomous agent sessions, this means a written plan + explicit user approval checkpoint before implementation, not skipping straight to code.
 
-For a task bigger than a one-sentence diff the approval is the non-author PR review of `SPEC.md`/`PLAN.md` (`AGENTS.md` › Before code); the table above is the chat-level gate for tasks below that size.
+For work of two or more slices the approval is the non-author PR review of `SPEC.md`/`PLAN.md` (`AGENTS.md` › Before code); the table above is the gate below that size.
 
 ## Planning
 
