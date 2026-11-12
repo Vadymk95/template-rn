@@ -590,6 +590,44 @@ describe('fork-init', () => {
         });
     });
 
+    // An npm scope is legal in a package name but not in an Expo slug, so the package keeps the
+    // scope while the slug in the app config loses it.
+    describe('a scoped package name', () => {
+        const SCOPED_NAME = '@acme/field-app';
+        const SCOPED_SLUG = 'field-app';
+        let dir = null;
+        let result = null;
+
+        before(() => {
+            dir = makeCopy();
+            result = run(dir, ['--name', SCOPED_NAME, '--title', NEW_TITLE]);
+        });
+
+        it('exits 0 and leaves docs:check green', { timeout: 30_000 }, () => {
+            assert.equal(result.code, 0, result.output);
+            const check = docsCheck(dir);
+            assert.equal(check.code, 0, check.output);
+        });
+
+        it('keeps the scope in the manifest and both root entries of the lockfile', () => {
+            const lock = readJson(dir, 'package-lock.json');
+
+            assert.deepEqual(
+                [readJson(dir, 'package.json').name, lock.name, lock.packages[''].name],
+                [SCOPED_NAME, SCOPED_NAME, SCOPED_NAME]
+            );
+        });
+
+        it('drops the scope from the Expo slug in the app config', () => {
+            const config = read(dir, 'app.config.ts');
+            const slugLines = config.split('\n').filter((line) => /^\s*slug:/.test(line));
+
+            assert.ok(config.includes(`slug: '${SCOPED_SLUG}',`));
+            assert.equal(slugLines.length, 1);
+            assert.doesNotMatch(slugLines[0], /[@/]/);
+        });
+    });
+
     describe('the script itself', () => {
         it('never calls the network and never runs gh', () => {
             const source = readFileSync(resolve(ROOT, SCRIPT_PATH), 'utf8');
