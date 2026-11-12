@@ -155,6 +155,14 @@ describe('against a real git repository', { timeout: 30_000 }, () => {
             assert.deepEqual(changedFiles({ cwd: root }), ['renamed.mjs']);
         });
 
+        it('lists a deleted file only when asked, for the checks that must see a removal', () => {
+            const root = makeRepo();
+            unlinkSync(path.join(root, 'kept.mjs'));
+
+            assert.deepEqual(changedFiles({ cwd: root }), []);
+            assert.deepEqual(changedFiles({ cwd: root, deleted: true }), ['kept.mjs']);
+        });
+
         it('leaves out an untracked file the repository ignores', () => {
             const root = makeRepo();
             write(root, 'generated/out.mjs');
