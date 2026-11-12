@@ -13,27 +13,31 @@ native folders.
 
 ---
 
-## Forking this template - rename checklist
+## Forking this template
 
-This scaffold ships with placeholder branding. Before you ship a fork, change every
-spot below, then re-grep `templatern` / `template-rn` / `Template RN` to catch any you
-missed. The **native identifiers must change**: an unchanged bundle id, package, or
-scheme collides with the template on a device and breaks deep links.
+After cloning and `npm run prepare`, run one command from the repository root. It reads and writes files only: no install, no network, no `gh`, and git history is never touched.
 
-- **`app.config.ts`** (the native identity source of truth via Continuous Native Generation):
-    - `ios.bundleIdentifier` / `android.package`: `com.example.templatern` plus the `.dev` / `.preview` variants, built in `getBundleId()`
-    - `name`: display name `Template RN` plus the Dev / Preview labels, built in `getAppName()`
-    - `slug`: `template-rn` (keep it equal to the repo folder and EAS slug)
-    - `scheme`: `templatern` (lowercase, no spaces; forms your `yourapp://` deep-link URLs)
-- **`package.json`**: `name`, aligned with the slug
-- **`README.md`**: heading and description
-- **`LICENSE`**: MIT is fine for an open-source fork; for a **proprietary/commercial**
-  app delete `LICENSE` and set `package.json` `"license": "UNLICENSED"` (the repo is
-  already `private`)
-- **Repository layout**: keep the app at the git root. `scripts/check-hooks.mjs` refuses to run from a
-  subfolder of the repository, because every gate script reads git paths relative to the repository root.
-- **Assets, EAS project id, and the Todo example slice**: the full checklist
-  lives in **`docs/template-reset.md`**.
+```bash
+npm run fork:init -- --name my-app --title "My App" [--holder "My Company Ltd"] [--private] [--dry-run]
+```
+
+It refuses on a dirty working tree, on an invalid package name (or one Expo cannot take as a slug), an empty title or an unknown option, and on a second run (it writes `.template-origin.json`, and that file's presence is the refusal). A successful run also removes the command from your fork (the script, its test, the `package.json` entry and this description of it, leaving the list below) so your gate does not carry a test of a one-time tool; `docs:check` judges that final tree, and if it is red the command stays whole. What it does:
+
+- **Identity** — the `package.json` name and both root entries of `package-lock.json`; in `app.config.ts` the `slug` (the package name without its scope) and the display name with its Dev and Preview labels in `getAppName()`; the heading and the package name in the intro of this file; the title lines of `AGENTS.md` and `.cursor/brain/PROJECT_CONTEXT.md`; the `LICENSE` copyright holder when `--holder` is given.
+- **Release start** — the version restarts at `0.1.0` in `package.json`, the lock file and `.release-please-manifest.json`; `CHANGELOG.md` restarts empty; `bootstrap-sha` in `release-please-config.json` becomes your repository's current commit, so the first release notes do not replay the template's history.
+- **Origin record** — `.template-origin.json` names the template, its version and its commit.
+- **Decision history** — `.cursor/brain/DECISIONS.md` starts with its header, an empty index and a pointer at the template's version; the `§` pointers into the old entries in other docs become quoted entry names, which `docs:check` does not pin. The script runs `docs:check` at the end and exits 1 if it is red.
+- **`--private`** — for a private repository without a code-scanning licence: the `codeql` job in `.github/workflows/security.yml` and its required check in `.github/ruleset.json` leave together. Sources: [Pipelines — and which ones survive a private fork](#pipelines--and-which-ones-survive-a-private-fork).
+- **What is left** — printed at the end, in order, with the exact `gh` commands: enable Actions, the permission for Actions to open pull requests, the `gate-change` label, one pull request, then the ruleset ([why in this order](#what-your-fork-does-not-inherit)), and the settings that are only switches.
+
+What it does not do, and you decide:
+
+- **Native identity** — `app.config.ts`: `getBundleId()` (the iOS `bundleIdentifier` and the Android `package`: `com.example.templatern` plus the `.dev` / `.preview` variants) and `scheme` (`templatern`; lowercase, no spaces; forms your `yourapp://` deep-link URLs). They hang on a reverse domain only you own, so the command leaves them: an unchanged one collides with the template on a device and breaks deep links. `MAESTRO_APP_ID` for `npm run maestro` is your bundle id.
+- **Assets and EAS** — replace the placeholder images in `assets/`; with EAS Build or Update, run `eas project:create`, set `EAS_PROJECT_ID` and check `eas.json`. The checklist: `docs/template-reset.md`.
+- **Licence** — MIT is fine for an open-source fork; for a **proprietary/commercial** app delete `LICENSE` and set `package.json` `"license": "UNLICENSED"` (the repo is already `private`).
+- **Example content** — the Todo slice and the start guide stay: they are live components with their own tests. Replace them in the order `docs/template-reset.md` gives.
+- **Repository layout** — keep the app at the git root. `scripts/check-hooks.mjs` refuses to run from a subfolder of the repository, because every gate script reads git paths relative to the repository root.
+- **Version holds** — keep `scripts/version-holds.json`: `verify` fails on a drift, and each hold is re-checked against your own Dependabot PRs, lifted when its condition is met.
 
 ---
 
