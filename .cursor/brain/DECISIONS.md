@@ -58,6 +58,7 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 | Gate checks refuse a value they cannot judge                           | 2026-11 | in force                               |
 | A timer started in an effect is released                               | 2026-11 | in force                               |
 | The commit hook formats every file the format check reads              | 2026-11 | in force                               |
+| A push leaves out the harness tests that read only the harness         | 2026-11 | in force                               |
 
 ## Expo managed over bare React Native
 
@@ -143,7 +144,7 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 ## Gate-script specs run on `node:test`
 
 - **Context**: the gate scripts are executable ESM (`.mjs`); Jest 29 does not discover that extension or load real ESM without `--experimental-vm-modules`. In a sibling template, folding gate scripts into the app's coverage run dropped line coverage from 93% to 82% with no app change.
-- **Decision**: `npm run test:scripts` is `node --test "scripts/**/*.test.mjs"`, no config, outside `collectCoverageFrom`. The glob is quoted so Node expands it (an unquoted glob relies on the shell, which does not glob on Windows).
+- **Decision**: `npm run test:scripts` is `node scripts/test-scripts.mjs`, which starts `node --test "scripts/**/*.test.mjs"` (no config, outside `collectCoverageFrom`) unless a push leaves listed files out (§ A push leaves out the harness tests that read only the harness). The glob is quoted so Node expands it (an unquoted glob relies on the shell, which does not glob on Windows).
 - **Status**: in force. **Evidence**: [4a29b21](https://github.com/Vadymk95/template-rn/commit/4a29b21).
 
 ## One entry-point guard for every gate script
@@ -473,3 +474,31 @@ Read before proposing a tool that was already considered.
   `scripts/lint-staged-coverage.test.mjs` proves it: one tracked file per ignore pattern, the command without the
   flag must exit 1, the configured command must exit 0.
 - **Status**: in force. **Evidence**: `scripts/lint-staged-coverage.test.mjs`, `package.json` `lint-staged`.
+
+## A push leaves out the harness tests that read only the harness
+
+- **Context**: the script tests run at every push, and most of their time goes to files that build real git
+  repositories in temp folders. Measured on master (2026-11-12, `node --test`): 48 s, 32 files, 1,843 tests;
+  without nine of those files 13 s, 23 files, 1,168 tests. Only a change to the harness can change their result,
+  so a fork that only writes app code paid 35 s per push for nothing.
+- **Decision**: `selfTests.files` in `scripts/gate-tiers.json` names the test files that read no repository
+  file outside `scripts/` (checked file by file with a read trace; temp folders, the tools in `node_modules` and a
+  check that a system tool exists do not count; the runner's own test qualified, 14 s alone).
+  The pre-push hook sets `GATE_PUSH=1`; `scripts/test-scripts.mjs`, the script-tests stage, then leaves those files
+  out of a push whose commits change no path of `scripts/gate-files.json`, none under `scripts/`, no `package.json`
+  and no lockfile, and prints how many it left out. Without the marker, or under CI, it starts exactly
+  `node --test "scripts/**/*.test.mjs"`. `GATE_PUSH=1` set by hand acts as a push.
+- **Everything runs when**: `CI` is set, `GATE_SELF_TESTS=all` is set, the list is empty, the manifest cannot be
+  read, no merge base with `origin/master` or `origin/main` exists, git cannot list the paths, or the package sits
+  below the repository root. The push prints its reason. Any other non-empty `GATE_SELF_TESTS` stops the push with a
+  message, so a mistyped override never leaves tests out in silence. `npm run test:scripts` without the marker,
+  `npm run verify` and CI never do (`npm test` is jest and runs no script test).
+- **How a file gets on the list**: a pull request that adds it, with the `gate-change` label (the list is under
+  `scripts/`). `scripts/gate-tiers.self-tests.test.mjs` fails a name that is missing, duplicated or not a test file
+  under `scripts/`. It does not know the name `scripts/fork-init.test.mjs`: `fork:init` deletes that file in every
+  fork, so a case in `scripts/fork-init.test.mjs` itself fails a list that names it.
+- **Consequences**: coverage counts `src/**` only, and the jest step is untouched, so no number moves. Reads of
+  `node_modules` by the two tests that run the linter and the formatter on temp files are allowed: a change to
+  either tool is a `package.json` or lockfile change, which runs everything.
+- **Status**: in force. Revisit if a master run goes red from a left-out test that a push would have caught.
+  **Evidence**: `scripts/test-scripts.test.mjs`, `scripts/gate-tiers.self-tests.test.mjs`.

@@ -42,7 +42,7 @@
         "test:coverage": "node scripts/check-coverage.mjs",
         "test:mutation": "stryker run",
         "test:coverage:raw": "jest --coverage",
-        "test:scripts": "node --test \"scripts/**/*.test.mjs\"",
+        "test:scripts": "node scripts/test-scripts.mjs",
         "bundle:analyze": "EXPO_ATLAS=1 expo export --platform ios --output-dir .atlas",
         "bundle:analyze:android": "EXPO_ATLAS=1 expo export --platform android --output-dir .atlas-android",
         "perf:capture": "node scripts/capture-bundle-metrics.mjs --export",

@@ -13,7 +13,14 @@ runs: `scripts/gate-tiers.json` (`checks.<name>.chain`), not repeated here.
 - **Proposing a new Maestro flow** — the suite is counted in invariants, not screens (`AGENTS.md` § the gate), by flow files, so a second subject of an invariant that already has a flow becomes steps in that flow's file, never a new yaml file; the ceiling is raised only with a measurement and a `DECISIONS.md` line. `npm run docs:check` prints the suite's measurement and reports it against the ceiling in `scripts/gate-tiers.json` § suites
 - **Commit** — the pre-commit hook (below). Nothing by hand.
 - **Push** — the pre-push hook runs `verify:ci`. Never run it, or any other full gate, by hand;
-  `ci:local` additionally needs local native tooling and takes minutes.
+  `ci:local` additionally needs local native tooling and takes minutes. A push that changes no harness
+  file (no path of `scripts/gate-files.json`, none under `scripts/`, no `package.json`, no lockfile,
+  between the merge base with `origin/master` or `origin/main` and HEAD) also leaves out the harness
+  tests listed under `selfTests` in `gate-tiers.json`: the hook sets `GATE_PUSH=1`, and
+  `scripts/test-scripts.mjs` (the script-tests stage) decides and prints which way it went on every
+  push. A change that cannot be told (a package below the repository root too), CI, `npm run verify`,
+  `npm run test:scripts` without the marker and `GATE_SELF_TESTS=all git push` run them all (`npm test`
+  is jest and runs no script test). `GATE_PUSH=1` set by hand acts as a push.
 
 **No scaffold phase here, and that is a measurement — the decision lives in
 `scripts/gate-tiers.json` (`_phaseMeaning`), the per-stage numbers in the table below.** In short: nothing in this
@@ -75,7 +82,7 @@ CAN fail is mutation-proving's job.
   hook decides so one attempt reports everything. Why the repo-wide pass exists:
   `DECISIONS.md` § TDD sibling gate on pre-commit. Remedy: `npm run fix && git add -u`.
 - **commit-msg** — commitlint (Conventional Commits, subject ≤96 chars).
-- **pre-push** — `npm run verify:ci`, the same script CI runs.
+- **pre-push** — `GATE_PUSH=1 npm run verify:ci`: the CI gate, with the one exception named under Push above (the marker is how the script-tests stage knows it is a push).
 
 Not adopted: a hook that commits for you. A hook that creates commits hides what it
 changed inside a commit you did not write, and the failure mode is a fix landing under an
