@@ -535,6 +535,7 @@ describe('the set of test files the runner finds', () => {
     const TREE = [
         'scripts/a.test.mjs',
         'scripts/sub/deep/b.test.mjs',
+        'scripts/sub/z.test.mjs',
         'scripts/Upper.TEST.mjs',
         'scripts/.hidden/c.test.mjs',
         'scripts/node_modules/pkg/d.test.mjs',
@@ -543,6 +544,14 @@ describe('the set of test files the runner finds', () => {
         'scripts/.dot.test.mjs',
         'tests/g.test.mjs',
         'src/h.test.mjs'
+    ];
+
+    // These match the pattern on every filesystem. `Upper.TEST.mjs` runs only where the filesystem
+    // ignores case (macOS by default), so a count would pass on one machine and fail on another.
+    const RUNS_ANYWHERE = [
+        'scripts/a.test.mjs',
+        'scripts/sub/deep/b.test.mjs',
+        'scripts/sub/z.test.mjs'
     ];
 
     const makeTree = () => {
@@ -572,7 +581,9 @@ describe('the set of test files the runner finds', () => {
             .toSorted();
 
         assert.equal(result.status, 0);
-        assert.ok(ran.length >= 3, `node ran too little to prove anything: ${ran.join()}`);
+        for (const file of RUNS_ANYWHERE) {
+            assert.ok(ran.includes(file), `node did not run ${file}: ${ran.join()}`);
+        }
         assert.deepEqual(findTestFiles(dir).toSorted(), ran);
     });
 
