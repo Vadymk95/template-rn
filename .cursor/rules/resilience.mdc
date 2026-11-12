@@ -31,7 +31,7 @@ priority: 92
 
 ## 5. Boundary adapter
 
-- A response is parsed **once**, at the boundary: `safeFetch` / `safeFetchQueryFn` + a Zod schema (`src/lib/api/safeFetch.ts`; live example `src/lib/api/_exampleSafeQuery.ts`). AsyncStorage and `expo-secure-store` reads go through `Schema.safeParse` the same way.
+- A response is parsed **once**, at the boundary: `safeFetch` / `safeFetchQueryFn` + a Zod schema (`src/lib/api/safeFetch.ts`; the shipped example: `.cursor/brain/EXTENSIONS.md` § "Phase 1 — A real backend: the HTTP layer and TanStack Query"). AsyncStorage and `expo-secure-store` reads go through `Schema.safeParse` the same way.
 - Defaults and renames live in the schema or a mapper next to it — `.default()`, `.catch()`, `.transform()`, or a `toViewModel(dto)` beside the query module (`src/features/<name>/api/`, placement in `fsd-layers.mdc`) — never in a component.
 - Screens, widgets and feature hooks receive the parsed view model: they never see a raw DTO and never supply their own fallbacks (`data?.x ?? ''` in JSX is the smell).
 - A schema change is a payload-contract change: the Approval Law applies (`workflow.mdc`, the contract / public-export row).
