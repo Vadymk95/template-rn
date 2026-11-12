@@ -56,6 +56,8 @@ const EXEMPT =
     /(\.test\.[tj]sx?$|\.d\.ts$|\/index\.tsx?$|constants\.ts$|types\.ts$|\/storageKeys\.ts$|\/_example[^/]*$|\/env\.ts$|\.stories\.[tj]sx?$|^src\/app\/|^src\/test\/|^src\/shared\/lib\/constants\/|^src\/shared\/lib\/i18n\/|^src\/shared\/locales\/)/;
 
 const BASE_CANDIDATES = ['origin/master', 'origin/main'];
+/** The base when no remote branch gives a merge base: a caller that needs the remote's can tell it by this. */
+export const FALLBACK_BASE = 'HEAD~1';
 
 export const isSrcLogic = (file) => /^src\/.+\.(ts|tsx)$/.test(file) && !EXEMPT.test(file);
 
@@ -85,7 +87,7 @@ const gitEnvironment = (environment) =>
     );
 
 /** git(args) -> stdout, or null when the command fails. */
-const makeGit =
+export const makeGit =
     (cwd, environment = process.env) =>
     (args) => {
         try {
@@ -144,6 +146,8 @@ export const readStaged = (git) => {
     };
 };
 
+export const isCi = (env) => env.CI === 'true' || env.GITHUB_ACTIONS === 'true';
+
 /**
  * Picks the commit the range starts from. Returns { ref }, { root: true } when there is no commit
  * to compare with, or { error }.
@@ -160,7 +164,7 @@ export const pickBase = ({ git, env, baseRef }) => {
     }
 
     let ref = null;
-    if (env.CI === 'true' || env.GITHUB_ACTIONS === 'true') {
+    if (isCi(env)) {
         ref = isCommit('HEAD~1') ? 'HEAD~1' : null;
     } else {
         for (const candidate of BASE_CANDIDATES) {
@@ -170,8 +174,8 @@ export const pickBase = ({ git, env, baseRef }) => {
                 break;
             }
         }
-        if (!ref && isCommit('HEAD~1')) {
-            ref = 'HEAD~1';
+        if (!ref && isCommit(FALLBACK_BASE)) {
+            ref = FALLBACK_BASE;
         }
     }
     if (ref) {

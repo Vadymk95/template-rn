@@ -181,6 +181,9 @@ run; the checks that need the registry live there, not in `verify`. The moments 
 superset rule are defined ONCE in `AGENTS.md` § Commands / the gate; stage timings
 live in `.cursor/brain/VERIFICATION.md`.
 
+A push that changes no harness file also leaves out the harness tests listed under `selfTests` in
+`scripts/gate-tiers.json` and prints that it did; CI always runs them, and `GATE_SELF_TESTS=all git push` runs them here.
+
 `npm run test:mutation` (StrykerJS) measures test strength — whether the suite
 would catch a wrong implementation, not just execute the code. It runs as a weekly
 `mutation.yml` CI job with a measured floor (`thresholds.break` in

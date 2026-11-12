@@ -71,13 +71,16 @@ list of the stages each gate script runs (`checks.<name>.chain`, checked against
 - **Commit** - the pre-commit hook owns it: staged autofix, the TDD sibling gate, then the repo-wide cheap
   checks. Nothing to run by hand; on refusal the hook prints the remedy. The commit-msg hook (commitlint)
   also rejects any body or footer line over 100 characters (the header cap is 96): wrap the body.
-- **Push** - the pre-push hook runs the gate ONCE, never shortened by what the diff touched. Where the
-  repo has heavy stages (the ones that need a build), the push script is phase-aware: phase 0 (scaffold,
-  before the first deploy) runs the offline checks and loudly SKIPS the heavy stages; phase 1 (from the
-  first deploy) runs the full `verify:ci`. A skipped stage is printed, never silent; flip the phase in one
-  commit at the first deploy. A repo whose gate has no heavy stage runs the full `verify:ci` at push and
-  records in `gate-tiers.json` that a phase switch would gate nothing. With no remote there is no push
-  moment: the lead hand-runs the push chain once per slice on the main checkout; an implementer never does.
+- **Push** - the pre-push hook runs the gate ONCE, never shortened by what the diff touched, with one
+  named exception: the harness's own tests that read nothing outside the harness (the list in
+  `gate-tiers.json`) are left out of a push that changes no harness file. The push prints that it left
+  them out, and CI always runs them. Where the repo has heavy stages (the ones that need a build), the
+  push script is phase-aware: phase 0 (scaffold, before the first deploy) runs the offline checks and
+  loudly SKIPS the heavy stages; phase 1 (from the first deploy) runs the full `verify:ci`. A skipped
+  stage is printed, never silent; flip the phase in one commit at the first deploy. A repo whose gate has
+  no heavy stage runs the full `verify:ci` at push and records in `gate-tiers.json` that a phase switch
+  would gate nothing. With no remote there is no push moment: the lead hand-runs the push chain once per
+  slice on the main checkout; an implementer never does.
 - **CI** - phase-blind: always the full `verify:ci`, plus what only CI can do (the security workflow, the
   scheduled mutation job, a mandatory dev-smoke job where the repo has one).
 
@@ -178,7 +181,7 @@ never invented.
 
 ## Working agreements
 
-- **No browser lane**: a question only a rendered result can answer goes to `.maestro/` or a device (the substitute ladder closes `READING_INDEX.md`). The push runs the full `verify:ci` directly (`gate-tiers.json` `_phaseMeaning` says why); the by-hand prohibition also covers `ci:local` and `test:mutation`. Change the tracer's discipline by editing `scripts/gate-tiers.json`, never the analyser. The gate binds no port: if Metro's is busy, MOVE (`npx expo start --port <free>`), kill nothing.
+- **No browser lane**: a question only a rendered result can answer goes to `.maestro/` or a device (the substitute ladder closes `READING_INDEX.md`). The push runs `verify:ci` directly (`gate-tiers.json` `_phaseMeaning` says why), leaving out only the listed harness tests when the push changes no harness file; the by-hand prohibition also covers `ci:local` and `test:mutation`. Change the tracer's discipline by editing `scripts/gate-tiers.json`, never the analyser. The gate binds no port: if Metro's is busy, MOVE (`npx expo start --port <free>`), kill nothing.
 - **Bootstrap after clone**: `npm run prepare` once (`.npmrc` disables lifecycle scripts as a supply-chain guard, so husky does not self-install; `verify:iter` and `verify` fail loudly without hooks, and a push from a clone without them runs no gate). Dependency cooldown `.npmrc` `min-release-age=3` (days): a brand-new package or urgent patch needs `npm install <pkg> --min-release-age=0`. The lockfile obeys the same cooldown: `npm run lock:age` (a network-bound check) fails a changed `name@version` younger than `min-release-age`. Prefer waiting out the cooldown. An agent never runs the `--min-release-age=0` install and never edits `scripts/lock-age-allowlist.json` (an agent's classifier refuses both); the operator runs the bypass install and lists the row (reason, expiry no later than the day the version is old enough on its own).
 - **Zero warnings** (`eslint --max-warnings 0`, `oxlint --deny-warnings`): fix the cause; never downgrade a rule or sprinkle `eslint-disable`. A directive that must stay names its rules and carries `-- reason`; `oxlint-disable*` is banned. A rule wrong for a class of files gets a documented file-scoped override (`eslint.config.mjs`, or `overrides` in `.oxlintrc.json`).
 - **Complexity ratchet**: `complexity` 15 / `max-depth` 3 / `max-params` 4 / `max-lines-per-function` 120 / `max-lines` 200 over `src/**`, tests exempt. The numbers sit above the measured ceiling (`DECISIONS.md`), so a hit means new drift: split the function first; raising one needs a fresh measurement and a `DECISIONS.md` line.

@@ -1,7 +1,9 @@
 #!/usr/bin/env sh
-# Same script CI runs, so a green push cannot turn into a red pipeline.
-# `verify:ci` is the CI gate; its stages are in scripts/gate-tiers.json.
-if ! npm run verify:ci; then
+# The CI gate, so a green push predicts a green pipeline. `verify:ci` is the CI gate; its stages are
+# in scripts/gate-tiers.json. GATE_PUSH=1 says this is a push: the test:scripts stage then leaves out
+# the harness tests listed under selfTests when the push changes no harness file, prints that it did,
+# and CI runs them. GATE_SELF_TESTS=all git push runs them here.
+if ! GATE_PUSH=1 npm run verify:ci; then
     echo ''
     echo '✖ pre-push: verify:ci failed — the pipeline would fail the same way.'
     echo '  Formatting or lint findings:  npm run fix && git add -u'
