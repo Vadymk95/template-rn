@@ -175,6 +175,8 @@ npm run verify
 The `check-hooks` step fails loudly when git hooks are missing — run
 `npm run prepare` once after clone (lifecycle scripts are disabled via `.npmrc`). It is the first
 step of `verify:iter` as well, so the working loop stops there before a push can go out with no gate.
+The check also reads the hook files: a hook with a body under `.husky/` and no executable file where git
+looks for it is refused by name.
 
 `verify` holds every check that works **offline**. `verify:ci` is what husky pre-push and the CI job both
 run; the checks that need the registry live there, not in `verify`. The moments (iterate, commit, push, CI), what is never run by hand and the
