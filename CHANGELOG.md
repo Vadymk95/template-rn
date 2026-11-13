@@ -1,5 +1,37 @@
 # Changelog
 
+## [0.4.0](https://github.com/Vadymk95/template-rn/compare/v0.3.7...v0.4.0) (2026-11-13)
+
+
+### Features
+
+* **gate:** a push that changes no harness file leaves out the pure harness tests ([#82](https://github.com/Vadymk95/template-rn/issues/82)) ([e20c2b5](https://github.com/Vadymk95/template-rn/commit/e20c2b5a8cfa61bc20699f9cc503d24f79c91f00))
+* **gate:** iterate runs the commit hook's checks ([#76](https://github.com/Vadymk95/template-rn/issues/76)) ([8f0798a](https://github.com/Vadymk95/template-rn/commit/8f0798ac25a0faf59f328f8a1292372fcaa70c40))
+* **lint:** fail on timers leaked by effects, and format .mjs, .cjs and .css files at commit ([#73](https://github.com/Vadymk95/template-rn/issues/73)) ([bb19754](https://github.com/Vadymk95/template-rn/commit/bb197542223e277f4e21a2595eb598fc5cd68dab))
+* **scripts:** add fork:init, the local part of fork day in one command ([#79](https://github.com/Vadymk95/template-rn/issues/79)) ([2576a8d](https://github.com/Vadymk95/template-rn/commit/2576a8db8fabc2e6f971b9376b10b4af9331c9d7))
+
+
+### Bug fixes
+
+* **hooks,ci:** pass commits of linter-ignored files; read gate labels when the job runs ([#75](https://github.com/Vadymk95/template-rn/issues/75)) ([7a0110b](https://github.com/Vadymk95/template-rn/commit/7a0110be9ca994b4b78fe65e9196fd95787aa572))
+* **hooks:** the hooks check refuses when a hook file is missing or not executable ([#83](https://github.com/Vadymk95/template-rn/issues/83)) ([64e1ad5](https://github.com/Vadymk95/template-rn/commit/64e1ad5e5d8609d945fa3ba2cecec76892e66745))
+
+
+### Documentation
+
+* **agents:** spec and plan from two slices; one slice carries its criteria in the PR ([#77](https://github.com/Vadymk95/template-rn/issues/77)) ([cf0e6d8](https://github.com/Vadymk95/template-rn/commit/cf0e6d83daf865f01d613782be48b6865de488b4))
+* **rules:** point resilience at the Phase 1 example, not the seed path ([#81](https://github.com/Vadymk95/template-rn/issues/81)) ([5ead65e](https://github.com/Vadymk95/template-rn/commit/5ead65e16106a44349719eaf5a541dde48702f6e))
+
+
+### Tests
+
+* **scripts:** give the lock-age command-line cases their own time budget ([#80](https://github.com/Vadymk95/template-rn/issues/80)) ([c57c60e](https://github.com/Vadymk95/template-rn/commit/c57c60ebbda9455d4ce8f314b50d72ecb18d55be))
+
+
+### CI
+
+* **deps:** auto-merge Dependabot patch and minor updates after the required checks ([#78](https://github.com/Vadymk95/template-rn/issues/78)) ([8b2356e](https://github.com/Vadymk95/template-rn/commit/8b2356e58806dfb971b0473e145d0a054411d00a))
+
 ## [0.3.7](https://github.com/Vadymk95/template-rn/compare/v0.3.6...v0.3.7) (2026-11-07)
 
 
