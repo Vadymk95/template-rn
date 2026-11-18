@@ -6,7 +6,7 @@ Production-ready React Native + Expo foundation, the mobile sibling of `template
 
 A **generic MVP template**: no vendor auth, analytics or crash reporting; wire those when the product needs them. It ships the toolchain and the architectural spine.
 
-## Tech Stack (July 2026)
+## Tech Stack (November 2026)
 
 The one place for the stack. Exact versions are `package.json`; every package held below a newer release is in `scripts/version-holds.json`.
 

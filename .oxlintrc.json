@@ -21,8 +21,8 @@
         "react-perf/jsx-no-new-object-as-prop": "off",
         "react-perf/jsx-no-new-array-as-prop": "off",
         "react-perf/jsx-no-new-function-as-prop": "off",
-        // This rule demands `Array#toSorted`, which Hermes on Expo SDK 57 does not have (Expo Go 57.0.9
-        // on iOS: `typeof [].toSorted` is "undefined"). Web and Jest run on engines that do have it, so
+        // This rule demands `Array#toSorted`, which Hermes on Expo SDK 57 and 58 does not have (Expo Go
+        // 57.0.9 and 58.0.7 on iOS: `typeof [].toSorted` is "undefined"). Web and Jest run on engines that do have it, so
         // only a device throws "undefined is not a function". Copy, then sort: `[...items].sort(...)`.
         "unicorn/no-array-sort": "off"
     },
