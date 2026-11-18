@@ -60,11 +60,11 @@ If you fork this template, keep those files in sync with your product decisions.
 
 | Layer          | Choice                                                                                               | Why                                                                                                  |
 | -------------- | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| Runtime        | React Native 0.86 + React 19.2                                                                       | Expo SDK 57 baseline                                                                                 |
-| Framework      | Expo SDK 57                                                                                          | New Arch only (Legacy dropped in SDK 55)                                                             |
+| Runtime        | React Native 0.88 + React 19.3                                                                       | Expo SDK 58 baseline                                                                                 |
+| Framework      | Expo SDK 58                                                                                          | New Arch only (Legacy dropped in SDK 55)                                                             |
 | Compiler       | React Compiler (stable)                                                                              | Auto-memoization via `experiments.reactCompiler`                                                     |
 | Language       | TypeScript 6.0 strict + `noUncheckedIndexedAccess` + `exactOptionalPropertyTypes`                    | Zero soft-land type escape hatches                                                                   |
-| Routing        | Expo Router v57                                                                                      | File-based, typed routes, deep links                                                                 |
+| Routing        | Expo Router v58                                                                                      | File-based, typed routes, deep links                                                                 |
 | Styling        | NativeWind 4 + Tailwind 3.4                                                                          | className-first; dark mode via `.dark`                                                               |
 | State (client) | Zustand 5 + plain selectors                                                                          | Minimal, no boilerplate; the Compiler cannot see a generated `.use.x()` call as a hook               |
 | State (server) | TanStack Query 5 + AppState focus wiring                                                             | Queries refetch on app foreground                                                                    |
@@ -317,8 +317,10 @@ npm run doctor                    # expo-doctor: dependencies match the SDK
 
 - `npm start` / `npm run start:clear` uses your local network (same Wi-Fi).
 - `npm run start:tunnel` (or `npm run start:tunnel:clear`) exposes the dev
-  server through Expo's tunnel so Expo Go / a dev client can open the app from
-  a QR code or shared `exp://` link even when the phone is not on the same LAN.
+  server through the ngrok tunnel (`@expo/ngrok`; SDK 58's default Expo tunnel
+  needs `expo login`, ngrok does not) so Expo Go / a dev client can open the app
+  from a QR code or shared `exp://` link even when the phone is not on the same
+  LAN.
 - This is a **development** workflow, not a production distribution channel. For
   production "open by link" behavior you still need proper deep links,
   Universal Links / App Links, and installed builds.

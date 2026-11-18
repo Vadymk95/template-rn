@@ -8,8 +8,8 @@
 // status has to be ESLint's, and a path ESLint ignores must not turn into a warning that
 // `--max-warnings 0` then reads as a failure.
 //
-// Runner: `node:test`, not Jest (Jest 29 does not discover `.mjs` gate scripts). Run via
-// `npm run test:scripts`.
+// Runner: `node:test`, not Jest (`jest.testMatch` in `package.json` keeps `.mjs` gate scripts
+// out of Jest). Run via `npm run test:scripts`.
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
 import {

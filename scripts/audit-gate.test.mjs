@@ -3,8 +3,9 @@
 // case below is the load-bearing one.
 //
 // Runner: `node:test`, not Jest. The gate scripts are executable ESM (`.mjs`)
-// and Jest 29 neither discovers that extension nor loads real ESM without
-// --experimental-vm-modules. Node's built-in runner needs no config and keeps
+// and Jest does not load real ESM without --experimental-vm-modules (Jest 30
+// finds `.mjs` files by default, so `jest.testMatch` in `package.json` keeps them
+// out). Node's built-in runner needs no config and keeps
 // these specs out of `collectCoverageFrom`, so gate tooling cannot drift the
 // app's coverage thresholds. Run via `npm run test:scripts`.
 //

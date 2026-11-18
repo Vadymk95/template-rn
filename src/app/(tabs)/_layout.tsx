@@ -13,16 +13,21 @@ interface TabIconProps {
     size: number;
 }
 
+// React Navigation hands the tab tint over as a string; ColorValue also admits a number and null,
+// which the icon component does not take.
+const toIconColor = (color: ColorValue): string | undefined =>
+    typeof color === 'string' ? color : undefined;
+
 const StartTabIcon = ({ color, size }: TabIconProps): ReactElement => (
-    <Ionicons name={TAB_SCREEN_IONICONS.index} color={color} size={size} />
+    <Ionicons name={TAB_SCREEN_IONICONS.index} color={toIconColor(color)} size={size} />
 );
 
 const TasksTabIcon = ({ color, size }: TabIconProps): ReactElement => (
-    <Ionicons name={TAB_SCREEN_IONICONS.tasks} color={color} size={size} />
+    <Ionicons name={TAB_SCREEN_IONICONS.tasks} color={toIconColor(color)} size={size} />
 );
 
 const SettingsTabIcon = ({ color, size }: TabIconProps): ReactElement => (
-    <Ionicons name={TAB_SCREEN_IONICONS.settings} color={color} size={size} />
+    <Ionicons name={TAB_SCREEN_IONICONS.settings} color={toIconColor(color)} size={size} />
 );
 
 const TabsLayout = (): ReactElement => {

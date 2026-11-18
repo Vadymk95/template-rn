@@ -2,8 +2,8 @@
 // cannot see still reaches the tests: `jest --onlyChanged --passWithNoTests` exits 0 when the walk
 // selects nothing, so a broken config passed the iterate chain and failed at the push.
 //
-// Runner: `node:test`, not Jest (Jest 29 does not discover `.mjs` gate scripts). Run via
-// `npm run test:scripts`.
+// Runner: `node:test`, not Jest (`jest.testMatch` in `package.json` keeps `.mjs` gate scripts
+// out of Jest). Run via `npm run test:scripts`.
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
 import {

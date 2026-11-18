@@ -11,7 +11,7 @@ export const TEXT_FIELD_ROLE = 'textfield';
 
 interface AccessibleControlSpec {
     /** An `accessibilityRole` / `role` value, or `TEXT_FIELD_ROLE` for a `TextInput`. */
-    role: ByRoleArgs[0] | typeof TEXT_FIELD_ROLE;
+    role: ByRoleArgs[0];
     /** The name a screen reader announces: `accessibilityLabel`, `aria-label`, or the text inside. */
     name: NonNullable<NonNullable<ByRoleArgs[1]>['name']>;
 }

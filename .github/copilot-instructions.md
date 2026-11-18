@@ -1,6 +1,6 @@
 # Review instructions
 
-Expo SDK 57 + React Native 0.86 template. Report correctness, security, accessibility and test strength
+Expo SDK 58 + React Native 0.88 template. Report correctness, security, accessibility and test strength
 before style — style is ESLint's and Prettier's job, not a review finding.
 
 ## Non-negotiable

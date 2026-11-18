@@ -2,9 +2,9 @@
 // chain pre-push gates on, so anything it does to observe a run must not change whether that run
 // is reported as a pass or a fail.
 //
-// Runner: `node:test`, not Jest — the gate scripts are executable ESM (`.mjs`) and Jest 29 neither
-// discovers that extension nor loads real ESM without --experimental-vm-modules. Run via
-// `npm run test:scripts`.
+// Runner: `node:test`, not Jest — the gate scripts are executable ESM (`.mjs`), Jest does not load
+// real ESM without --experimental-vm-modules, and `jest.testMatch` in `package.json` keeps `.mjs`
+// files out of its runs. Run via `npm run test:scripts`.
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';

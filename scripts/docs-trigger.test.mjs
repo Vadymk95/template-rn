@@ -3,8 +3,8 @@
 // A second copy of that pattern in a hook or a package script would drift, so the last cases read the
 // hook and package.json as text and fail when either stops going through the script.
 //
-// Runner: `node:test`, not Jest (Jest 29 does not discover `.mjs` gate scripts). Run via
-// `npm run test:scripts`.
+// Runner: `node:test`, not Jest (`jest.testMatch` in `package.json` keeps `.mjs` gate scripts
+// out of Jest). Run via `npm run test:scripts`.
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
 import {

@@ -35,19 +35,17 @@ updates:
           - dependency-name: '@react-native/*'
           - dependency-name: '@react-native-async-storage/*'
           - dependency-name: 'jest'
-            versions: ['>=30']
+            versions: ['>=31']
           - dependency-name: '@types/jest'
-            versions: ['>=30']
+            versions: ['>=31']
           - dependency-name: '@babel/core'
             versions: ['>=8']
           - dependency-name: 'tailwindcss'
             versions: ['>=4']
           - dependency-name: 'typescript'
             versions: ['>=6.1']
-          - dependency-name: 'test-renderer'
-            versions: ['>=1.3']
           - dependency-name: '@types/react'
-            versions: ['>=19.3']
+            versions: ['>=19.4']
           - dependency-name: 'eslint'
             versions: ['>=11']
           - dependency-name: '@eslint/js'

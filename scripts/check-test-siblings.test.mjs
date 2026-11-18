@@ -3,9 +3,10 @@
 // are FOR, so a widening that changes the policy fails here instead of silently
 // letting untested logic land.
 //
-// Runner: `node:test`, for the same reason as the other gate specs here — Jest 29
-// neither discovers `.mjs` nor loads real ESM without --experimental-vm-modules, and
-// keeping these out of `collectCoverageFrom` stops gate tooling from moving the app's
+// Runner: `node:test`, for the same reason as the other gate specs here — Jest does not
+// load real ESM without --experimental-vm-modules (`jest.testMatch` in `package.json` keeps
+// `.mjs` out of its runs), and keeping these out of `collectCoverageFrom` stops gate
+// tooling from moving the app's
 // coverage thresholds. Run via `npm run test:scripts`.
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';

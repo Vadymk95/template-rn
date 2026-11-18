@@ -6,8 +6,8 @@
 //   - the test leg that runs the whole suite when a config jest cannot trace is dirty: a raw
 //     `jest --onlyChanged --passWithNoTests` selects nothing for such a change and exits 0.
 //
-// Runner: `node:test`, not Jest (Jest 29 does not discover `.mjs` gate scripts). Run via
-// `npm run test:scripts`.
+// Runner: `node:test`, not Jest (`jest.testMatch` in `package.json` keeps `.mjs` gate scripts
+// out of Jest). Run via `npm run test:scripts`.
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';

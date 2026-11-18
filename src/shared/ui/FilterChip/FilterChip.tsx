@@ -18,12 +18,11 @@ interface FilterChipProps extends Omit<PressableProps, 'children' | 'style'> {
 export const FilterChip = ({
     label,
     selected = false,
-    disabled = false,
+    disabled: isDisabled = false,
     className,
     ...pressableProps
 }: FilterChipProps): ReactElement => {
     const controlSize = CONTROL_SIZE_TOKENS.sm;
-    const isDisabled = Boolean(disabled);
 
     return (
         <Pressable
