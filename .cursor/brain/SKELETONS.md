@@ -81,9 +81,9 @@ Touch with intent; re-verify via the commands in `VERIFICATION.md`.
 - Adding a new var requires editing `.env.example`, `src/env.ts` schema, AND
   restarting Metro (env is read once).
 
-## Hermes runtime (Expo SDK 57)
+## Hermes runtime (Expo SDK 57 and 58)
 
-- `Array#toSorted` is `undefined` on a device (Expo Go 57.0.9, iOS Simulator; `toReversed`,
+- `Array#toSorted` is `undefined` on a device (Expo Go 57.0.9 and 58.0.7, iOS Simulator; `toReversed`,
   `toSpliced` and `with` are functions), while web and Jest have it, so only a device throws.
   Copy, then sort: `[...items].sort(...)`. Lint bans `.toSorted` under `src/**`, and the oxlint
   rule that demands it (`unicorn/no-array-sort`) is off in `.oxlintrc.json`.

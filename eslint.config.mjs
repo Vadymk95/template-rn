@@ -321,8 +321,9 @@ export default tseslint.config(
         }
     },
     // ─── Array methods the iOS engine does not have ─────────────────────────
-    // Measured on Expo Go 57.0.9 in the iOS Simulator: `typeof [].toSorted` is "undefined"
-    // (`toReversed`, `toSpliced` and `with` are functions). Web and Jest run on engines that have
+    // Measured on Expo Go 57.0.9 and again on Expo Go 58.0.7 (Hermes for RN 260318099.0.4) in the iOS
+    // Simulator: `typeof [].toSorted` is "undefined" (`toReversed`, `toSpliced` and `with` are
+    // functions). Web and Jest run on engines that have
     // it, so the call passes every check and throws only on a device. `.oxlintrc.json` turns off
     // the oxlint rule that demands it. Tests run on Node and are exempt.
     {
@@ -334,7 +335,7 @@ export default tseslint.config(
                 {
                     property: 'toSorted',
                     message:
-                        'Array#toSorted is not available in Hermes on Expo SDK 57. Copy, then sort: `[...items].sort(...)`.'
+                        'Array#toSorted is not available in Hermes on Expo SDK 57 or 58. Copy, then sort: `[...items].sort(...)`.'
                 }
             ]
         }

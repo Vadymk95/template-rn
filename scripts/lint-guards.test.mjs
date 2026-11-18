@@ -176,7 +176,8 @@ describe('accessibility state on web', () => {
 });
 
 describe('array methods the iOS engine lacks', () => {
-    // Measured on Expo Go 57.0.9 in the iOS Simulator: `typeof [].toSorted` is "undefined" while
+    // Measured on Expo Go 57.0.9 and again on Expo Go 58.0.7 (Hermes for RN 260318099.0.4) in the iOS
+    // Simulator: `typeof [].toSorted` is "undefined" while
     // `toReversed`, `toSpliced` and `with` are functions. Web and Jest run on engines that have
     // `toSorted`, so only a device throws "undefined is not a function".
     it('flags toSorted under src', async () => {

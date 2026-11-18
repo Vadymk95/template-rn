@@ -114,7 +114,7 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 
 - **Context**: ESLint 9 is end of life. `eslint-config-expo` sets `settings.react.version: 'detect'`, and under ESLint 10 that path calls the removed `context.getFilename()`, so every React rule throws at load.
 - **Decision**: ESLint 10 with a trailing config object in `eslint.config.mjs` that sets `settings.react.version` to a literal; it has no `files` key and comes last, so it wins over the Expo preset. `eslint-plugin-react` and `eslint-plugin-import` (peer capped below 10) are mapped to the installed ESLint through root `overrides` (`{ "eslint": "$eslint" }`), never `--legacy-peer-deps`. Type-aware rules stay scoped to `src/**`.
-- **Consequences**: removing the trailing block reproduces the crash (verified, still true on `eslint-config-expo@57`). `eslint-plugin-oxlint` is deliberately not installed: the two linters run as separate passes, so `oxlint` has no lockstep partner and bumps on its own.
+- **Consequences**: removing the trailing block reproduces the crash (verified, still true on `eslint-config-expo@58.0.4` with ESLint 10.15.0, 2026-11-18). `eslint-plugin-oxlint` is deliberately not installed: the two linters run as separate passes, so `oxlint` has no lockstep partner and bumps on its own.
 - **Status**: in force; `eslint` and `@eslint/js` ceilings in `scripts/version-holds.json`.
 - **Evidence**: [2beb9f2](https://github.com/Vadymk95/template-rn/commit/2beb9f2), `eslint.config.mjs`.
 
