@@ -4,61 +4,61 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 
 ## Index
 
-| Decision                                                               | Date    | Status                                 |
-| ---------------------------------------------------------------------- | ------- | -------------------------------------- |
-| Expo managed over bare React Native                                    | 2026-04 | in force                               |
-| Expo Router over React Navigation standalone                           | 2026-04 | in force                               |
-| Expo SDK 57 baseline                                                   | 2026-07 | in force; SDK 58 held                  |
-| NativeWind 4.2 on Tailwind 3.4, not v5                                 | 2026-04 | in force; version hold                 |
-| Tailwind scans product code, not tests                                 | 2026-10 | in force                               |
-| Dependencies: the SDK list is the authority, holds are data            | 2026-10 | in force                               |
-| Override floors with major caps, dated allowances                      | 2026-10 | in force; allowances 2026-11-21, 12-01 |
-| ESLint 10 and `eslint-config-expo`                                     | 2026-07 | in force                               |
-| Oxlint before ESLint                                                   | 2026-04 | in force                               |
-| 4-space indent, single quotes                                          | 2026-04 | in force                               |
-| Jest and jest-expo, not Vitest                                         | 2026-04 | in force                               |
-| Jest coverage thresholds and exclusions                                | 2026-04 | in force                               |
-| Gate-script specs run on `node:test`                                   | 2026-07 | in force                               |
-| One entry-point guard for every gate script                            | 2026-10 | in force                               |
-| Test servers bind ports below the ephemeral ranges                     | 2026-10 | in force                               |
-| Jest does not reset mocks between tests                                | 2026-10 | in force                               |
-| `expo-secure-store` for tokens, AsyncStorage for cache                 | 2026-04 | in force                               |
-| No observability vendor in the template                                | 2026-04 | in force                               |
-| i18n and forms in the template, auth and crash reporting not           | 2026-04 | in force                               |
-| `@t3-oss/env-core` and Zod                                             | 2026-04 | in force                               |
-| Icons: `@expo/vector-icons`, not `lucide-react-native`                 | 2026-04 | in force                               |
-| Design tokens are vocabulary, not call sites                           | 2026-04 | in force                               |
-| [2026-05] Boundary validation via Zod safeFetch wrapper (mobile-aware) | 2026-05 | in force                               |
-| Magic strings become constants (storage keys)                          | 2026-05 | in force                               |
-| Raw hex and magic numbers are lint errors                              | 2026-07 | in force                               |
-| Native colour values mirror `global.css`                               | 2026-10 | in force                               |
-| The gate contract: `verify` is a superset of CI                        | 2026-07 | in force                               |
-| The gate chain has one readable home                                   | 2026-10 | in force                               |
-| docs:check reads the tree as a clean checkout does                     | 2026-10 | in force                               |
-| The gate's strict flags are read from the commands                     | 2026-10 | in force                               |
-| Gate tests pin the git defaults their flags override                   | 2026-10 | in force                               |
-| The app sits at the git root                                           | 2026-10 | in force                               |
-| The iterate chain lints, widens and pins its legs                      | 2026-10 | in force                               |
-| Fail-closed audit gate                                                 | 2026-07 | in force                               |
-| `docs:check` guards CI steps, ruleset contexts and its own trigger     | 2026-10 | in force                               |
-| TDD sibling gate on pre-commit, no auto-commit hook                    | 2026-07 | in force                               |
-| Complexity ratchet                                                     | 2026-08 | in force                               |
-| Mutation testing: weekly strength gate, outside `verify`               | 2026-08 | in force                               |
-| Content variance on native: props, not pixels                          | 2026-08 | in force                               |
-| Secret scan, CodeQL and SHA-pinned actions                             | 2026-07 | in force                               |
-| zizmor audits the workflow files                                       | 2026-10 | in force                               |
-| Cleartext traffic cannot be enabled unnoticed                          | 2026-10 | in force                               |
-| Agent limits in a committed `.claude/settings.json`                    | 2026-09 | in force; not a security boundary      |
-| One Dependabot group; release token wired                              | 2026-09 | in force                               |
-| Role commands in `.claude/commands/`, pointers in `.cursor/commands/`  | 2026-07 | in force                               |
-| Deliberately not adopted from the sibling web templates                | 2026-07 | in force                               |
-| Audit backlog: what the template adopts and defers                     | 2026-04 | in force                               |
-| React Compiler silent-bailout awareness                                | 2026-05 | in force                               |
-| REJECT list: explicit non-adoption                                     | 2026-05 | in force                               |
-| Gate checks refuse a value they cannot judge                           | 2026-11 | in force                               |
-| A timer started in an effect is released                               | 2026-11 | in force                               |
-| The commit hook formats every file the format check reads              | 2026-11 | in force                               |
-| A push leaves out the harness tests that read only the harness         | 2026-11 | in force                               |
+| Decision                                                               | Date    | Status                            |
+| ---------------------------------------------------------------------- | ------- | --------------------------------- |
+| Expo managed over bare React Native                                    | 2026-04 | in force                          |
+| Expo Router over React Navigation standalone                           | 2026-04 | in force                          |
+| Expo SDK 58 baseline                                                   | 2026-11 | in force                          |
+| NativeWind 4.2 on Tailwind 3.4, not v5                                 | 2026-04 | in force; version hold            |
+| Tailwind scans product code, not tests                                 | 2026-10 | in force                          |
+| Dependencies: the SDK list is the authority, holds are data            | 2026-10 | in force                          |
+| Override floors with major caps, dated allowances                      | 2026-10 | in force; allowance 2026-12-02    |
+| ESLint 10 and `eslint-config-expo`                                     | 2026-07 | in force                          |
+| Oxlint before ESLint                                                   | 2026-04 | in force                          |
+| 4-space indent, single quotes                                          | 2026-04 | in force                          |
+| Jest and jest-expo, not Vitest                                         | 2026-04 | in force                          |
+| Jest coverage thresholds and exclusions                                | 2026-04 | in force                          |
+| Gate-script specs run on `node:test`                                   | 2026-07 | in force                          |
+| One entry-point guard for every gate script                            | 2026-10 | in force                          |
+| Test servers bind ports below the ephemeral ranges                     | 2026-10 | in force                          |
+| Jest does not reset mocks between tests                                | 2026-10 | in force                          |
+| `expo-secure-store` for tokens, AsyncStorage for cache                 | 2026-04 | in force                          |
+| No observability vendor in the template                                | 2026-04 | in force                          |
+| i18n and forms in the template, auth and crash reporting not           | 2026-04 | in force                          |
+| `@t3-oss/env-core` and Zod                                             | 2026-04 | in force                          |
+| Icons: `@expo/vector-icons`, not `lucide-react-native`                 | 2026-04 | in force                          |
+| Design tokens are vocabulary, not call sites                           | 2026-04 | in force                          |
+| [2026-05] Boundary validation via Zod safeFetch wrapper (mobile-aware) | 2026-05 | in force                          |
+| Magic strings become constants (storage keys)                          | 2026-05 | in force                          |
+| Raw hex and magic numbers are lint errors                              | 2026-07 | in force                          |
+| Native colour values mirror `global.css`                               | 2026-10 | in force                          |
+| The gate contract: `verify` is a superset of CI                        | 2026-07 | in force                          |
+| The gate chain has one readable home                                   | 2026-10 | in force                          |
+| docs:check reads the tree as a clean checkout does                     | 2026-10 | in force                          |
+| The gate's strict flags are read from the commands                     | 2026-10 | in force                          |
+| Gate tests pin the git defaults their flags override                   | 2026-10 | in force                          |
+| The app sits at the git root                                           | 2026-10 | in force                          |
+| The iterate chain lints, widens and pins its legs                      | 2026-10 | in force                          |
+| Fail-closed audit gate                                                 | 2026-07 | in force                          |
+| `docs:check` guards CI steps, ruleset contexts and its own trigger     | 2026-10 | in force                          |
+| TDD sibling gate on pre-commit, no auto-commit hook                    | 2026-07 | in force                          |
+| Complexity ratchet                                                     | 2026-08 | in force                          |
+| Mutation testing: weekly strength gate, outside `verify`               | 2026-08 | in force                          |
+| Content variance on native: props, not pixels                          | 2026-08 | in force                          |
+| Secret scan, CodeQL and SHA-pinned actions                             | 2026-07 | in force                          |
+| zizmor audits the workflow files                                       | 2026-10 | in force                          |
+| Cleartext traffic cannot be enabled unnoticed                          | 2026-10 | in force                          |
+| Agent limits in a committed `.claude/settings.json`                    | 2026-09 | in force; not a security boundary |
+| One Dependabot group; release token wired                              | 2026-09 | in force                          |
+| Role commands in `.claude/commands/`, pointers in `.cursor/commands/`  | 2026-07 | in force                          |
+| Deliberately not adopted from the sibling web templates                | 2026-07 | in force                          |
+| Audit backlog: what the template adopts and defers                     | 2026-04 | in force                          |
+| React Compiler silent-bailout awareness                                | 2026-05 | in force                          |
+| REJECT list: explicit non-adoption                                     | 2026-05 | in force                          |
+| Gate checks refuse a value they cannot judge                           | 2026-11 | in force                          |
+| A timer started in an effect is released                               | 2026-11 | in force                          |
+| The commit hook formats every file the format check reads              | 2026-11 | in force                          |
+| A push leaves out the harness tests that read only the harness         | 2026-11 | in force                          |
 
 ## Expo managed over bare React Native
 
@@ -73,12 +73,12 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 - **Decision**: file-based routes (the Next.js App Router mental model); typed routes, deep links and URL handling come with it. The bundle cost is accepted for an MVP.
 - **Status**: in force. **Evidence**: [494809f](https://github.com/Vadymk95/template-rn/commit/494809f).
 
-## Expo SDK 57 baseline
+## Expo SDK 58 baseline
 
-- **Context**: upgraded from SDK 55 on 2026-07-16 by `npx expo install expo@^57 --fix`; the SDK 56 attempt had been reverted over 360 typecheck errors that the jump to 57 resolved (jest globals via `"types": ["jest", "node"]`, `splash` moved to the `expo-splash-screen` plugin, `ColorValue` for tab icon colours, RNTL 14 async API).
-- **Decision**: SDK 57 with React Native 0.86 and React 19.2. The New Architecture is the only option (Legacy was dropped in SDK 55), so `newArchEnabled` is not a flag to set. The React Compiler is on through `experiments.reactCompiler: true`.
-- **Consequences**: SDK 58 stays out until Expo's `latest` tag moves to it; the hold is in `scripts/version-holds.json`.
-- **Status**: in force. **Evidence**: [0f9c932](https://github.com/Vadymk95/template-rn/commit/0f9c932), [PR #44](https://github.com/Vadymk95/template-rn/pull/44).
+- **Context**: upgraded from SDK 57 on 2026-11-18 with `npx expo install expo@^58.0.0`. SDK 57 had come on 2026-07-16 from SDK 55, after an SDK 56 attempt was reverted over 360 typecheck errors that the jump to 57 resolved (jest globals via `"types": ["jest", "node"]`, `splash` moved to the `expo-splash-screen` plugin, `ColorValue` for tab icon colours, RNTL 14 async API).
+- **Decision**: SDK 58 with React Native 0.88 and React 19.3. The New Architecture is the only option (Legacy was dropped in SDK 55), so `newArchEnabled` is not a flag to set. The React Compiler is on through `experiments.reactCompiler: true`.
+- **Consequences**: SDK 59 stays out until Expo's `latest` tag moves to it; the hold is in `scripts/version-holds.json`. Five points came with the move. `unstable_settings` takes `anchor`, because expo-router 58 removed `initialRouteName`. `start:tunnel` passes `--tunnel ngrok`: SDK 58's default Expo tunnel needs `expo login`, the ngrok provider does not. `web.output` stays unset, since nothing here exports or serves a web build (SDK 58 defaults it to `"server"`). Jest is 30, as `jest-expo` 58 expects, with `testMatch` back at Jest 29's default because Jest 30 also collects `.mjs` and `.cjs` files and would pick up the `node:test` gate specs under `scripts/`. The React Compiler lint rules now come from `eslint-plugin-react-hooks` 7 alone (§ Override floors with major caps, dated allowances).
+- **Status**: in force. **Evidence**: [0f9c932](https://github.com/Vadymk95/template-rn/commit/0f9c932), [PR #44](https://github.com/Vadymk95/template-rn/pull/44), [PR #86](https://github.com/Vadymk95/template-rn/pull/86), `scripts/version-holds.json`.
 
 ## NativeWind 4.2 on Tailwind 3.4, not v5
 
@@ -107,7 +107,7 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 
 - **Context**: a transitive advisory with a fixed release is closed with a root `overrides` floor; npm's own suggested fix was once a semver-major downgrade of `eslint-config-expo`, which is destructive. Our own uncapped floors (`brace-expansion`, `fast-uri`) aged into later advisories' vulnerable ranges.
 - **Decision**: every floor carries a major cap (`">=fixed <next-major"`), and two majors need two floors keyed by major (`"js-yaml@^3"` and `"js-yaml@^4"`; the parent-scoped form made `npm ls --all` flaky). An advisory with no fixed release in the major its dependents accept gets a dated entry in `scripts/audit-allowlist.json` (`id`, `expires`, `reason`, `upstream`), not a floor: a floor across majors would break the cap.
-- **Consequences**: two allowances stand, each re-read on 2026-11-07. The `zod` 3.25.76 copies under `@expo/cli` and `eslint-plugin-react-compiler` (GHSA-mrhx-c7xc-m3w5, fixed only from zod 4.6.6, so no patched 3.x; the app's own zod is the top-level 4.6.7, held there by `package.json` `^4.6.7`, because an allowance keyed by advisory id covers that copy too; `@expo/cli` 57.0.33 moved zod to devDependencies, so the `@expo/cli` copy leaves with an `expo` bump once the install cooldown allows it) are allowed until 2026-12-01. `decode-uri-component` 0.2.2 (GHSA-qr28-fpjm-wq7f, high; the patched 0.5.x line is ESM only while `query-string` 7.1.3 requires it from CommonJS, and npm's remedy is the `expo-router` 58 major, so no fix is adoptable; reached through `expo-router` -> `query-string`, which is app runtime code) is allowed only until 2026-11-21, the shorter date because the code ships in the app. Three allowances were dropped: `deepmerge` (GHSA-gcqx-w48m-w2h4) and `decode-uri-component` (GHSA-vcc3-ghjq-m6fr) are rated low and medium by their own advisories, and `audit:gate` now judges a root advisory by its own rating, not the rating of the package it was reached through; `node-forge` (GHSA-86w9-cpqp-85rv and five newer high advisories) has a patched release since 1.4.1 (2026-10-27) and is closed by a capped root floor `">=1.4.1 <2"`, which is what the doctrine asks for when a fix exists. At expiry, check `npm view <pkg> versions` and the upstream chain for a release past the vulnerable range; re-date only with a fresh reading. The `audit:gate` guard prints each allowance on every run and fails an expired or stale one.
+- **Consequences**: one allowance stands since 2026-11-18, to 2026-12-02: `picomatch` (GHSA-fc5q-39xc-vjpf, high). GitHub widened its range to `<= 4.0.7` on 2026-11-17 with no patched release (4.0.7 is the newest), and every path to its copies is Metro, Expo CLI, jest or lint tooling, none of it app code, so a dated reason is the only door; the entry names the re-check. Before it, `scripts/audit-allowlist.json` was `[]`. The two that stood on 2026-11-07 were dropped on 2026-11-18 with the SDK 58 move. `decode-uri-component` 0.2.2 (GHSA-qr28-fpjm-wq7f) was reached only through `expo-router` -> `query-string`, and SDK 58's `expo-router` has no `query-string`. The `zod` 3.25.76 copies (GHSA-mrhx-c7xc-m3w5, fixed only from zod 4.6.6, so no patched 3.x) came from `@expo/cli`, whose SDK 58 line keeps zod in devDependencies only, and from `eslint-plugin-react-compiler`, which was removed: `eslint-plugin-react-hooks` 7, loaded through `eslint-config-expo`, carries the same compiler rules (a probe file with a mutated prop, a ref read in render, a state setter in render and an impure call in render drew an error from a `react-hooks/*` rule in each case with the plugin gone). The app's own zod is the top-level 4.6.7, held there by `package.json` `^4.6.7`. Three earlier allowances were dropped too: `deepmerge` (GHSA-gcqx-w48m-w2h4) and `decode-uri-component` (GHSA-vcc3-ghjq-m6fr) are rated low and medium by their own advisories, and `audit:gate` now judges a root advisory by its own rating, not the rating of the package it was reached through; `node-forge` (GHSA-86w9-cpqp-85rv and five newer high advisories) has a patched release since 1.4.1 (2026-10-27) and is closed by a capped root floor `">=1.4.1 <2"`, which is what the doctrine asks for when a fix exists. A new allowance is written only after `npm view <pkg> versions` and the upstream chain show no release past the vulnerable range, and it is re-dated only with a fresh reading. The `audit:gate` guard prints each allowance on every run and fails an expired or stale one.
 - **Status**: in force. **Evidence**: [1f90e46](https://github.com/Vadymk95/template-rn/commit/1f90e46), [PR #44](https://github.com/Vadymk95/template-rn/pull/44).
 
 ## ESLint 10 and `eslint-config-expo`
@@ -132,7 +132,7 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 
 - **Context**: Vitest React Native support is still rough with Reanimated and NativeWind mocks; `jest-expo` ships the right `transformIgnorePatterns`.
 - **Decision**: Jest with `jest-expo`; matchers come built in with React Native Testing Library (`@testing-library/jest-native` is deprecated); mocks live in `src/test/setup.ts`. `jest-expo` runs Babel through the app's `babel.config.js`, so `babel-preset-expo` must stay resolvable from the project root (a direct dependency) for `npm test` to run.
-- **Consequences**: Jest stays on 29 while `jest-expo` depends on `babel-jest@29`, which also holds `@babel/core` at 7 (both in `scripts/version-holds.json`).
+- **Consequences**: Jest stays on 30 with `jest-expo` 58, and `@babel/core` stays at 7 (both in `scripts/version-holds.json`). Jest 30 collects `.mjs` and `.cjs` files by default, so `package.json` `jest.testMatch` keeps Jest 29's default, or `npm test` would run the `node:test` gate specs under `scripts/` as suites and fail on their ESM imports.
 - **Status**: in force. **Evidence**: [494809f](https://github.com/Vadymk95/template-rn/commit/494809f), `package.json`.
 
 ## Jest coverage thresholds and exclusions
@@ -143,7 +143,7 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 
 ## Gate-script specs run on `node:test`
 
-- **Context**: the gate scripts are executable ESM (`.mjs`); Jest 29 does not discover that extension or load real ESM without `--experimental-vm-modules`. In a sibling template, folding gate scripts into the app's coverage run dropped line coverage from 93% to 82% with no app change.
+- **Context**: the gate scripts are executable ESM (`.mjs`); Jest does not load real ESM without `--experimental-vm-modules` (Jest 30 collects the extension by default, so `jest.testMatch` in `package.json` leaves it out). In a sibling template, folding gate scripts into the app's coverage run dropped line coverage from 93% to 82% with no app change.
 - **Decision**: `npm run test:scripts` is `node scripts/test-scripts.mjs`, which starts `node --test "scripts/**/*.test.mjs"` (no config, outside `collectCoverageFrom`) unless a push leaves listed files out (§ A push leaves out the harness tests that read only the harness). The glob is quoted so Node expands it (an unquoted glob relies on the shell, which does not glob on Windows).
 - **Status**: in force. **Evidence**: [4a29b21](https://github.com/Vadymk95/template-rn/commit/4a29b21).
 
@@ -402,8 +402,8 @@ Recorded so forks do not re-litigate the list. Ghost principle: only **Adopted**
 
 ## React Compiler silent-bailout awareness
 
-- **Decision**: keep `experiments.reactCompiler: true`, `eslint-plugin-react-compiler` and `eslint-plugin-react-hooks` 7 (rules-of-hooks and exhaustive-deps come through `eslint-config-expo`). `npm run verify:rc` (`react-compiler-healthcheck src`) is an opt-in audit, outside the gate. The escape hatch for a bailout that causes an observable regression is a file-level `"use no memo"`.
-- **Consequences**: `reactHooks.configs['recommended-latest']` is not wired: `eslint-config-expo` bundles an older `react-hooks` instance, so the v7-only rules do not resolve under flat config. Two upstream bugs can make the Compiler skip memoization silently: [facebook/react#35105](https://github.com/facebook/react/issues/35105) (`eslint-disable` suppresses the incompatible-library warning) and [#35644](https://github.com/facebook/react/issues/35644) (silent bailout with try/catch/finally in a component body). Drop this awareness once both are closed.
+- **Decision**: keep `experiments.reactCompiler: true` and `eslint-plugin-react-hooks` 7, which `eslint-config-expo` loads with rules-of-hooks, exhaustive-deps and the Compiler rules (`react-hooks/purity`, `refs`, `immutability`, `set-state-in-render` and the rest). `eslint-plugin-react-compiler` was dropped as a duplicate. `npm run verify:rc` (`react-compiler-healthcheck src`) is an opt-in audit, outside the gate. The escape hatch for a bailout that causes an observable regression is a file-level `"use no memo"`.
+- **Consequences**: `reactHooks.configs['recommended-latest']` is not wired by hand: `eslint-config-expo` already loads `eslint-plugin-react-hooks` 7 with the Compiler rules (`npx eslint --print-config src/app/_layout.tsx` lists 16 `react-hooks/*` rules). Two upstream bugs can make the Compiler skip memoization silently: [facebook/react#35105](https://github.com/facebook/react/issues/35105) (`eslint-disable` suppresses the incompatible-library warning) and [#35644](https://github.com/facebook/react/issues/35644) (silent bailout with try/catch/finally in a component body). Drop this awareness once both are closed.
 - **Status**: in force. The web siblings do not enable the Compiler (a Vite/Babel conflict and no ruled-out reproducer); this repo does.
 - **Evidence**: [31a9d36](https://github.com/Vadymk95/template-rn/commit/31a9d36), [9c3f78e](https://github.com/Vadymk95/template-rn/commit/9c3f78e).
 

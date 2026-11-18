@@ -4,7 +4,7 @@ This file is the **single source of truth** for "what to add when forking this t
 
 Companion docs: [`PROJECT_CONTEXT.md`](./PROJECT_CONTEXT.md) (the stack you extend, and the lists of what is not wired yet), [`SKELETONS.md`](./SKELETONS.md) (danger zones), [`VERIFICATION.md`](./VERIFICATION.md) (native parity and OTA discipline), [`DECISIONS.md`](./DECISIONS.md) (why each tool was kept or removed), [`SECURITY_REVIEW.md`](./SECURITY_REVIEW.md), `AGENTS.md` (rules and the gate), `docs/template-reset.md` (fork identity).
 
-**How to read a recipe.** Every recipe lists a doc source for its commands and config keys. The stack is Expo SDK 57 with React Native 0.86: a recipe that targets a newer SDK says so, and nothing here assumes a newer API. An item marked **(unverified)** was not confirmed against the vendor docs when this file was written; confirm it on the page named in the recipe before relying on it. An item marked **(opinion)** is a recommendation with no vendor source.
+**How to read a recipe.** Every recipe lists a doc source for its commands and config keys. The stack is Expo SDK 58 with React Native 0.88: a recipe that targets a newer SDK says so, and nothing here assumes a newer API. An item marked **(unverified)** was not confirmed against the vendor docs when this file was written; confirm it on the page named in the recipe before relying on it. An item marked **(opinion)** is a recommendation with no vendor source.
 
 **Priority order when the fork becomes a real product** (the phases are the detail): the HTTP layer and its retry rules (Phase 1) → auth on `<Stack.Protected>` plus the token rules (Phase 2) → crash reporting through the existing `logger.ts` plug-in point (Phase 3) → build-profile environments and the OTA path (Phase 5) → offline persistence only when the product needs it (Phase 4) → push and deep links (Phase 6) → UI extras as screens demand them (Phase 7).
 
@@ -103,9 +103,9 @@ The template ships the storage half: `src/lib/secureToken.ts` (`setAuthToken` / 
     - The Jest mock in `src/test/setup.ts` exports only the three functions. Add the `WHEN_UNLOCKED_THIS_DEVICE_ONLY` constant to it when you pass the option, or a test that asserts the options sees `undefined`.
     - A key rename in `SECURE_STORAGE_KEYS` is a storage schema change: the old entry is orphaned and every user is logged out. Decide on migration before renaming.
 - **Guard:** the existing `expo-secure-store` Jest mock in `src/test/setup.ts`; a test that `clearAuthToken()` runs on logout and on a failed refresh (2.3).
-- **Security:** on iOS, `expo-secure-store` data can persist across an uninstall when the app is reinstalled with the same bundle id; on Android it does not (secure-store docs, SDK 57). On the first launch after an install, call `clearAuthToken()` before trusting a stored token, keyed on an AsyncStorage flag, which an uninstall does remove (opinion).
+- **Security:** on iOS, `expo-secure-store` data can persist across an uninstall when the app is reinstalled with the same bundle id; on Android it does not (secure-store docs, SDK 58). On the first launch after an install, call `clearAuthToken()` before trusting a stored token, keyed on an AsyncStorage flag, which an uninstall does remove (opinion).
 - **Do NOT:** put a token in AsyncStorage, Zustand `persist`, a query key, a log line, the crash reporter's context or any `EXPO_PUBLIC_*` variable.
-- **Doc source:** [`expo-secure-store` for SDK 57](https://docs.expo.dev/versions/v57.0.0/sdk/securestore).
+- **Doc source:** [`expo-secure-store` for SDK 58](https://docs.expo.dev/versions/v58.0.0/sdk/securestore).
 
 ### 2.2 Route protection with `Stack.Protected`
 
@@ -115,7 +115,7 @@ The template ships the storage half: `src/lib/secureToken.ts` (`setAuthToken` / 
 - **Config and why:** evaluate the guard only after hydration. `src/app/_layout.tsx` already holds the splash screen until `useStoreReady()` is true; keep the stack from rendering before the stored token has also been validated, or a signed-in user flashes the sign-in screen. "A token exists" is not "the user is signed in": validate it with one cheap authenticated call at boot and clear it on a 401 (opinion).
 - **Guard:** a unit test on the hook (signed out → false, hydrating → not rendered). The `expo-router` mock in `src/test/setup.ts` defines `Stack` as a plain function with no `Protected` member, so a test that renders `RootStack` needs a mock with that member (`src/widgets/root-stack/RootStack.test.tsx` shows the shape). A Maestro flow beside `.maestro/smoke.yaml` for sign in → protected screen → sign out → sign-in screen (the only layer that sees real navigation).
 - **Security:** a client guard is UX, not authorization. The backend must reject every unauthorised request on its own.
-- **Do NOT:** use the `redirectTo` option of `Stack.Protected` (documented for SDK 58 and later, newer than this repo's SDK 57), or gate screens with a `useEffect` + `router.replace` (a flash of protected content first).
+- **Do NOT:** gate screens with a `useEffect` + `router.replace` (a flash of protected content first). `Stack.Protected` takes `redirectTo` from SDK 58 on, to choose where a failed guard sends the user; leave it off unless the default (the navigator's anchor, else its first accessible route) is the wrong place.
 - **Doc source:** [Expo Router protected routes](https://docs.expo.dev/router/advanced/protected).
 
 ### 2.3 Token injection, 401 and refresh
@@ -171,7 +171,7 @@ The template ships the storage half: `src/lib/secureToken.ts` (`setAuthToken` / 
 - **Security:** device model and OS version are low-sensitivity, but a stable device identifier is personal data: do not add one to events or analytics without a consent decision (3.3).
 - **Do NOT:** add either package for a single string you can get elsewhere, or log the full device object.
 - **Native:** both are native modules: rebuild the dev client and bump `version`.
-- **Doc sources:** [`expo-application`](https://docs.expo.dev/versions/v57.0.0/sdk/application), [`expo-device`](https://docs.expo.dev/versions/v57.0.0/sdk/device), and the [`expo-constants` SDK 57 reference](https://docs.expo.dev/versions/v57.0.0/sdk/constants), which marks its model, OS-version and build-number fields deprecated in favour of `expo-device` and `expo-application`.
+- **Doc sources:** [`expo-application`](https://docs.expo.dev/versions/v58.0.0/sdk/application), [`expo-device`](https://docs.expo.dev/versions/v58.0.0/sdk/device), and the [`expo-constants` SDK 58 reference](https://docs.expo.dev/versions/v58.0.0/sdk/constants), which marks its model, OS-version and build-number fields deprecated in favour of `expo-device` and `expo-application`.
 
 ### 3.3 Analytics
 
@@ -236,7 +236,7 @@ The template ships the storage half: `src/lib/secureToken.ts` (`setAuthToken` / 
 - **Config and why:**
     - A `EXPO_PUBLIC_*` value cannot be secret whatever its EAS visibility: the bundle inlines it. Secret visibility is for build-time tokens (`SENTRY_AUTH_TOKEN`), not for app configuration.
     - Secrets are not available during `eas update`, so anything an OTA bundle needs at build time must be non-secret.
-    - From SDK 55 `eas update` needs an explicit `--environment` so the bundle gets the right variables (the usage page; this repo is on SDK 57).
+    - From SDK 55 `eas update` needs an explicit `--environment` so the bundle gets the right variables (the usage page; this repo is on SDK 58).
 - **Guard:** keep a single source of truth: a variable defined in `eas.json` is not also defined in an EAS environment. The Zod schema in `src/env.ts` makes a bundle without `EXPO_PUBLIC_API_URL` throw at app start-up, not at build time, and no test covers it today (`src/env.ts` is outside coverage): the preview-channel check in 5.2 is where a missing value shows up.
 - **Security:** a leaked secret is rotated, not deleted from history. Never paste values into docs, PRs or chat.
 - **Do NOT:** commit `.env` files other than `.env.example`.
@@ -249,7 +249,7 @@ The template ships the storage half: `src/lib/secureToken.ts` (`setAuthToken` / 
 - **Where it plugs in:** the `preview` and `production` channels in `eas.json`; the update URL and runtime version in `app.config.ts`.
 - **Config and why:**
     - Publish with `eas update --channel <channel> --message "<what changed>" --environment <environment>`. Always publish to `preview` first and verify on a preview build; `production` second.
-    - `runtimeVersion.policy: 'appVersion'` ties an update to the `version` string: any native change needs a bumped `version`, which is exactly the rule in `VERIFICATION.md`. The `fingerprint` policy (a valid value in the SDK 57 config schema) instead changes the runtime version whenever anything that may affect the native runtime changes, at the cost of more builds (EAS Update runtime versions page). Switching policy is a decision for `DECISIONS.md`.
+    - `runtimeVersion.policy: 'appVersion'` ties an update to the `version` string: any native change needs a bumped `version`, which is exactly the rule in `VERIFICATION.md`. The `fingerprint` policy (a valid value in the SDK 58 config schema) instead changes the runtime version whenever anything that may affect the native runtime changes, at the cost of more builds (EAS Update runtime versions page). Switching policy is a decision for `DECISIONS.md`.
     - Rollback: `eas update:rollback` republishes the update group published before the latest one, or rolls back to the update embedded in the binary when there is none; `eas update:republish` republishes a chosen group (EAS CLI reference). Rehearse a rollback on the `preview` channel before you need it.
     - `updates.checkAutomatically` and `fallbackToCacheTimeout` control launch behaviour. `fallbackToCacheTimeout` defaults to 0 (launch with the cached bundle and apply a downloaded update on the next launch) and accepts 0 to 300000 milliseconds (config source). The default keeps start-up fast; raise it only when users must never run the old bundle, and then keep it short.
     - Check for updates in the foreground with `useUpdates()` or `Updates.checkForUpdateAsync()`, `fetchUpdateAsync()`, `reloadAsync()` (EAS Update docs): prompt the user instead of reloading mid-task.
@@ -257,7 +257,7 @@ The template ships the storage half: `src/lib/secureToken.ts` (`setAuthToken` / 
 - **Guard:** the pre-push gate cannot prove an OTA. Add a manual preview-channel check to the release checklist: install the preview build, publish, confirm the update id in the About screen (3.2).
 - **Security:** an OTA update executes new code on every device that matches the channel and runtime version. Protect the Expo account with 2FA, restrict who may run `eas update --channel production`, and enable code signing before real users.
 - **Do NOT:** ship a native change by OTA (the app crashes on a mismatched native module), or reuse a `version` after changing a native dependency.
-- **Note:** the `fallbackToCacheTimeout` range and the `fingerprint` policy above were checked on the SDK 57 pages ([app config](https://docs.expo.dev/versions/v57.0.0/config/app), [`expo-updates`](https://docs.expo.dev/versions/v57.0.0/sdk/updates)); cross-check any other key against the SDK 57 page, not `latest`, before copying.
+- **Note:** the `fallbackToCacheTimeout` range and the `fingerprint` policy above were checked on the SDK 58 pages ([app config](https://docs.expo.dev/versions/v58.0.0/config/app), [`expo-updates`](https://docs.expo.dev/versions/v58.0.0/sdk/updates)); cross-check any other key against the SDK 58 page, not `latest`, before copying.
 
 ---
 
@@ -312,17 +312,17 @@ The template ships the storage half: `src/lib/secureToken.ts` (`setAuthToken` / 
 - **Security:** an SVG imported from outside is code-adjacent data: convert it to a component by hand, do not render remote SVG strings.
 - **Do NOT:** add the package for one logo (a PNG asset does that), or add an SVG transformer to the Metro config for a handful of icons.
 - **Native:** a native module. Rebuild the dev client, bump `version`, run `npm run doctor`.
-- **Doc source:** [`react-native-svg` in the SDK 57 reference](https://docs.expo.dev/versions/v57.0.0/sdk/svg) (the install line above is the one it gives). The package is already matched by the `react-native` prefix in the `transformIgnorePatterns` entry in `package.json`, so Jest transforms it.
+- **Doc source:** [`react-native-svg` in the SDK 58 reference](https://docs.expo.dev/versions/v58.0.0/sdk/svg) (the install line above is the one it gives). The package is already matched by the `react-native` prefix in the `transformIgnorePatterns` entry in `package.json`, so Jest transforms it.
 
 ### 7.2 Edge-to-edge: do NOT add `react-native-edge-to-edge`
 
-The package was removed from the template. On Android, edge-to-edge is the platform default for apps targeting Android 15 (API level 35) and above, and the Expo docs checked for this file treat it as the default for Expo apps, so there is nothing to enable. This repo's React Native 0.86.3 sets `targetSdk = "36"` (`node_modules/react-native/gradle/libs.versions.toml` after install), so a build targets API level 36. The old `edgeToEdgeEnabled` key is absent from the installed `@expo/config-types` schema. What a screen still owes:
+The package was removed from the template. On Android, edge-to-edge is the platform default for apps targeting Android 15 (API level 35) and above, and the Expo docs checked for this file treat it as the default for Expo apps, so there is nothing to enable. This repo's React Native 0.88.1 sets `targetSdk = "36"` (`node_modules/react-native/gradle/libs.versions.toml` after install), so a build targets API level 36. The old `edgeToEdgeEnabled` key is absent from the installed `@expo/config-types` schema. What a screen still owes:
 
 - Draw below the system bars deliberately: use insets from `react-native-safe-area-context` (already installed) through the `Screen` primitive in `src/shared/ui/Screen`, not a hardcoded padding.
 - Status bar style through `expo-status-bar` (installed). Navigation bar styling on Android through `expo-navigation-bar` **only if a design needs it** (not installed).
 - Keyboard resize behaviour is `android.softwareKeyboardLayoutMode` in `app.config.ts`; with edge-to-edge, test forms on a real Android device.
 
-Re-add the package only if a documented SDK 57 limitation names it. Doc source: the Expo edge-to-edge and system-bars pages (checked via context7 in an earlier pass).
+Re-add the package only if a documented SDK 58 limitation names it. Doc source: the Expo system-bars page (read again for SDK 58: it names neither the package nor a limitation) and the edge-to-edge pages (checked via context7 in an earlier pass).
 
 ### 7.3 Images (`expo-image`)
 
@@ -334,7 +334,7 @@ Re-add the package only if a documented SDK 57 limitation names it. Doc source: 
 - **Security:** only fetch images over https and from hosts you expect; user-supplied URLs go through an allowlist.
 - **Do NOT:** use it for icons (7.1) or for local assets that `require` serves.
 - **Native:** a native module: rebuild, bump `version`.
-- **Doc source:** [`expo-image` for SDK 57](https://docs.expo.dev/versions/v57.0.0/sdk/image) (`cachePolicy` default `'disk'`, `recyclingKey`, `prefetch`).
+- **Doc source:** [`expo-image` for SDK 58](https://docs.expo.dev/versions/v58.0.0/sdk/image) (`cachePolicy` default `'disk'`, `recyclingKey`, `prefetch`).
 
 ### 7.4 Optional capabilities
 

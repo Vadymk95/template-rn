@@ -71,7 +71,7 @@ export const Button = ({
     ...pressableProps
 }: ButtonProps): ReactElement => {
     const { colorScheme } = useColorScheme();
-    const isDisabled = disabled === true || loading;
+    const isDisabled = disabled || loading;
     const controlSize = CONTROL_SIZE_TOKENS[size];
 
     if (__DEV__ && children && !label && !accessibilityLabel) {

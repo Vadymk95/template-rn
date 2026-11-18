@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react-native';
 import { createRef } from 'react';
-import type { TextInput } from 'react-native';
+import type { TextInputInstance } from 'react-native';
 
 import { Input } from '@/shared/ui/Input/Input';
 import { expectAccessibleControl, TEXT_FIELD_ROLE } from '@/test/a11y';
@@ -26,7 +26,7 @@ describe('Input', () => {
     });
 
     it('forwards its ref to the underlying text input', async () => {
-        const inputRef = createRef<TextInput>();
+        const inputRef = createRef<TextInputInstance>();
 
         await render(<Input ref={inputRef} label="Task title" />);
 

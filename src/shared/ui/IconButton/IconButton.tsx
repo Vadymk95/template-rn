@@ -42,13 +42,12 @@ export const IconButton = ({
     accessibilityLabel,
     variant = 'neutral',
     size = 'md',
-    disabled = false,
+    disabled: isDisabled = false,
     className,
     ...pressableProps
 }: IconButtonProps): ReactElement => {
     const { colorScheme } = useColorScheme();
     const controlSize = CONTROL_SIZE_TOKENS[size];
-    const isDisabled = Boolean(disabled);
 
     return (
         <Pressable

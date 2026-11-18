@@ -9,8 +9,8 @@
 // bin is run, because `postcss` is not a dependency of this repository. The patterns are relative, so
 // the compile runs with that tree as the working directory. Only the product utilities may appear.
 //
-// Runner: `node:test`, not Jest (Jest 29 does not discover `.mjs` gate scripts). Run via
-// `npm run test:scripts`.
+// Runner: `node:test`, not Jest (`jest.testMatch` in `package.json` keeps `.mjs` gate scripts
+// out of Jest). Run via `npm run test:scripts`.
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';

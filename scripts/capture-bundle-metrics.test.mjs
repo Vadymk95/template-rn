@@ -3,7 +3,8 @@
 // "not over the limit" and pass. These cases pin the refusal of every input that is not a usable
 // number, and that merely importing the module runs no export and reads no baseline.
 //
-// Runner: `node:test` (Jest 29 does not discover `.mjs` gate scripts). Run via `npm run test:scripts`.
+// Runner: `node:test` (`jest.testMatch` in `package.json` keeps `.mjs` gate scripts out of
+// Jest). Run via `npm run test:scripts`.
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';

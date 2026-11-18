@@ -1,6 +1,6 @@
 import { useColorScheme } from 'nativewind';
 import { forwardRef, type ReactElement, type ReactNode } from 'react';
-import { Text, TextInput, View, type TextInputProps } from 'react-native';
+import { Text, TextInput, View, type TextInputInstance, type TextInputProps } from 'react-native';
 
 import { cn } from '@/lib/utils';
 import {
@@ -21,7 +21,7 @@ interface InputProps extends Omit<TextInputProps, 'style'> {
     inputClassName?: string;
 }
 
-export const Input = forwardRef<TextInput, InputProps>(
+export const Input = forwardRef<TextInputInstance, InputProps>(
     (
         {
             label,

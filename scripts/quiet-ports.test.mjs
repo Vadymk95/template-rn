@@ -10,8 +10,8 @@ import {
     windowStart
 } from './quiet-ports.mjs';
 
-// Runner: `node:test`, not Jest (Jest 29 does not discover `.mjs` gate scripts). Run via
-// `npm run test:scripts`.
+// Runner: `node:test`, not Jest (`jest.testMatch` in `package.json` keeps `.mjs` gate scripts
+// out of Jest). Run via `npm run test:scripts`.
 
 /* Both ephemeral ranges start at or above this; a port below it is never handed out by `listen(0)`
    or taken by an outgoing connection. */

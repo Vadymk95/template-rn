@@ -10,8 +10,8 @@ A **generic MVP template**: no vendor auth, analytics or crash reporting; wire t
 
 The one place for the stack. Exact versions are `package.json`; every package held below a newer release is in `scripts/version-holds.json`.
 
-- **Runtime**: React Native 0.86 on Expo SDK 57, React 19.2, TypeScript 6.0 strict, Metro (bundled with Expo), React Compiler (`experiments.reactCompiler`).
-- **Routing and styling**: Expo Router v57; NativeWind 4 on Tailwind 3.4; `@expo/vector-icons` (ships with Expo); Reanimated 4 with worklets; gesture-handler.
+- **Runtime**: React Native 0.88 on Expo SDK 58, React 19.3, TypeScript 6.0 strict, Metro (bundled with Expo), React Compiler (`experiments.reactCompiler`).
+- **Routing and styling**: Expo Router v58; NativeWind 4 on Tailwind 3.4; `@expo/vector-icons` (ships with Expo); Reanimated 4 with worklets; gesture-handler.
 - **State and data**: Zustand 5 (devtools + persist); TanStack Query 5 with AppState focus; `@t3-oss/env-core` + Zod for env; `expo-secure-store` for secrets, AsyncStorage for cache.
 - **i18n and forms**: i18next + react-i18next, typed `t()` keys, bundled JSON in `src/shared/locales/`, expo-localization; react-hook-form + `@hookform/resolvers` (Zod).
 - **Tests**: Jest + jest-expo + `@testing-library/react-native` (built-in matchers).

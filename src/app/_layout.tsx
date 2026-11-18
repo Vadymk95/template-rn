@@ -28,7 +28,7 @@ SplashScreen.preventAutoHideAsync().catch((reason: unknown) => {
 });
 
 export const unstable_settings = {
-    initialRouteName: EXPO_ROUTER.rootStackInitialRoute
+    anchor: EXPO_ROUTER.rootStackAnchor
 };
 
 const RootLayout = (): ReactElement => {

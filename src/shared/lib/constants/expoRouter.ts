@@ -4,5 +4,5 @@
  */
 export const EXPO_ROUTER = {
     rootTabGroup: '(tabs)',
-    rootStackInitialRoute: '(tabs)'
+    rootStackAnchor: '(tabs)'
 } as const;

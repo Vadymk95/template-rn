@@ -8,7 +8,6 @@ import importX from 'eslint-plugin-import-x';
 import jestPlugin from 'eslint-plugin-jest';
 import prettierConfig from 'eslint-config-prettier';
 import prettierPlugin from 'eslint-plugin-prettier';
-import reactCompiler from 'eslint-plugin-react-compiler';
 import reactWebApi from 'eslint-plugin-react-web-api';
 import templatePlugin from './tooling/eslint-plugin-template/index.mjs';
 import tseslint from 'typescript-eslint';
@@ -149,7 +148,6 @@ export default tseslint.config(
             'import-x': importX,
             boundaries,
             prettier: prettierPlugin,
-            'react-compiler': reactCompiler,
             'react-web-api': reactWebApi,
             template: templatePlugin
         },
@@ -246,7 +244,6 @@ export default tseslint.config(
             ],
             'import-x/no-cycle': 'error',
             'import-x/no-default-export': 'off',
-            'react-compiler/react-compiler': 'error',
 
             // ─── Timers started in an effect ─────────────────────────────────
             // A timer that outlives its component keeps running after unmount and holds the
@@ -527,7 +524,7 @@ export default tseslint.config(
     // package.json.
     {
         settings: {
-            react: { version: '19.2' }
+            react: { version: '19.3' }
         }
     }
 );

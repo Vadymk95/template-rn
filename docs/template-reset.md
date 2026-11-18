@@ -43,7 +43,7 @@ When the new product stops looking like the Todo example, review these files tog
 The template's decisions are about the template. Your fork starts its own record and keeps the guard on held packages.
 
 - [ ] Replace `.cursor/brain/DECISIONS.md` with a fresh file: one header line saying history lives in `git log -p -- .cursor/brain/DECISIONS.md` and in the template repository (`https://github.com/Vadymk95/template-rn`), then your own entries, each at most 30 lines (context, decision, consequences, status, evidence link). Delete what turns out wrong or dead; git keeps the history.
-- [ ] Keep `scripts/version-holds.json` and `scripts/check-version-holds.mjs`. The holds are facts about packages (SDK-pinned natives, Jest 29, Tailwind 3.4, TypeScript, ESLint), not about the template, and `verify` fails a manifest, lockfile or Dependabot `ignore` that drifts from them.
+- [ ] Keep `scripts/version-holds.json` and `scripts/check-version-holds.mjs`. The holds are facts about packages (SDK-pinned natives, Jest 30, Tailwind 3.4, TypeScript, ESLint), not about the template, and `verify` fails a manifest, lockfile or Dependabot `ignore` that drifts from them.
 - [ ] Re-check every hold against your own Dependabot PRs. A PR for a held package is the signal to test the hold's lift condition: lift it by editing `scripts/version-holds.json`, `package.json` and `.github/dependabot.yml` in one change, or close the PR.
 
 ## CodeQL in a private fork

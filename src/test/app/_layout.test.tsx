@@ -1,7 +1,7 @@
 import { render, waitFor } from '@testing-library/react-native';
 import type { ReactElement } from 'react';
 
-import RootLayout from '@/app/_layout';
+import RootLayout, { unstable_settings } from '@/app/_layout';
 import { I18N_INIT_FALLBACK_COPY } from '@/shared/lib/constants/initFallbackCopy';
 
 jest.mock('../../../global.css', () => ({}));
@@ -36,6 +36,12 @@ jest.mock('@/shared/lib/i18n', () => {
 });
 
 describe('RootLayout', () => {
+    it('anchors the root stack on the tabs group and names no initial route', () => {
+        // expo-router 58 removed `initialRouteName`; the stack's anchor route is the replacement.
+        expect(unstable_settings).toHaveProperty('anchor', '(tabs)');
+        expect(unstable_settings).not.toHaveProperty('initialRouteName');
+    });
+
     it('renders the i18n init error fallback when i18next bootstrap fails', async () => {
         const { getByText } = await render(<RootLayout />);
 
