@@ -40,6 +40,7 @@
             "Edit(/scripts/version-holds.json)",
             "Edit(/scripts/native-config*)",
             "Edit(/scripts/mutation-scope.test.mjs)",
+            "Edit(/scripts/bench-verify.mjs)",
             "Edit(/scripts/bench-verify.test.mjs)",
             "Edit(/tooling/eslint-plugin-template/**)",
             "Edit(/.maestro/**)",

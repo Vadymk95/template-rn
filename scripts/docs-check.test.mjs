@@ -1015,6 +1015,19 @@ describe('budget', () => {
     });
     const many = (count, ms) => Array.from({ length: count }, () => row(ms));
 
+    it('starts the drift finding with ACT; calibration and in-budget lines keep their words', () => {
+        const at = (ms, baselineMs) =>
+            budgetReport({ rows: many(10, ms), label: 'verify:ci', phase: '0', baselineMs })
+                .message;
+
+        assert.equal(
+            at(40000, 24000),
+            'ACT budget: "verify:ci" p90 is 40.0s in phase 0 over 10 runs, 1.67x this machine\'s 24.0s baseline and past the 1.3x line — find what grew, or delete .gate-budget.json to accept this as the new normal'
+        );
+        assert.match(at(24000, null), /^budget: "verify:ci" calibrated to THIS machine/);
+        assert.match(at(24000, 24000), /^budget: "verify:ci" p90 24\.0s in phase 0/);
+    });
+
     it('calibrates to this machine instead of judging it by a number from another', () => {
         const first = budgetReport({
             rows: many(10, 24000),
