@@ -60,6 +60,14 @@ budgets and classes are DATA in `scripts/gate-tiers.json`; the analyser names no
 discipline changes by editing that JSON. Telemetry sees WHO ran WHAT and HOW LONG — whether a check
 CAN fail is mutation-proving's job.
 
+The push runs its steps through the runner in `scripts/bench-verify.mjs` (`.husky/pre-push` calls it under the tracer,
+label `verify:ci`): wrappers and `npm run` hops are followed, so a push writes one row, `verify:ci`. It prints one line
+per step and a verdict naming the step that failed. `npm run bench:verify -- --run <script>` runs any script's steps the
+same way.
+
+The coverage step prints the four totals (the `text-summary` reporter), not a row per file; a missed threshold is still
+named. The per-file table, on demand: `npx --no-install jest <test file> --coverage --coverageReporters=text`.
+
 ## By change type
 
 | Changed                                 | Run                                                         |

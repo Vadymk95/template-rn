@@ -60,6 +60,8 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 | A timer started in an effect is released                               | 2026-11 | in force                          |
 | The commit hook formats every file the format check reads              | 2026-11 | in force                          |
 | A push leaves out the harness tests that read only the harness         | 2026-11 | in force                          |
+| The push runs its steps through one runner that names the red one      | 2026-11 | in force                          |
+| A log keeps four coverage totals and a command's first and last lines  | 2026-11 | in force                          |
 
 ## Expo managed over bare React Native
 
@@ -523,3 +525,32 @@ Read before proposing a tool that was already considered.
   either tool is a `package.json` or lockfile change, which runs everything.
 - **Status**: in force. Revisit if a master run goes red from a left-out test that a push would have caught.
   **Evidence**: `scripts/test-scripts.test.mjs`, `scripts/gate-tiers.self-tests.test.mjs`.
+
+## The push runs its steps through one runner that names the red one
+
+- **Decision**: `.husky/pre-push` runs `node scripts/bench-verify.mjs --run verify:ci` under the tracer (label `verify:ci`,
+  `GATE_PUSH=1`). `expandSteps` lists the leaf steps of the script and `runSteps` runs them in order, output inherited.
+  `npm run` hops and the tracer wrapper are followed, every argument is kept, a segment npm hands to its shell (an env
+  prefix, quotes) runs through `sh -c`, and a cycle, a missing script or a `pre`/`post` script throws, so no step is
+  dropped. One line names each step before it starts; the run ends with one verdict line,
+  `✖ <target>: step <label> failed (exit <code>) after <s> s; <k> later steps not run` or
+  `✓ <target>: <n> steps passed in <s> s`. The exit code is the failed step's own, 1 for a signal. A line that needs a person starts with `ACT` (a budget drift, a stale audit allowance), so
+  a push log names the action.
+- **Consequences**: the push was `npm run verify:ci`, an `&&` chain: it stops at the first red but never says which step that
+  was. A step list of its own (`bench:verify` had one) loses arguments such as `--range` and drifts from the gate. `npm_*`
+  variables are not set (no gate script reads one); `node_modules/.bin` leads PATH. A push writes one trace row,
+  `verify:ci`: the row of the wrapped script it used to nest is gone, and nothing read it (`trace:report` skipped a
+  nested row, the budget reads `verify:ci`).
+- **Status**: in force. **Evidence**: `scripts/bench-verify.mjs`, `scripts/bench-verify.test.mjs`,
+  `scripts/gate-tiers.self-tests.test.mjs`, `scripts/audit-gate.test.mjs`.
+
+## A log keeps four coverage totals and a command's first and last lines
+
+- **Decision**: the Jest block of `package.json` sets `coverageReporters` to Jest's default list with `text` replaced by
+  `text-summary`: the four totals, and a missed threshold is still named, exit 1
+  (`Jest: Coverage for lines (<n>%) does not meet "global" threshold (<n>%)`). The per-file table is one flag away
+  (`--coverageReporters=text`). A lane prints the exit code, the log's first line and its last 40 lines.
+- **Consequences**: the `text` reporter printed a row per file into every coverage log and nothing read it
+  (`scripts/check-coverage.mjs` reads only the dropout lines). A lane that printed the tail of a log lost the line that
+  says what the run selected, and a command piped into `tail` hid its exit code.
+- **Status**: in force. **Evidence**: `package.json`, `scripts/check-coverage.test.mjs`, `.cursor/templates/LANE.md`.

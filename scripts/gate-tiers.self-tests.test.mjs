@@ -104,7 +104,8 @@ describe('the list of harness tests a push may leave out', () => {
 // The push hook is where the marker is set. Without it every push runs everything and prints
 // nothing about it: the saving would be off in silence.
 const HOOK = '.husky/pre-push';
-const GATE_COMMAND = 'npm run verify:ci';
+const GATE_COMMAND =
+    'node scripts/gate-trace.mjs verify:ci -- node scripts/bench-verify.mjs --run verify:ci';
 const MARKER = 'GATE_PUSH=1';
 
 /** What is wrong with the push hook of the repository at `cwd`: no gate command, or one without the marker. */
@@ -144,14 +145,14 @@ describe('the push hook sets the marker', () => {
 
     it('accepts a hook whose gate command carries the marker', () => {
         const dir = withHook(
-            '#!/usr/bin/env sh\nif ! GATE_PUSH=1 npm run verify:ci; then\n    exit 1\nfi\n'
+            `#!/usr/bin/env sh\nif ! GATE_PUSH=1 ${GATE_COMMAND}; then\n    exit 1\nfi\n`
         );
 
         assert.deepEqual(hookProblemsOf(dir), []);
     });
 
     it('fails a hook whose gate command lacks the marker', () => {
-        const dir = withHook('#!/usr/bin/env sh\nif ! npm run verify:ci; then\n    exit 1\nfi\n');
+        const dir = withHook(`#!/usr/bin/env sh\nif ! ${GATE_COMMAND}; then\n    exit 1\nfi\n`);
 
         assert.deepEqual(hookProblemsOf(dir), [
             '.husky/pre-push does not set GATE_PUSH=1 on the gate command'
@@ -159,7 +160,7 @@ describe('the push hook sets the marker', () => {
     });
 
     it('fails a hook that names the marker only in a comment', () => {
-        const dir = withHook('# GATE_PUSH=1 npm run verify:ci\nnpm run verify:ci || exit 1\n');
+        const dir = withHook(`# GATE_PUSH=1 ${GATE_COMMAND}\n${GATE_COMMAND} || exit 1\n`);
 
         assert.deepEqual(hookProblemsOf(dir), [
             '.husky/pre-push does not set GATE_PUSH=1 on the gate command'
@@ -169,7 +170,7 @@ describe('the push hook sets the marker', () => {
     it('fails a hook that does not run the gate at all', () => {
         const dir = withHook('#!/usr/bin/env sh\nexit 0\n');
 
-        assert.deepEqual(hookProblemsOf(dir), ['.husky/pre-push does not run npm run verify:ci']);
+        assert.deepEqual(hookProblemsOf(dir), [`.husky/pre-push does not run ${GATE_COMMAND}`]);
     });
 
     it('fails a hook that is missing', () => {

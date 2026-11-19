@@ -2,6 +2,8 @@
 // here (executable `.mjs`, and keeping tooling specs out of `collectCoverageFrom`). Run via
 // `npm run test:scripts`.
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, it } from 'node:test';
 
 import { findCoverageDropouts } from './check-coverage.mjs';
@@ -39,5 +41,18 @@ describe('findCoverageDropouts', () => {
             []
         );
         assert.deepEqual(findCoverageDropouts('Failed to collect'), []);
+    });
+});
+
+describe('the coverage reporter', () => {
+    // The `text` reporter prints a row per file into every coverage log and nothing reads it; the summary
+    // prints the four totals, and a missed threshold is still named.
+    it('prints the four totals in the terminal, not a row per file', () => {
+        const { jest } = JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf8'));
+        // Unset means Jest's own default list, which has `text`.
+        const reporters = jest.coverageReporters ?? ['json', 'text', 'lcov', 'clover'];
+
+        assert.ok(reporters.includes('text-summary'));
+        assert.ok(!reporters.includes('text'));
     });
 });

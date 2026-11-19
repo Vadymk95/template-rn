@@ -160,6 +160,12 @@ describe('evaluateAudit', () => {
         assert.equal(result.ok, false);
     });
 
+    it('says what a person does about a stale allowance, on a line that starts with ACT', () => {
+        assert.deepEqual(formatFailures(evaluateAudit(audit({}), [allowance()], NOW)), [
+            `ACT Stale allowlist entry: ${ID}: npm audit no longer reports it. If gh api /advisories/${ID} shows withdrawn_at, GitHub withdrew it: delete the entry and its DECISIONS line; otherwise read the advisory again and re-date the entry.`
+        ]);
+    });
+
     it('resolves a derived advisory to its root before matching the allowlist', () => {
         // npm reports the dependent package with `via: ['left-pad']` and no url of
         // its own; the allowance names the root GHSA, so the chain must resolve.

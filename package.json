@@ -176,6 +176,12 @@
             "!src/**/*.stories.{ts,tsx}",
             "!src/lib/api/_example*"
         ],
+        "coverageReporters": [
+            "json",
+            "text-summary",
+            "lcov",
+            "clover"
+        ],
         "coverageThreshold": {
             "global": {
                 "statements": 80,
