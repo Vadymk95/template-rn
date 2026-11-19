@@ -55,6 +55,7 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 | Audit backlog: what the template adopts and defers                     | 2026-04 | in force                          |
 | React Compiler silent-bailout awareness                                | 2026-05 | in force                          |
 | REJECT list: explicit non-adoption                                     | 2026-05 | in force                          |
+| A script reads a child's whole output; the push lints uncached         | 2026-11 | in force                          |
 | Gate checks refuse a value they cannot judge                           | 2026-11 | in force                          |
 | A timer started in an effect is released                               | 2026-11 | in force                          |
 | The commit hook formats every file the format check reads              | 2026-11 | in force                          |
@@ -300,7 +301,7 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 ## The iterate chain lints, widens and pins its legs
 
 - **Context**: the iterate chain ran no type-aware lint, so findings that need types first fired at the commit hook. A change to a file no test imports (the jest block in `package.json`, `babel.config.js`, `tsconfig.json`, the NativeWind and Metro configs, `src/test/setup.ts`) selected no test, and `--passWithNoTests` turned that into exit 0, so a broken config went green here and red at the push. `scripts/mutation-scope.test.mjs` reads configs as text and nothing imports it, so no selection reached it.
-- **Decision**: `scripts/lint-changed.mjs` runs ESLint, with the flags and cache of `npm run lint`, on what differs from HEAD plus untracked files; `.cursor/**` is ignored, since nothing under it is product code. `scripts/iterate-tests.mjs` selects tests by change, but runs the whole suite, without `--passWithNoTests`, when one of its named paths is dirty (staged, untracked, deleted or renamed away) or git cannot answer. The scope test is a plain `node` step, named by its file: a raw `node --test` step reads as a stage called `node`, and any line saying "the Node engine" then counts as retelling the chain. `scripts/iterate-chain.test.mjs` fails a chain that drops a leg or brings back a raw jest step; `scripts/iterate-tests.test.mjs` fails a listed path that no longer exists and a jest setup file the list lacks.
+- **Decision**: `scripts/lint-changed.mjs` runs ESLint, with the flags of `npm run lint` and the cache of `npm run fix`, on what differs from HEAD plus untracked files; `.cursor/**` is ignored, since nothing under it is product code. `scripts/iterate-tests.mjs` selects tests by change, but runs the whole suite, without `--passWithNoTests`, when one of its named paths is dirty (staged, untracked, deleted or renamed away) or git cannot answer. The scope test is a plain `node` step, named by its file: a raw `node --test` step reads as a stage called `node`, and any line saying "the Node engine" then counts as retelling the chain. `scripts/iterate-chain.test.mjs` fails a chain that drops a leg or brings back a raw jest step; `scripts/iterate-tests.test.mjs` fails a listed path that no longer exists and a jest setup file the list lacks.
 - **Consequences**: measured on a scratch copy, three changed source files, warm caches: 3.7 s before, 4.7 s after; the ESLint leg alone 4.1 s on a cold cache and 0.9 s warm; the widened run, the whole suite, 3.4 s for 36 suites. The budget is 15 s (`scripts/gate-tiers.json`). A diff that touches no listed path keeps the module-graph selection, so a green run on an untested source change still proves nothing (`VERIFICATION.md` § Verification integrity).
 - **Status**: in force. **Evidence**: `scripts/iterate-chain.test.mjs`, `scripts/iterate-tests.test.mjs`, `scripts/lint-changed.test.mjs`.
 
@@ -421,6 +422,26 @@ Read before proposing a tool that was already considered.
 | `react-native-accessibility-engine` | skip           | last release 2022-11-15, and it peers `react-test-renderer`, which React 19 deprecates; evaluated 2026-10-09                   |
 
 - **Status**: in force. **Evidence**: [31a9d36](https://github.com/Vadymk95/template-rn/commit/31a9d36).
+
+## A script reads a child's whole output; the push lints uncached
+
+- **Decision**:
+    - Every capture in `scripts/*.mjs` passes `maxBuffer: OUTPUT_LIMIT_BYTES` (256 MiB, `scripts/child-output.mjs`);
+      `check-coverage` and `audit-gate` print one line naming the limit when `ENOBUFS` stops a child, and fail. A script
+      that echoes a child's output sets `process.exitCode` and returns. `scripts/output-limits.test.mjs` fails both a
+      capture with no limit and an echo followed by `process.exit(`.
+    - The push's `lint` runs ESLint uncached (no `--cache` in `package.json`). `fix`, the staged pass and `lint-changed`
+      keep their cache.
+- **Consequences**: a sync child call keeps stdout and stderr together up to `maxBuffer`, 1 MiB by default; past it the
+  child is killed (`ENOBUFS`, status null) and a check that reads only `status` fails with no reason. Measured (Node
+  24.10.0, macOS): 600 KiB on stdout plus 600 KiB on stderr ends in `ENOBUFS`, and with 64 MiB the same call ends in
+  status 0. `check-coverage` prints about 358 KB in CI (an estimate from the CI log); a red run read through a pipe lost
+  its tail, because on a macOS pipe `process.stdout.write(<1 MiB>)` followed by `process.exit()` delivers 65,536 bytes,
+  while `process.exitCode` and a return deliver all 1,048,576. A cached ESLint run replays an old verdict of a type-aware
+  rule (typescript-eslint FAQ, "Can I use ESLint's `--cache` with typescript-eslint?": "it will only work reliably for
+  untyped rules -- and even then, not always", https://typescript-eslint.io/troubleshooting/faqs/eslint/). Measured
+  2026-11-19, median of 3 runs per mode on the maintainer's Mac, one file changed: 2.9 s cached, 6.3 s uncached.
+- **Status**: in force. **Evidence**: `scripts/child-output.mjs`, `scripts/child-output.test.mjs`, `scripts/output-limits.test.mjs`.
 
 ## Gate checks refuse a value they cannot judge
 
