@@ -94,7 +94,7 @@ Three rungs, and the split is deliberate:
 
 - **`npm run verify:iter`** — the iteration rung: the hooks check first (a clone without git hooks fails here, not at a push that
   runs no gate), the cheap static checks (the type check is incremental), then the files git sees as
-  changed through ESLint (staged, unstaged and untracked; the flags and cache of `npm run lint`, so the
+  changed through ESLint (staged, unstaged and untracked; the flags of `npm run lint` and the cache of `npm run fix`, so the
   type-aware rules run here and not first at the commit hook), then what the commit hook would refuse, on those same
   changed files: a `src` logic file with no test beside it (`scripts/check-test-siblings.mjs --changed`; a test on disk
   counts here, the hook wants it staged), a file that is not formatted (`scripts/format-changed.mjs`) and the docs drift

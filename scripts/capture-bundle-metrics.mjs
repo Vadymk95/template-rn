@@ -15,6 +15,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSy
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { OUTPUT_LIMIT_BYTES } from './child-output.mjs';
 import { isEntryPoint } from './is-entry-point.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -104,7 +105,11 @@ function parseArgs(argv) {
 
 function gitShortSha() {
     try {
-        return execSync('git rev-parse --short HEAD', { cwd: ROOT, encoding: 'utf8' }).trim();
+        return execSync('git rev-parse --short HEAD', {
+            cwd: ROOT,
+            encoding: 'utf8',
+            maxBuffer: OUTPUT_LIMIT_BYTES
+        }).trim();
     } catch {
         return null;
     }

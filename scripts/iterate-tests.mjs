@@ -19,6 +19,7 @@
  */
 import { execFileSync, spawnSync } from 'node:child_process';
 
+import { OUTPUT_LIMIT_BYTES } from './child-output.mjs';
 import { isEntryPoint } from './is-entry-point.mjs';
 
 export const WIDENING_PATHS = Object.freeze([
@@ -44,6 +45,7 @@ const git = (cwd, args) =>
         cwd,
         env: gitEnv(),
         encoding: 'utf8',
+        maxBuffer: OUTPUT_LIMIT_BYTES,
         stdio: ['ignore', 'pipe', 'pipe']
     });
 

@@ -22,7 +22,7 @@
         "prebuild:preview": "APP_VARIANT=preview expo prebuild --clean",
         "doctor": "expo-doctor",
         "typecheck": "tsc --noEmit",
-        "lint": "eslint . --max-warnings 0 --cache --cache-location .eslintcache",
+        "lint": "eslint . --max-warnings 0",
         "lint:fix": "eslint . --fix --cache --cache-location .eslintcache",
         "lint:oxlint": "oxlint --config .oxlintrc.json --deny-warnings src",
         "fix": "oxlint --config .oxlintrc.json --fix src && eslint . --fix --cache --cache-location .eslintcache && prettier --write .",
