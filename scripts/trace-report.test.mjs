@@ -68,6 +68,24 @@ describe('parseLogLine', () => {
         assert.equal(parsed.exitCode, 0);
     });
 
+    it('reads the 8, 9 and 11 field shapes and refuses any other count', () => {
+        const fields = ['2026-08-30T10:00:00.000Z', 'verify:push', '1000', '0', 'master', '/repo'];
+        const parse = (...extra) =>
+            parseLogLine([...fields, 'main', 'code', ...extra].join('\t'), 1);
+        const columns = ({ malformed, phase, head, failedStep }) => ({
+            malformed,
+            phase,
+            head,
+            failedStep
+        });
+        const shaped = (phase, head, failedStep) => ({ malformed: false, phase, head, failedStep });
+
+        assert.deepEqual(columns(parse()), shaped('', '', ''));
+        assert.deepEqual(columns(parse('0')), shaped('0', '', ''));
+        assert.deepEqual(columns(parse('0', 'abc123', 'lint')), shaped('0', 'abc123', 'lint'));
+        assert.equal(parse('0', 'abc123').malformed, true);
+    });
+
     it('flags a missing exit code instead of coercing it to a number', () => {
         const parsed = row({ exitCode: '' });
         assert.equal(parsed.exitCodeValid, false);

@@ -7,7 +7,15 @@
 // files out of its runs. Run via `npm run test:scripts`.
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import {
+    existsSync,
+    mkdirSync,
+    mkdtempSync,
+    readFileSync,
+    realpathSync,
+    rmSync,
+    writeFileSync
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { afterEach, describe, it } from 'node:test';
@@ -18,7 +26,8 @@ import {
     formatLogLine,
     gatherRunContext,
     isDocsPath,
-    parseStatusPath
+    parseStatusPath,
+    readHead
 } from './gate-trace.mjs';
 
 const SCRIPT = resolve(process.cwd(), 'scripts/gate-trace.mjs');
@@ -125,12 +134,12 @@ describe('gate-trace passthrough (the one thing that must not be got wrong)', ()
 });
 
 describe('gate-trace log line shape', () => {
-    it('writes exactly 9 tab-separated fields in the documented order', () => {
+    it('writes exactly 11 tab-separated fields in the documented order', () => {
         const repo = makeRepo();
         cleanupDirs.push(repo);
         runWrapper(repo, ['shape', '--', 'node', '-e', 'process.exit(0)']);
         const fields = readLogLines(repo)[0].split('\t');
-        assert.equal(fields.length, 9);
+        assert.equal(fields.length, 11);
         assert.doesNotThrow(() => new Date(fields[0]).toISOString());
         assert.equal(fields[1], 'shape');
         assert.ok(Number(fields[2]) >= 0);
@@ -139,6 +148,91 @@ describe('gate-trace log line shape', () => {
         assert.notEqual(fields[5], '');
         assert.equal(fields[6], 'main');
         assert.equal(fields[7], 'clean');
+        assert.equal(fields[9], git(['rev-parse', 'HEAD'], repo).trim());
+        assert.equal(fields[10], '');
+    });
+
+    it('leaves the head empty when git cannot name one', () => {
+        const unknown = () => {
+            throw new Error('no commit');
+        };
+        assert.equal(readHead('/nowhere', unknown), '');
+        assert.equal(
+            readHead('/nowhere', () => 'abc'),
+            'abc'
+        );
+    });
+});
+
+describe('gate-trace step file', () => {
+    // The child sees the step file as GATE_TRACE_STEP_FILE and names the step it failed at there.
+    const child = (body, code) => [
+        'node',
+        '-e',
+        `const fs = require('node:fs'); const file = process.env.GATE_TRACE_STEP_FILE; ${body}; process.exit(${code})`
+    ];
+    const failedStepOf = (repo, at = 0) => readLogLines(repo)[at]?.split('\t')[10];
+
+    it('logs the step a red child names, and still exits with the child own code', () => {
+        const repo = makeRepo();
+        cleanupDirs.push(repo);
+        const verdict = runWrapper(repo, [
+            'red',
+            '--',
+            ...child("fs.writeFileSync(file, 'lint')", 3)
+        ]);
+        assert.equal(verdict.code, 3);
+        assert.equal(failedStepOf(repo), 'lint');
+    });
+
+    it('logs no step for a green run or a child that wrote nothing, exit codes untouched', () => {
+        const repo = makeRepo();
+        cleanupDirs.push(repo);
+        const green = runWrapper(repo, [
+            'green',
+            '--',
+            ...child("fs.writeFileSync(file, 'lint')", 0)
+        ]);
+        assert.equal(green.code, 0);
+        assert.equal(runWrapper(repo, ['silent', '--', ...child('', 3)]).code, 3);
+        assert.deepEqual(
+            readLogLines(repo).map((line) => line.split('\t')[10]),
+            ['', '']
+        );
+    });
+
+    it('logs the label the step runner prints in its verdict line', () => {
+        const repo = makeRepo();
+        cleanupDirs.push(repo);
+        writeFileSync(
+            join(repo, 'package.json'),
+            JSON.stringify({ scripts: { gate: 'node ok.mjs && node red.mjs && node never.mjs' } })
+        );
+        writeFileSync(join(repo, 'ok.mjs'), '');
+        writeFileSync(join(repo, 'red.mjs'), 'process.exit(3);');
+        writeFileSync(join(repo, 'never.mjs'), '');
+        const runner = resolve(process.cwd(), 'scripts/bench-verify.mjs');
+        const verdict = runWrapper(repo, ['gate', '--', 'node', runner, '--run', 'gate']);
+        const named = /step (.+) failed \(exit 3\)/.exec(verdict.output)?.[1];
+        assert.equal(verdict.code, 3);
+        assert.ok(named);
+        assert.equal(failedStepOf(repo), named);
+    });
+
+    it('removes the step file after the run, and a child that removes it first changes nothing', () => {
+        const repo = makeRepo();
+        cleanupDirs.push(repo);
+        const seen = join(repo, 'seen');
+        const note = `fs.writeFileSync(file, 'lint'); fs.writeFileSync(${JSON.stringify(seen)}, file)`;
+        runWrapper(repo, ['gone', '--', ...child(note, 3)]);
+        const stepFile = readFileSync(seen, 'utf8');
+        assert.equal(failedStepOf(repo), 'lint');
+        assert.equal(existsSync(stepFile), false);
+        assert.equal(existsSync(dirname(stepFile)), false);
+
+        const removed = "fs.rmSync(require('node:path').dirname(file), { recursive: true })";
+        assert.equal(runWrapper(repo, ['removed', '--', ...child(removed, 3)]).code, 3);
+        assert.equal(failedStepOf(repo, 1), '');
     });
 });
 
@@ -310,12 +404,14 @@ describe('classifyChange / parseStatusPath / isDocsPath (pure)', () => {
 });
 
 describe('formatLogLine (pure)', () => {
-    it('joins the 9 fields in the documented order, tab-separated', () => {
+    it('joins the 11 fields in the documented order, tab-separated', () => {
         const line = formatLogLine({
             timestamp: '2026-08-30T00:00:00.000Z',
             label: 'verify:iter',
             durationMs: 1234,
             exitCode: 0,
+            head: 'a1b2c3',
+            failedStep: 'lint',
             context: {
                 branch: 'master',
                 toplevel: '/repo',
@@ -333,7 +429,9 @@ describe('formatLogLine (pure)', () => {
             '/repo',
             'main',
             'code',
-            '0'
+            '0',
+            'a1b2c3',
+            'lint'
         ]);
     });
 

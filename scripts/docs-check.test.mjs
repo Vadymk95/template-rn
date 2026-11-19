@@ -999,13 +999,20 @@ describe('budget', () => {
         assert.equal(percentile90([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), 9);
         assert.equal(percentile90([]), null);
     });
-    it('parses 8- and 9-column rows and ignores malformed ones', () => {
+    it('parses 8-, 9- and 11-column rows and ignores malformed ones', () => {
+        const head = 't\tverify:push\t1000\t0\tmaster\t/r\tmain\tcode';
         const rows = parseTraceRows(
-            't\tverify:push\t1000\t0\tmaster\t/r\tmain\tcode\nt\tverify:push\t2000\t0\tmaster\t/r\tmain\tcode\t0\nbroken\n'
+            `${head}\n${head}\t0\n${head}\t0\tabc123\tlint\n${head}\t0\tabc123\nbroken\n`
         );
-        assert.equal(rows.length, 2);
-        assert.equal(rows[0].phase, '');
-        assert.equal(rows[1].phase, '0');
+        assert.equal(rows.length, 3);
+        assert.deepEqual(
+            rows.map((row) => row.phase),
+            ['', '0', '0']
+        );
+        assert.deepEqual(
+            [rows[2].head, rows[2].failedStep, rows[2].durationMs],
+            ['abc123', 'lint', 1000]
+        );
     });
     const row = (durationMs, phase = '0', exitCode = '0') => ({
         label: 'verify:ci',

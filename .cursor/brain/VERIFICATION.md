@@ -65,6 +65,10 @@ label `verify:ci`): wrappers and `npm run` hops are followed, so a push writes o
 per step and a verdict naming the step that failed. `npm run bench:verify -- --run <script>` runs any script's steps the
 same way.
 
+A row holds eleven tab-separated fields: time, label, duration in ms, exit code, branch, toplevel, worktree kind, change
+class, phase, then `head` (the full sha of HEAD when the run started) and `failedStep` (the step the runner named when
+the run went red; empty on a pass).
+
 The coverage step prints the four totals (the `text-summary` reporter), not a row per file; a missed threshold is still
 named. The per-file table, on demand: `npx --no-install jest <test file> --coverage --coverageReporters=text`.
 
