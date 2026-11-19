@@ -28,6 +28,7 @@ import {
     checkGateChains,
     checkGateFlags,
     checkMemoryImports,
+    checkMomentLabels,
     checkQuarantine,
     checkPathsAndScripts,
     checkPullRequestReadPermission,
@@ -5089,6 +5090,111 @@ describe('run: the gate chain', () => {
             assert.deepEqual(findings, [
                 'scripts/gate-tiers.json:2: retells the gate chain — point at scripts/gate-tiers.json instead'
             ]);
+        });
+    });
+});
+
+describe('checkMomentLabels', () => {
+    const moments = {
+        iterate: { expected: ['verify:iter'], forbidden: ['verify'] },
+        push: { expected: ['verify:push'], forbidden: [] }
+    };
+    const traced = (label) => `node scripts/gate-trace.mjs ${label} -- npm run ${label}:inner`;
+    const scripts = { 'verify:iter': traced('verify:iter'), verify: traced('verify') };
+    const unlisted = (label, where) =>
+        `scripts/gate-tiers.json: no moment lists "${label}", traced by ${where} — add it to the expected or forbidden list of the moment it belongs to`;
+    const check = (extra = {}, hooks = []) =>
+        checkMomentLabels({ moments, scripts: { ...scripts, ...extra }, hooks });
+
+    it('passes when every traced label is an expected or a forbidden label of a moment', () => {
+        assert.deepEqual(check({ 'verify:push': traced('verify:push'), build: 'vite build' }), []);
+    });
+
+    it('names a traced label no moment lists, and the script that traces it', () => {
+        assert.deepEqual(check({ 'verify:push': traced('verify:pushed') }), [
+            unlisted('verify:pushed', 'package.json § scripts.verify:push')
+        ]);
+        assert.deepEqual(check({ late: `npm run lint && ${traced('verify:late')}` }), [
+            unlisted('verify:late', 'package.json § scripts.late')
+        ]);
+    });
+
+    it('reads the label a hook traces behind an env prefix, and skips its comments', () => {
+        const hook = [
+            '# GATE_PUSH=1 node scripts/gate-trace.mjs in-a-comment -- npm run x',
+            'if ! GATE_PUSH=1 node scripts/gate-trace.mjs verify:ci -- node scripts/bench-verify.mjs; then'
+        ].join('\n');
+        assert.deepEqual(check({}, [['.husky/pre-push', hook]]), [
+            unlisted('verify:ci', '.husky/pre-push')
+        ]);
+        assert.deepEqual(
+            check({}, [['.husky/pre-push', hook.replace('verify:ci', 'verify:push')]]),
+            []
+        );
+    });
+});
+
+describe('run: the moments map', () => {
+    const tree = (moments, label = 'verify:push') => ({
+        'scripts/gate-tiers.json': JSON.stringify(moments === undefined ? {} : { moments }),
+        'package.json': JSON.stringify({
+            scripts: { 'verify:push': `node scripts/gate-trace.mjs ${label} -- node a.mjs` }
+        }),
+        'package-lock.json': '{"packages":{}}',
+        'AGENTS.md': '`verify:push`\n',
+        'README.md': '# Readme\n'
+    });
+    const moments = { push: { expected: ['verify:push'], forbidden: [] } };
+    const finding = (label) =>
+        `scripts/gate-tiers.json: no moment lists "${label}", traced by package.json § scripts.verify:push — add it to the expected or forbidden list of the moment it belongs to`;
+
+    it('goes red when a traced label is renamed away from the map, green when restored', () => {
+        withGitRepo(tree(moments), (root) => {
+            const manifest = path.join(root, 'package.json');
+            const original = readFileSync(manifest, 'utf8');
+            const findings = () => run({ root, today: '2026-10-09' }).findings;
+
+            assert.deepEqual(findings(), []);
+            writeFileSync(manifest, original.replace('trace.mjs verify:push', 'trace.mjs renamed'));
+            assert.deepEqual(findings(), [finding('renamed')]);
+            writeFileSync(manifest, original);
+            assert.deepEqual(findings(), []);
+        });
+    });
+
+    it('judges the label the pre-push hook traces', () => {
+        const hooked = (label) => ({
+            ...tree(moments),
+            '.husky/pre-push': `GATE_PUSH=1 node scripts/gate-trace.mjs ${label} -- node a.mjs\n`
+        });
+        withGitRepo(hooked('verify:push'), (root) => {
+            assert.deepEqual(run({ root, today: '2026-10-09' }).findings, []);
+        });
+        withGitRepo(hooked('verify:ci'), (root) => {
+            assert.deepEqual(run({ root, today: '2026-10-09' }).findings, [
+                'scripts/gate-tiers.json: no moment lists "verify:ci", traced by .husky/pre-push — add it to the expected or forbidden list of the moment it belongs to'
+            ]);
+        });
+    });
+
+    it('is skipped, and not vouched for, when gate-tiers.json has no moments', () => {
+        withGitRepo(tree(undefined, 'renamed'), (root) => {
+            const { findings, skipped } = run({ root, today: '2026-10-09' });
+            assert.deepEqual(findings, []);
+            assert.deepEqual(skipped, ['moment labels']);
+        });
+    });
+
+    it('reads the rows of the push moment label for the budget, not a hand-run verify:ci', () => {
+        const row = (label) => `t\t${label}\t1000\t0\tmaster\t/r\tmain\tcode\t1`;
+        const files = {
+            ...tree(moments),
+            'scripts/gate-tiers.json': JSON.stringify({ phase: 1, moments }),
+            '.gate-trace.log': [row('verify:push'), row('verify:ci'), row('verify:ci')].join('\n')
+        };
+        withGitRepo(files, (root) => {
+            const { budget } = run({ root, today: '2026-10-09' });
+            assert.match(budget.message, /1 of 8 traced "verify:push" runs in phase 1/);
         });
     });
 });

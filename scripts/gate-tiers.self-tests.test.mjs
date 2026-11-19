@@ -105,7 +105,7 @@ describe('the list of harness tests a push may leave out', () => {
 // nothing about it: the saving would be off in silence.
 const HOOK = '.husky/pre-push';
 const GATE_COMMAND =
-    'node scripts/gate-trace.mjs verify:ci -- node scripts/bench-verify.mjs --run verify:ci';
+    'node scripts/gate-trace.mjs verify:push -- node scripts/bench-verify.mjs --run verify:ci';
 const MARKER = 'GATE_PUSH=1';
 
 /** What is wrong with the push hook of the repository at `cwd`: no gate command, or one without the marker. */
@@ -141,6 +141,16 @@ describe('the push hook sets the marker', () => {
 
     it('holds in this repository', () => {
         assert.deepEqual(hookProblemsOf(process.cwd()), []);
+    });
+
+    it('traces the push under the label the push moment expects', () => {
+        const tiers = JSON.parse(
+            readFileSync(path.join(process.cwd(), 'scripts/gate-tiers.json'), 'utf8')
+        );
+        assert.equal(
+            /gate-trace\.mjs (\S+) --/.exec(GATE_COMMAND)[1],
+            tiers.moments.push.expected[0]
+        );
     });
 
     it('accepts a hook whose gate command carries the marker', () => {
