@@ -15,7 +15,7 @@
         },
         "verify:ci": {
             "class": "code",
-            "description": "the CI chain, and what pre-push runs",
+            "description": "the CI chain; pre-push runs its steps through the step runner, traced as verify:push",
             "chain": "audit:gate -> lock:age -> verify"
         },
         "verify:native": {
@@ -158,8 +158,8 @@
             "requiresMainCheckout": true
         },
         "push": {
-            "description": "Husky pre-push -> verify:ci (GATE_PUSH=1). Runs at every push, never shortened by what the diff touched, with one named exception: the harness tests listed in selfTests are left out of a push that changes no harness file; the push prints that it left them out, and CI always runs them.",
-            "expected": ["verify:ci"],
+            "description": "Husky pre-push -> the steps of verify:ci through the step runner, traced as verify:push (GATE_PUSH=1). Runs at every push, never shortened by what the diff touched, with one named exception: the harness tests listed in selfTests are left out of a push that changes no harness file; the push prints that it left them out, and CI always runs them.",
+            "expected": ["verify:push"],
             "forbidden": [],
             "runsRegardlessOfDiff": true,
             "requiresMainCheckout": true,

@@ -4,10 +4,15 @@
 //
 // Runner: `node:test` (see gate-trace.test.mjs for why). Run via `npm run test:scripts`.
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { describe, it } from 'node:test';
 
 import {
     computeFindings,
+    formatPushLedger,
     isNested,
     parseLog,
     parseLogLine,
@@ -17,19 +22,19 @@ import {
 const TIERS = {
     checks: {
         'verify:iter': { class: 'code' },
-        'verify:ci': { class: 'code' },
+        'verify:push': { class: 'code' },
         test: { class: 'code' }
     },
     moments: {
         iterate: {
             expected: ['verify:iter'],
-            forbidden: ['test'],
+            forbidden: ['test', 'verify:ci'],
             budgetSeconds: 15,
             runsRegardlessOfDiff: false,
             requiresMainCheckout: false
         },
         push: {
-            expected: ['verify:ci'],
+            expected: ['verify:push'],
             forbidden: [],
             budgetSeconds: 30,
             runsRegardlessOfDiff: true,
@@ -119,7 +124,7 @@ describe('isNested', () => {
 
 describe('resolveMoment', () => {
     it('finds the home moment for an expected label', () => {
-        const resolved = resolveMoment('verify:ci', TIERS.moments);
+        const resolved = resolveMoment('verify:push', TIERS.moments);
         assert.equal(resolved.name, 'push');
         assert.equal(resolved.legitimate, true);
     });
@@ -153,14 +158,14 @@ describe('computeFindings', () => {
 
     it('reports a push-moment run from a linked worktree', () => {
         const findings = computeFindings(
-            [row({ label: 'verify:ci', durationMs: 20000, worktreeKind: 'worktree' })],
+            [row({ label: 'verify:push', durationMs: 20000, worktreeKind: 'worktree' })],
             TIERS
         );
         assert.ok(findings.some((f) => f.message.includes('requires the main checkout')));
     });
 
     it('suppresses a run nested inside a longer sibling — sub-steps are not decisions', () => {
-        const outer = row({ label: 'verify:ci', durationMs: 25000 });
+        const outer = row({ label: 'verify:push', durationMs: 25000 });
         const inner = row({
             label: 'test',
             timestamp: '2026-08-30T10:00:10.000Z',
@@ -176,5 +181,81 @@ describe('computeFindings', () => {
     it('reports malformed lines as log-integrity findings', () => {
         const findings = computeFindings(parseLog('garbage-line\n'), TIERS);
         assert.ok(findings.some((f) => f.actor === 'log integrity'));
+    });
+});
+
+describe('formatPushLedger', () => {
+    const line = (timestamp, label, durationMs, exitCode, ...extra) =>
+        [timestamp, label, durationMs, exitCode, 'master', '/repo', 'main', 'code', ...extra].join(
+            '\t'
+        );
+    const cells = (text) => text.trim().split(/ {2,}/);
+    const ledgerOf = (lines) => formatPushLedger(parseLog(`${lines.join('\n')}\n`), TIERS);
+    const head = 'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2';
+
+    it('lists old and new rows side by side, and leaves out what is not a push', () => {
+        const [title, header, ...rows] = ledgerOf([
+            line('2026-08-30T09:00:00.000Z', 'verify:push', 71200, '0'),
+            line('2026-08-30T09:30:00.000Z', 'verify:ci', 70000, '0'),
+            line('2026-08-30T10:00:00.000Z', 'verify:push', 12000, '1', '0'),
+            line('2026-08-30T11:00:00.000Z', 'verify:push', 70100, '0', '0', head, ''),
+            line('2026-08-30T12:00:00.000Z', 'verify:push', 13500, '3', '0', head, 'lint'),
+            line('2026-08-30T13:00:00.000Z', 'verify:push', 1000, ''),
+            'garbage-line'
+        ]);
+        assert.equal(title, 'Push ledger (verify:push): last 5 of 5');
+        assert.deepEqual(cells(header), ['time', 'verdict', 'failed step', 'duration', 'head']);
+        assert.deepEqual(rows.map(cells), [
+            ['2026-08-30T09:00:00.000Z', 'pass', '-', '71.2s', '-'],
+            ['2026-08-30T10:00:00.000Z', 'red (exit 1)', '-', '12.0s', '-'],
+            ['2026-08-30T11:00:00.000Z', 'pass', '-', '70.1s', 'a1b2c3d'],
+            ['2026-08-30T12:00:00.000Z', 'red (exit 3)', 'lint', '13.5s', 'a1b2c3d'],
+            ['2026-08-30T13:00:00.000Z', 'unknown', '-', '1.0s', '-']
+        ]);
+    });
+
+    it('keeps the last 20 pushes, says how many there were, and prints nothing without one', () => {
+        const at = (index) => `2026-08-30T10:${String(index).padStart(2, '0')}:00.000Z`;
+        const pushes = Array.from({ length: 25 }, (_, index) =>
+            line(at(index), 'verify:push', 1000, '0')
+        );
+        const [title, , first, ...rest] = ledgerOf(pushes);
+        assert.equal(title, 'Push ledger (verify:push): last 20 of 25');
+        assert.equal(cells(first)[0], at(5));
+        assert.equal(rest.length, 19);
+        assert.deepEqual(ledgerOf([line(at(0), 'verify:iter', 3000, '0')]), []);
+    });
+});
+
+describe('trace:report prints the push ledger', () => {
+    const SCRIPT = resolve(process.cwd(), 'scripts/trace-report.mjs');
+    const GIT_ENV = Object.fromEntries(
+        Object.entries(process.env).filter(([key]) => !key.startsWith('GIT_'))
+    );
+    const reportFor = (log) => {
+        const repo = mkdtempSync(join(tmpdir(), 'trace-report-'));
+        try {
+            execFileSync('git', ['init', '-q'], { cwd: repo, env: GIT_ENV, stdio: 'ignore' });
+            writeFileSync(join(repo, '.gate-trace.log'), log);
+            return execFileSync('node', [SCRIPT], {
+                cwd: repo,
+                env: GIT_ENV,
+                encoding: 'utf8',
+                stdio: ['ignore', 'pipe', 'pipe']
+            });
+        } finally {
+            rmSync(repo, { recursive: true, force: true });
+        }
+    };
+    const push = '2026-08-30T10:00:00.000Z\tverify:push\t70000\t0\tmaster\t/repo\tmain\tcode\t1';
+
+    it('shows the ledger under a clean report and under a report with findings', () => {
+        const clean = reportFor(`${push}\n`);
+        assert.ok(clean.includes('Gate trace: 1 run(s) recorded, no findings.'));
+        assert.ok(clean.includes('Push ledger (verify:push): last 1 of 1'));
+
+        const flagged = reportFor(`${push}\nbroken\n`);
+        assert.ok(flagged.includes('log integrity:'));
+        assert.ok(flagged.includes('Push ledger (verify:push): last 1 of 1'));
     });
 });

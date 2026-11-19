@@ -60,6 +60,7 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 | A timer started in an effect is released                               | 2026-11 | in force                          |
 | The commit hook formats every file the format check reads              | 2026-11 | in force                          |
 | A push leaves out the harness tests that read only the harness         | 2026-11 | in force                          |
+| The report lists the last pushes; a guard keeps the moments map whole  | 2026-11 | in force                          |
 | A trace row names its commit and the red step                          | 2026-11 | in force                          |
 | The push runs its steps through one runner that names the red one      | 2026-11 | in force                          |
 | A log keeps four coverage totals and a command's first and last lines  | 2026-11 | in force                          |
@@ -527,6 +528,22 @@ Read before proposing a tool that was already considered.
 - **Status**: in force. Revisit if a master run goes red from a left-out test that a push would have caught.
   **Evidence**: `scripts/test-scripts.test.mjs`, `scripts/gate-tiers.self-tests.test.mjs`.
 
+## The report lists the last pushes; a guard keeps the moments map whole
+
+- **Decision**: `trace:report` ends with the push ledger: the last 20 rows under the push moment's `expected` label,
+  each with its time, verdict, failed step, duration and head; a row from before a column shows `-` there. `docs:check`
+  fails when a label traced in `package.json` or a hook is on no moment's `expected` or `forbidden` list, and skips that
+  check when `gate-tiers.json` has no `moments`. The pre-push hook traces under `verify:push`, the label a web push
+  writes, so a push row is told from a hand-run `verify:ci` with no new state: `moments.push.expected` is
+  `["verify:push"]`, and `verify:ci` is only forbidden at the desk, as in the web templates.
+- **Consequences**: the budget reads `moments.push.expected[0]`: it counts `verify:push` rows, so the stored
+  `verify:ci@1` baseline is not read again and recalibrates from the next 8 pushes (delete nothing), and hand-run
+  `verify:ci` rows no longer count. `trace:report` now lists a hand-run `verify:ci` as forbidden at the iterate moment.
+  The map from traced label to moment is kept by hand and a label no moment names is never judged, so the guard reads
+  the hook's label as well as the scripts'.
+- **Status**: in force. **Evidence**: `scripts/trace-report.mjs`, `scripts/docs-check.mjs`, `.husky/pre-push`,
+  `scripts/gate-tiers.json`, `scripts/gate-tiers.self-tests.test.mjs` and the tests of each.
+
 ## A trace row names its commit and the red step
 
 - **Decision**: a row has two more columns, `head` (the full sha of HEAD when the run started, empty when git cannot
@@ -541,7 +558,7 @@ Read before proposing a tool that was already considered.
 
 ## The push runs its steps through one runner that names the red one
 
-- **Decision**: `.husky/pre-push` runs `node scripts/bench-verify.mjs --run verify:ci` under the tracer (label `verify:ci`,
+- **Decision**: `.husky/pre-push` runs `node scripts/bench-verify.mjs --run verify:ci` under the tracer (label `verify:push`,
   `GATE_PUSH=1`). `expandSteps` lists the leaf steps of the script and `runSteps` runs them in order, output inherited.
   `npm run` hops and the tracer wrapper are followed, every argument is kept, a segment npm hands to its shell (an env
   prefix, quotes) runs through `sh -c`, and a cycle, a missing script or a `pre`/`post` script throws, so no step is
@@ -552,8 +569,8 @@ Read before proposing a tool that was already considered.
 - **Consequences**: the push was `npm run verify:ci`, an `&&` chain: it stops at the first red but never says which step that
   was. A step list of its own (`bench:verify` had one) loses arguments such as `--range` and drifts from the gate. `npm_*`
   variables are not set (no gate script reads one); `node_modules/.bin` leads PATH. A push writes one trace row,
-  `verify:ci`: the row of the wrapped script it used to nest is gone, and nothing read it (`trace:report` skipped a
-  nested row, the budget reads `verify:ci`).
+  `verify:push`: the row of the wrapped script it used to nest is gone, and nothing read it (`trace:report` skipped a
+  nested row).
 - **Status**: in force. **Evidence**: `scripts/bench-verify.mjs`, `scripts/bench-verify.test.mjs`,
   `scripts/gate-tiers.self-tests.test.mjs`, `scripts/audit-gate.test.mjs`.
 

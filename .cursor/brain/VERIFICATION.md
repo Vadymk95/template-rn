@@ -41,7 +41,7 @@ chain; the chain is `scripts/gate-tiers.json` (`checks.<name>.chain`).
 | hooks        | 0.05    |
 
 Measured here (`.gate-trace.log`, 2026-08-30 to 2026-09-11): the push — `verify:ci`, traced under that
-label because the hook runs it directly — 11.7-23.0 s; the first two pushes after the 2026-09-06
+label then; it is verify:push now — 11.7-23.0 s; the first two pushes after the 2026-09-06
 dependency reinstall took 46.3 / 34.3 s and are the only rows over the 30 s
 `push` budget in `gate-tiers.json`, which is unchanged; `verify` alone 8.4-20.2 s; `verify:iter`
 2.5-4.1 s; one `test:one` file 8.3 s; the mutation run 2m02s (`mutation.yml`, outside the gate).
@@ -61,13 +61,16 @@ discipline changes by editing that JSON. Telemetry sees WHO ran WHAT and HOW LON
 CAN fail is mutation-proving's job.
 
 The push runs its steps through the runner in `scripts/bench-verify.mjs` (`.husky/pre-push` calls it under the tracer,
-label `verify:ci`): wrappers and `npm run` hops are followed, so a push writes one row, `verify:ci`. It prints one line
-per step and a verdict naming the step that failed. `npm run bench:verify -- --run <script>` runs any script's steps the
-same way.
+label verify:push): wrappers and `npm run` hops are followed, so a push writes one row, verify:push, and a hand-run
+`verify:ci` is a row of its own. It prints one line per step and a verdict naming the step that failed.
+`npm run bench:verify -- --run <script>` runs any script's steps the same way.
 
 A row holds eleven tab-separated fields: time, label, duration in ms, exit code, branch, toplevel, worktree kind, change
 class, phase, then `head` (the full sha of HEAD when the run started) and `failedStep` (the step the runner named when
 the run went red; empty on a pass).
+`trace:report` ends with the push ledger, the last 20 pushes with time, verdict, failed step, duration and head; a row
+from before a column shows `-` there. Every traced label belongs to a moment in `scripts/gate-tiers.json`: `docs:check`
+fails on one that does not.
 
 The coverage step prints the four totals (the `text-summary` reporter), not a row per file; a missed threshold is still
 named. The per-file table, on demand: `npx --no-install jest <test file> --coverage --coverageReporters=text`.
@@ -94,7 +97,7 @@ named. The per-file table, on demand: `npx --no-install jest <test file> --cover
   hook decides so one attempt reports everything. Why the repo-wide pass exists:
   `DECISIONS.md` § TDD sibling gate on pre-commit. Remedy: `npm run fix && git add -u`.
 - **commit-msg** — commitlint (Conventional Commits, subject ≤96 chars).
-- **pre-push** — `GATE_PUSH=1 npm run verify:ci`: the CI gate, with the one exception named under Push above (the marker is how the script-tests stage knows it is a push).
+- **pre-push** — `GATE_PUSH=1` and the steps of `verify:ci` through the runner, traced as verify:push: the CI gate, with the one exception named under Push above (the marker is how the script-tests stage knows it is a push).
 
 Not adopted: a hook that commits for you. A hook that creates commits hides what it
 changed inside a commit you did not write, and the failure mode is a fix landing under an
