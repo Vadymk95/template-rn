@@ -60,6 +60,7 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 | A timer started in an effect is released                               | 2026-11 | in force                          |
 | The commit hook formats every file the format check reads              | 2026-11 | in force                          |
 | A push leaves out the harness tests that read only the harness         | 2026-11 | in force                          |
+| A trace row names its commit and the red step                          | 2026-11 | in force                          |
 | The push runs its steps through one runner that names the red one      | 2026-11 | in force                          |
 | A log keeps four coverage totals and a command's first and last lines  | 2026-11 | in force                          |
 
@@ -525,6 +526,18 @@ Read before proposing a tool that was already considered.
   either tool is a `package.json` or lockfile change, which runs everything.
 - **Status**: in force. Revisit if a master run goes red from a left-out test that a push would have caught.
   **Evidence**: `scripts/test-scripts.test.mjs`, `scripts/gate-tiers.self-tests.test.mjs`.
+
+## A trace row names its commit and the red step
+
+- **Decision**: a row has two more columns, `head` (the full sha of HEAD when the run started, empty when git cannot
+  say) and `failedStep` (the label the runner writes to the file named by `GATE_TRACE_STEP_FILE`). `gate-trace.mjs`
+  gives each traced command a fresh temp folder for that file, reads it after the command exits and removes it; the
+  column is empty on a pass or when nothing was written, and the exit code is the command's own either way.
+  `trace:report` and `docs:check` read 8, 9 and 11 fields, so an old log still parses.
+- **Consequences**: a red push left a row with an exit code and nothing else: the step that failed and the commit that
+  was pushed had to be dug out of the terminal.
+- **Status**: in force. **Evidence**: `scripts/gate-trace.mjs`, `scripts/trace-report.mjs`, `scripts/docs-check.mjs` and
+  their tests.
 
 ## The push runs its steps through one runner that names the red one
 
