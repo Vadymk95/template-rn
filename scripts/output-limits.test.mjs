@@ -1,8 +1,11 @@
-// Runner: `node:test`, not Jest, like the other gate specs here. Run via `npm run test:scripts`.
+// Runner-agnostic on purpose: this file is byte-identical in every template, and the templates run their
+// script tests under different runners (vitest with globals, or `node --test`).
 import assert from 'node:assert/strict';
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { describe, it } from 'node:test';
+
+const { describe, it } = globalThis.describe ? globalThis : await import('node:test');
 
 /* Two ways a gate script loses what a child printed, found by reading the scripts as text:
    1. a captured child (`spawnSync`, `execSync`, `execFileSync`, `exec`, `execFile`) whose options set
@@ -13,7 +16,10 @@ import { describe, it } from 'node:test';
       `process.exit(`: on a pipe the exit cuts a large write short (65,536 of 1,048,576 bytes on
       macOS). Set `process.exitCode` and return. */
 
-const SCRIPTS = join(process.cwd(), 'scripts');
+// Where a repository keeps its own code: scripts/ in every one, lib/ and bin/ where it has them (the kit).
+const foldersOf = (root) =>
+    ['scripts', 'lib', 'bin'].filter((folder) => existsSync(join(root, folder)));
+const ROOT = process.cwd();
 const CAPTURING = new Set(['spawnSync', 'execSync', 'execFileSync', 'exec', 'execFile']);
 const QUOTES = new Set(["'", '"', '`']);
 
@@ -118,25 +124,42 @@ describe('outputProblems', () => {
     });
 });
 
+describe('foldersOf', () => {
+    it('is scripts alone for a repository with no lib or bin, and adds each folder that exists', () => {
+        const root = mkdtempSync(join(tmpdir(), 'output-limits-'));
+        try {
+            mkdirSync(join(root, 'scripts'));
+            assert.deepEqual(foldersOf(root), ['scripts']);
+            mkdirSync(join(root, 'bin'));
+            assert.deepEqual(foldersOf(root), ['scripts', 'bin']);
+            mkdirSync(join(root, 'lib'));
+            assert.deepEqual(foldersOf(root), ['scripts', 'lib', 'bin']);
+        } finally {
+            rmSync(root, { recursive: true, force: true });
+        }
+    });
+});
+
 describe('the gate scripts', () => {
     it('capture every child with a limit and never exit over an echoed output', () => {
-        const files = readdirSync(SCRIPTS)
-            .filter(
-                (name) =>
-                    name.endsWith('.mjs') &&
-                    !name.endsWith('.test.mjs') &&
-                    !name.endsWith('.fixtures.mjs')
-            )
-            .sort();
+        const files = foldersOf(ROOT).flatMap((folder) =>
+            readdirSync(join(ROOT, folder))
+                .filter(
+                    (name) =>
+                        name.endsWith('.mjs') &&
+                        !name.endsWith('.test.mjs') &&
+                        !name.endsWith('.fixtures.mjs')
+                )
+                .sort()
+                .map((name) => `${folder}/${name}`)
+        );
         const calls = files.filter(
-            (name) => capturingNames(readFileSync(join(SCRIPTS, name), 'utf8')).size > 0
+            (file) => capturingNames(readFileSync(join(ROOT, file), 'utf8')).size > 0
         );
 
         assert.ok(calls.length > 5, 'no script imports a capturing call: the scan is broken');
         assert.deepEqual(
-            files.flatMap((name) =>
-                outputProblems(readFileSync(join(SCRIPTS, name), 'utf8'), `scripts/${name}`)
-            ),
+            files.flatMap((file) => outputProblems(readFileSync(join(ROOT, file), 'utf8'), file)),
             [],
             'give each capture `maxBuffer: OUTPUT_LIMIT_BYTES` (scripts/child-output.mjs); set process.exitCode instead of process.exit( after echoing a child'
         );

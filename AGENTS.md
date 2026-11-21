@@ -5,7 +5,7 @@ Production-ready React Native + Expo starter: file-based routing, strict types, 
 ## Start here
 
 1. Read `.cursor/brain/PROJECT_CONTEXT.md`, then `READING_INDEX.md` beside it: it maps a situation to the two or three files that answer it. Also there: `MAP.md` (architecture), `SKELETONS.md` (danger zones), `VERIFICATION.md` (what to run per change). Human-facing contract: `docs/strict-template-contract.md`.
-2. `.cursor/rules/*.mdc` are **binding for the files they cover**: read the ones for the area you touch before the first edit (`global.mdc` § Rule routing lists which). `agent-pipeline`, `global` and `workflow` are always applied; the rest load by glob.
+2. `.cursor/rules/*.mdc` are **binding for the files they cover**: read the ones for the area you touch before the first edit (`.cursor/brain/READING_INDEX.md` § Rule routing lists which). `agent-pipeline`, `global` and `workflow` are always applied; the rest load by glob.
 3. Role commands (`/onboard` `/feat` `/test` `/review` `/docs`) live in `.claude/commands/` with thin shims in `.cursor/commands/`: edit the `.claude/` file, never the shim.
 4. Before sweeping the source, confirm the work is still needed (`git log --oneline -15` plus one grep). Name the files when you dispatch work to another agent.
 
@@ -33,23 +33,29 @@ Production-ready React Native + Expo starter: file-based routing, strict types, 
 
 ## Commands / the gate
 
-The tier law (what runs at which moment, what is never run by hand) is the shared block below; this table is the repo's command list; the stages each gate script runs: `scripts/gate-tiers.json` (`checks.<name>.chain`). Every other script: `package.json` and the README tables.
+The tier law (what runs at which moment, what is never run by hand) is the shared block below; this table is the repo's command list, and a `# [<role>]` at the start of a comment says which role of the law the command plays; the stages each gate script runs: `scripts/gate-tiers.json` (`checks.<name>.chain`). Every other script: `package.json` and the README tables.
 
 ```bash
 npm start            # Expo dev server (QR → Expo Go / Dev Client)
-npm run verify:iter  # iteration tier: the seconds-long check (not a hand-over gate)
-npm run verify       # every OFFLINE check
-npm run verify:ci    # the CI gate — husky pre-push AND CI both run it (`ci:local` is the full local parity with CI)
-npm run fix          # the one remedy: repo-wide autofix, then format
-npm run test:one -- <file> # one jest test file, through the tracer (not around it)
-npm run trace:report # findings from .gate-trace.log (forbidden moments, budgets, worktrees), then the last 20 pushes
-npm run docs:check   # docs drift (paths against the files git lists, line pointers, scripts, versions, command table, dead docs, the DECISIONS shape, the gate chain view, its strict flags and any retelling or composition of it); inside verify, weekly CI adds --weekly
-npm run bench:verify # per-step timings when the gate feels slow; `-- --run <script>` runs a script's steps as the push does
+npm run verify:iter  # [iterate command] the seconds-long check, run per change (not a hand-over gate)
+npm run verify       # [gate command] every OFFLINE check
+npm run verify:ci    # [CI gate command] the CI gate: husky pre-push AND CI both run it (`ci:local` is the full local parity with CI)
+npm run fix          # [fix command] the one remedy: repo-wide autofix, then format
+npm run test:one -- <file> # [single-test command] one jest test file, through the tracer (not around it)
+npm run trace:report # [trace report command] findings from .gate-trace.log (forbidden moments, budgets, worktrees), then the last 20 pushes
+npm run docs:check   # [docs-drift command] docs drift (paths against the files git lists, line pointers, scripts, versions, command table, dead docs, the DECISIONS shape, the gate chain view, its strict flags and any retelling or composition of it); inside verify, weekly CI adds --weekly
+npm run bench:verify # [bench command] per-step timings when the gate feels slow; `-- --run <script>` runs a script's steps as the push does
 npm run test:mutation # StrykerJS strength gate — weekly `mutation.yml`, NOT in verify
+# What the law leaves to this table (one line each, no role tag):
+# worker cap: jest `--maxWorkers=2`; `node --test` `--test-concurrency=2`; the `test:scripts` stage reads `NODE_TEST_CONCURRENCY=2`
+# re-run after a red push: name the failed test files; jest's `--onlyFailures` keeps only what failed, so it has no never-reached catch
+# directory option for a lane that does not `cd`: `npm run --prefix <dir> <script>`
+# the gate trace log: `.gate-trace.log` (gitignored)
+# no browser suite, no measure command, no probe command, no single-spec command, no push command of its own
 ```
 
 <!-- shared-harness:begin -->
-<!-- This block is byte-identical in all four templates (template-1, template-spa-pwa, template-next-seo, template-rn). Change it in every template in the same commit, or not at all. Stack-specific facts (ports, what is skipped and why, timings) live OUTSIDE this block: in the command table above and in `.cursor/brain/VERIFICATION.md`; the stages each gate script runs live in `scripts/gate-tiers.json`. -->
+<!-- This block is synced from the gatelaw kit into every repository that takes the gate harness from it, and is the same in all of them: change it in the kit, never in a repository. It names command ROLES, never commands: the repo's command table above tags each command line with its role, and the stack-specific facts (ports, runner flags, what is skipped and why, timings) live OUTSIDE this block, in that table and in `.cursor/brain/VERIFICATION.md`; the stages each gate script runs live in `scripts/gate-tiers.json`. -->
 
 ### The tier law - this section is the ONLY place it lives
 
@@ -57,73 +63,93 @@ Every other file (rules, commands, brain, README, Copilot instructions) points h
 A restated pipeline rule goes stale in place; a stale copy cost a sibling repo a day of 40-minute rounds
 because five copies still demanded the full chain before the first report. `scripts/gate-tiers.json` is
 the machine-readable form (expected and forbidden scripts per moment, budgets, phase) and the one readable
-list of the stages each gate script runs (`checks.<name>.chain`, checked against `package.json` by
-`docs:check`); when this prose and that file disagree, the file wins and the prose is fixed in the same commit.
+list of the stages each gate script runs (`checks.<name>.chain`, checked against the repo's script manifest
+by the docs-drift command); when this prose and that file disagree, the file wins and the prose is fixed in
+the same commit.
+
+**Command roles.** This law names what a command is for, never the command. The repo's command table (the
+fenced list in `AGENTS.md` outside this block) tags each command line with its role in a comment that opens
+`# [<role>]`; that table is where a role turns into a command, and where a runner's own flags and examples
+are written. A role marked optional may have no row in a repo that has no such thing. The roles:
+
+- **iterate command** - the seconds-long check, run per change.
+- **measure command** (optional) - builds and looks at a rendered result.
+- **probe command** (optional) - renders a route and prints measured quantities.
+- **single-spec command** (optional) - one browser spec on a free port, through the tracer.
+- **single-test command** - one unit test file, through the tracer.
+- **fix command** - the one remedy: repo-wide autofix, then format.
+- **push command** (optional) - what the pre-push hook runs, where that is a script of its own; phase-aware.
+- **gate command** - every offline check; the push and CI chain, not a desk tool.
+- **CI gate command** - the gate CI runs; the push runs it from phase 1.
+- **docs-drift command** - mechanical doc drift: paths, scripts, versions, the chain view and more.
+- **bench command** (optional) - the gate step by step, with timings.
+- **trace report command** - findings from the gate trace log, then the last pushes.
 
 **Four moments, and one that is not a gate.**
 
-- **Iterate** - per change, seconds. Run `verify:iter`. Where the change touches a surface that has its
-  own spec and the repo has a browser lane, run that ONE spec through the traced single-spec script (see
-  the command table). Nothing heavier.
-- **Measure** - whenever only a rendered result can answer the question: the measure script (build +
-  look) or the probe, where the repo has them. Legal at any time, in any lane, never a violation.
+- **Iterate** - per change, seconds. Run the iterate command. Where the change touches a surface that has its
+  own spec and the repo has a browser lane, run that ONE spec through the single-spec command. Nothing
+  heavier.
+- **Measure** - whenever only a rendered result can answer the question: the measure command (build +
+  look) or the probe command, where the repo has them. Legal at any time, in any lane, never a violation.
   Measuring is not verifying: it runs no lint, no types, no tests.
 - **Commit** - the pre-commit hook owns it: staged autofix, the TDD sibling gate, then the repo-wide cheap
-  checks. Nothing to run by hand; on refusal the hook prints the remedy. The commit-msg hook (commitlint)
+  checks. Nothing to run by hand; on refusal the hook prints the remedy. The commit-message hook
   also rejects any body or footer line over 100 characters (the header cap is 96): wrap the body.
-- **Push** - the pre-push hook runs the gate ONCE, never shortened by what the diff touched, with one
-  named exception: the harness's own tests that read nothing outside the harness (the list in
-  `gate-tiers.json`) are left out of a push that changes no harness file. The push prints that it left
-  them out, and CI always runs them. Where the repo has heavy stages (the ones that need a build), the
-  push script is phase-aware: phase 0 (scaffold, before the first deploy) runs the offline checks and
-  loudly SKIPS the heavy stages; phase 1 (from the first deploy) runs the full `verify:ci`. A skipped
-  stage is printed, never silent; flip the phase in one commit at the first deploy. A repo whose gate has
-  no heavy stage runs the full `verify:ci` at push and records in `gate-tiers.json` that a phase switch
-  would gate nothing. With no remote there is no push moment: the lead hand-runs the push chain once per
-  slice on the main checkout; an implementer never does.
-- **CI** - phase-blind: always the full `verify:ci`, plus what only CI can do (the security workflow, the
-  scheduled mutation job, a mandatory dev-smoke job where the repo has one).
+- **Push** - the pre-push hook runs the gate ONCE, never shortened by what the diff touched. Where the repo
+  has heavy stages (the ones that need a build), the push command is phase-aware: phase 0 (scaffold, before
+  the first deploy) runs the offline checks and loudly SKIPS the heavy stages; phase 1 (from the first
+  deploy) runs the full CI gate command. A skipped stage is printed, never silent; flip the phase in one
+  commit at the first deploy. A repo whose gate has no heavy stage runs the full CI gate command at push and
+  records in `gate-tiers.json` that a phase switch would gate nothing. With no remote there is no push
+  moment: the lead hand-runs the push chain once per slice on the main checkout; an implementer never does.
+- **CI** - phase-blind: always the full CI gate command, plus what only CI can do (the security workflow,
+  the scheduled mutation job, a mandatory dev-smoke job where the repo has one).
 
-**Prohibitions, stated as such.** An implementer or a reviewer NEVER runs `verify`, the fuller `verify:*`
-variants, a production build or a browser suite by hand: the full chain belongs to the push hook and CI, and a
-result an agent cannot act on is not worth its minutes. A review round gets the diff plus `verify:iter`;
-acceptance does not re-run the gate, the push does. Parallel lanes never run heavy stages (one machine,
-shared caches): heavy work serialises at the push. Individual scripts (`typecheck`, `test`, `fix`)
-are drill-downs on a specific failure; none of them is a moment. Every test command an agent runs names
-a worker cap (`--maxWorkers`, `--workers` or `--test-concurrency`), and a lane starts nothing heavy while
-the 1-minute load average is at or above the core count (`sysctl -n hw.ncpu` or `nproc`).
+**Prohibitions, stated as such.** An implementer or a reviewer NEVER runs the gate command, a fuller variant
+of it, a production build or a browser suite by hand: the full chain belongs to the push hook and CI, and a
+result an agent cannot act on is not worth its minutes. A review round gets the diff plus the iterate
+command; acceptance does not re-run the gate, the push does. Parallel lanes never run heavy stages (one
+machine, shared caches): heavy work serialises at the push. Individual scripts (one stage run alone, one
+test file, the fix command) are drill-downs on a specific failure; none of them is a moment. Every test
+command an agent runs names a worker cap (the runner's own option for it; the command table's notes name
+it), and a lane starts nothing heavy while the 1-minute load average is at or above the core count
+(`sysctl -n hw.ncpu` or `nproc`).
 
 **A red push costs one fix, not another round of the whole gate.** Where the repo has a browser suite, it
-stops after a capped number of failures on the gate run and in CI (`maxFailures`) instead of running every
-remaining test into its timeouts. After a red push, whoever pushes fixes the cause, rebuilds only when the
-failing stage runs against a build, re-runs only the tests that failed until they pass, then pushes again;
-the push still runs the whole gate and reaches whatever the cap stopped short of. Name the failed spec files
-from the red output: Playwright's `--last-failed` also re-runs every test a capped run never reached, which
-is most of the suite, so it fits only a red that finished under the cap (Jest's `--onlyFailures` has no such
-catch). That re-run is a drill-down on a known failure, so it is the one sanctioned hand-run of a build or of
-browser tests, and it never replaces the push. Each browser config writes to its own output folder, so the
-last-failed record always belongs to the suite that failed.
+stops after a capped number of failures on the gate run and in CI instead of running every remaining test
+into its timeouts. After a red push, whoever pushes fixes the cause, rebuilds only when the failing stage
+runs against a build, re-runs only the tests that failed until they pass, then pushes again; the push still
+runs the whole gate and reaches whatever the cap stopped short of. Name the failed spec files from the red
+output: a re-run that would also re-run tests a capped run never reached is not a drill-down, and a
+runner's re-run-the-failed record can be exactly that (it holds the tests the capped run never reached as
+well, which is most of the suite), so it fits only a red that finished under the cap; a record that holds
+only what failed has no such catch (the command table's notes say which runner keeps which). That re-run is
+a drill-down on a known failure, so it is the one sanctioned hand-run of a build or of browser tests, and
+it never replaces the push. Each browser config writes to its own output folder, so that record always
+belongs to the suite that failed.
 
 **What earns a browser test.** The browser suite is counted in INVARIANTS, not in screens. A new route
 or a new component earns a browser test only when it brings an invariant the existing specs do not
 already measure: a different layout shell, an engine-dependent behaviour, the first instance of a flow
 class. Everything else is a unit test against a mocked network, which runs in the iterate moment and
-costs the push nothing. `gate-tiers.json` declares the suite's ceiling and `docs:check` reports a suite
-that outgrew it, so that number moves on a measurement and a `DECISIONS.md` line, never on habit.
+costs the push nothing. `gate-tiers.json` declares the suite's ceiling and the docs-drift command reports a
+suite that outgrew it, so that number moves on a measurement and a `DECISIONS.md` line, never on habit.
 
-**`verify` is a strict superset of the offline checks CI runs**, so a green `verify` predicts a green CI.
-Keeping that true is a rule: a new check goes into the script, never only into the workflow file.
-The network-bound checks sit in the CI chain rather than in `verify` because they need the network, so an offline agent can
-still run the whole offline gate. `bench:verify` derives its step list from the `verify` script; a
-hand-written second list has already drifted once.
+**The gate command is a strict superset of the offline checks CI runs**, so a green gate command predicts
+a green CI. Keeping that true is a rule: a new check goes into the script, never only into the workflow
+file. The network-bound checks sit in the CI chain rather than in the gate command because they need the
+network, so an offline agent can still run the whole offline gate. The bench command derives its step list
+from the gate command's script; a hand-written second list has already drifted once.
 
-**Every gate run is traced** to `.gate-trace.log`; `trace:report` turns the log into findings (forbidden
-moments, blown budgets, gate runs from a worktree). After a push, gate output in the terminal is part of
-the contract: **silence is a failure, not a pass** - a push that printed no gate ran no gate, whatever the
-exit code says. A line that starts with `ACT` asks a person to act; the push prints it on every run until that is done.
+**Every gate run is traced** to the gate trace log; the trace report command turns the log into findings
+(forbidden moments, blown budgets, gate runs from a worktree). After a push, gate output in the terminal is
+part of the contract: **silence is a failure, not a pass** - a push that printed no gate ran no gate,
+whatever the exit code says. A line that starts with `ACT` asks a person to act; the push prints it on
+every run until that is done.
 
 **Ports.** A busy port means MOVE, never kill a server you did not start. A script that goes through the
-free-port wrapper takes the next free port; a script that pins its port (a strictPort flag, or a fixed
+free-port wrapper takes the next free port; a script that pins its port (a strict-port option, or a fixed
 URL in a browser-test config) fails when the port is busy (free it by stopping YOUR server, never
 someone else's). Only the push gate clears its own port.
 
@@ -131,22 +157,23 @@ someone else's). Only the push gate clears its own port.
 
 - **Main agent, inline.** Iterate and measure while working; the push runs the chain, never a hand-run.
 - **Implementer subagent.** Works in a hand-made `git worktree` OUTSIDE the repo directory, on its own port,
-  with `node_modules` symlinked from the main checkout. Iterate and measure only; the gate never runs from a
-  worktree. The lead removes the worktree, checks the branch out in the main checkout and pushes from there,
-  so the gate runs once, at the push, for every writer. A lane never waits on a prompt: it writes only in its
-  worktree and its scratch folder (a planner or gate file change goes in the report as exact lines, which the lead
-  applies with the operator), reads with Read and Grep, and runs `git -C <dir>` and `npm run --prefix <dir>`
-  instead of `cd`, with no shell variable or `;` chain. Lane rules: `.cursor/templates/LANE.md`.
+  with the installed dependencies linked from the main checkout. Iterate and measure only; the gate never
+  runs from a worktree. The lead removes the worktree, checks the branch out in the main checkout and pushes
+  from there, so the gate runs once, at the push, for every writer. A lane never waits on a prompt: it
+  writes only in its worktree and its scratch folder (a planner or gate file change goes in the report as
+  exact lines, which the lead applies with the operator), reads with Read and Grep, and runs `git -C <dir>`
+  and the package manager's own directory option (the command table's notes name it) instead of `cd`, with
+  no shell variable or `;` chain. Lane rules: `.cursor/templates/LANE.md`.
 - **Copilot coding agent.** Hand-over is a fully specified issue (goal as behaviour, paths in scope,
   acceptance, out of scope; use `.github/ISSUE_TEMPLATE/agent-task.yml` where the repo ships it), assigned
   to Copilot. It works on its own branch and opens a draft pull request; workflows on that PR start only
   after a human approves the run. Task class: verifiable by the gate, under ~400 changed lines, contract
   stated in the issue, nothing on the mandatory-human-review list. Its review context is
   `.github/copilot-instructions.md`, which points here for the gate.
-- **Review, any lane.** The diff plus `verify:iter`, never a re-run of the gate. Findings are correctness,
-  test strength, security, readability; style belongs to the linters. A non-author human approves; an
-  agent's own green is not an approval. A gate or suppression change stays red until a reviewer adds the
-  `gate-change` label, never the author (`scripts/check-gate-integrity.mjs` lists the change).
+- **Review, any lane.** The diff plus the iterate command, never a re-run of the gate. Findings are
+  correctness, test strength, security, readability; style belongs to the linters. A non-author human
+  approves; an agent's own green is not an approval. A gate or suppression change stays red until a reviewer
+  adds the `gate-change` label, never the author (`scripts/check-gate-integrity.mjs` lists the change).
 - **Two tools, one file.** Claude Code reads `CLAUDE.md` -> `AGENTS.md` -> the brain files this guide
   points at (read on demand; nothing beyond `AGENTS.md` is `@`-imported); Cursor reads `AGENTS.md` plus
   every `alwaysApply: true` rule; Copilot reads `.github/copilot-instructions.md`. `AGENTS.md` is the only
@@ -183,7 +210,7 @@ never invented.
 
 ## Working agreements
 
-- **No browser lane**: a question only a rendered result can answer goes to `.maestro/` or a device (the substitute ladder closes `READING_INDEX.md`). The push runs `verify:ci` directly (`gate-tiers.json` `_phaseMeaning` says why), leaving out only the listed harness tests when the push changes no harness file; the by-hand prohibition also covers `ci:local` and `test:mutation`. Change the tracer's discipline by editing `scripts/gate-tiers.json`, never the analyser. The gate binds no port: if Metro's is busy, MOVE (`npx expo start --port <free>`), kill nothing.
+- **No browser lane**: a question only a rendered result can answer goes to `.maestro/` or a device (the substitute ladder closes `READING_INDEX.md`). The push runs `verify:ci` directly (`gate-tiers.json` `_phaseMeaning` says why) and leaves nothing out; the by-hand prohibition also covers `ci:local` and `test:mutation`. Change the tracer's discipline by editing `scripts/gate-tiers.json`, never the analyser. The gate binds no port: if Metro's is busy, MOVE (`npx expo start --port <free>`), kill nothing.
 - **Bootstrap after clone**: `npm run prepare` once (`.npmrc` disables lifecycle scripts as a supply-chain guard, so husky does not self-install; `verify:iter` and `verify` fail loudly without hooks, and a push from a clone without them runs no gate). Dependency cooldown `.npmrc` `min-release-age=3` (days): a brand-new package or urgent patch needs `npm install <pkg> --min-release-age=0`. The lockfile obeys the same cooldown: `npm run lock:age` (a network-bound check) fails a changed `name@version` younger than `min-release-age`. Prefer waiting out the cooldown. An agent never runs the `--min-release-age=0` install and never edits `scripts/lock-age-allowlist.json` (an agent's classifier refuses both); the operator runs the bypass install and lists the row (reason, expiry no later than the day the version is old enough on its own).
 - **Zero warnings** (`eslint --max-warnings 0`, `oxlint --deny-warnings`): fix the cause; never downgrade a rule or sprinkle `eslint-disable`. A directive that must stay names its rules and carries `-- reason`; `oxlint-disable*` is banned. A rule wrong for a class of files gets a documented file-scoped override (`eslint.config.mjs`, or `overrides` in `.oxlintrc.json`).
 - **Complexity ratchet**: `complexity` 15 / `max-depth` 3 / `max-params` 4 / `max-lines-per-function` 120 / `max-lines` 200 over `src/**`, tests exempt. The numbers sit above the measured ceiling (`DECISIONS.md`), so a hit means new drift: split the function first; raising one needs a fresh measurement and a `DECISIONS.md` line.

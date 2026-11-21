@@ -1,8 +1,8 @@
 // The self-tests start the gate's scripts as child processes and feed them bad setups and bad
 // arguments on purpose, so the scripts print their refusals. `execFileSync` and `execSync` copy the
 // child's stderr onto their own unless `stdio` is given, and `stdio: 'inherit'` passes everything
-// through: a refusal a case expects then lands in every `npm run test:scripts` and every push log,
-// worded like a real failure ("Git hooks are not installed" in a clone whose hooks are installed).
+// through: a refusal a case expects then lands in every test run and every push log, worded like a
+// real failure ("Git hooks are not installed" in a clone whose hooks are installed).
 // So every child a self-test starts has its output captured, and the case asserts on the text where
 // it matters; nothing it expects reaches the terminal.
 //
@@ -10,16 +10,21 @@
 // capture. It does not run the suite a second time: a run inside this one would execute the same
 // files at the same moment as the outer run, and cases that bind a fixed port would meet themselves.
 //
-// Runner: `node:test`, like the other gate specs here. Run via `npm run test:scripts`.
+// Runner-agnostic on purpose: this file is byte-identical in every template, and the templates run their
+// script tests under different runners (vitest with globals, or `node --test`).
 import assert from 'node:assert/strict';
-import { readdirSync, readFileSync } from 'node:fs';
-import { join, relative } from 'node:path';
-import { describe, it } from 'node:test';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 import ts from 'typescript';
 
+const { describe, it } = globalThis.describe ? globalThis : await import('node:test');
+
 const ROOT = process.cwd();
-const SCRIPTS = join(ROOT, 'scripts');
+// Where a repository keeps its own code: scripts/ in every one, lib/ and bin/ where it has them (the kit).
+const foldersOf = (root) =>
+    ['scripts', 'lib', 'bin'].filter((folder) => existsSync(join(root, folder)));
 
 // These copy the child's stderr onto the parent's unless `stdio` says otherwise. The other calls
 // buffer the output by default and leak only through an explicit `stdio` that passes it on.
@@ -270,16 +275,32 @@ describe('uncapturedChildren', () => {
     });
 });
 
+describe('foldersOf', () => {
+    it('is scripts alone for a repository with no lib or bin, and adds each folder that exists', () => {
+        const root = mkdtempSync(join(tmpdir(), 'self-test-capture-'));
+        try {
+            mkdirSync(join(root, 'scripts'));
+            assert.deepEqual(foldersOf(root), ['scripts']);
+            mkdirSync(join(root, 'bin'));
+            assert.deepEqual(foldersOf(root), ['scripts', 'bin']);
+            mkdirSync(join(root, 'lib'));
+            assert.deepEqual(foldersOf(root), ['scripts', 'lib', 'bin']);
+        } finally {
+            rmSync(root, { recursive: true, force: true });
+        }
+    });
+});
+
 describe('the harness self-tests', () => {
     it('start every child process with its output captured', () => {
-        const files = readdirSync(SCRIPTS, { recursive: true })
-            .filter((name) => name.endsWith('.test.mjs'))
-            .sort();
-        const results = files.map((name) =>
-            uncapturedChildren(
-                readFileSync(join(SCRIPTS, name), 'utf8'),
-                relative(ROOT, join(SCRIPTS, name))
-            )
+        const files = foldersOf(ROOT).flatMap((folder) =>
+            readdirSync(join(ROOT, folder), { recursive: true })
+                .filter((name) => name.endsWith('.test.mjs'))
+                .sort()
+                .map((name) => join(folder, name))
+        );
+        const results = files.map((file) =>
+            uncapturedChildren(readFileSync(join(ROOT, file), 'utf8'), file)
         );
 
         assert.ok(

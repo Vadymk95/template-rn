@@ -59,11 +59,11 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 | Gate checks refuse a value they cannot judge                           | 2026-11 | in force                          |
 | A timer started in an effect is released                               | 2026-11 | in force                          |
 | The commit hook formats every file the format check reads              | 2026-11 | in force                          |
-| A push leaves out the harness tests that read only the harness         | 2026-11 | in force                          |
 | The report lists the last pushes; a guard keeps the moments map whole  | 2026-11 | in force                          |
 | A trace row names its commit and the red step                          | 2026-11 | in force                          |
 | The push runs its steps through one runner that names the red one      | 2026-11 | in force                          |
 | A log keeps four coverage totals and a command's first and last lines  | 2026-11 | in force                          |
+| The harness and its tests live in gatelaw, and a sync copies them      | 2026-11 | in force                          |
 
 ## Expo managed over bare React Native
 
@@ -149,7 +149,7 @@ History lives in `git log -p -- .cursor/brain/DECISIONS.md` and the linked PRs; 
 ## Gate-script specs run on `node:test`
 
 - **Context**: the gate scripts are executable ESM (`.mjs`); Jest does not load real ESM without `--experimental-vm-modules` (Jest 30 collects the extension by default, so `jest.testMatch` in `package.json` leaves it out). In a sibling template, folding gate scripts into the app's coverage run dropped line coverage from 93% to 82% with no app change.
-- **Decision**: `npm run test:scripts` is `node scripts/test-scripts.mjs`, which starts `node --test "scripts/**/*.test.mjs"` (no config, outside `collectCoverageFrom`) unless a push leaves listed files out (§ A push leaves out the harness tests that read only the harness). The glob is quoted so Node expands it (an unquoted glob relies on the shell, which does not glob on Windows).
+- **Decision**: `npm run test:scripts` is `node scripts/test-scripts.mjs`, which starts `node --test "scripts/**/*.test.mjs"` (no config, outside `collectCoverageFrom`) and runs every spec file on every push, `npm run verify` and CI; `NODE_TEST_CONCURRENCY=<n>` adds `--test-concurrency=<n>`, and a value that is not a positive whole number stops the run (§ The harness and its tests live in gatelaw, and a sync copies them). The glob is quoted so Node expands it (an unquoted glob relies on the shell, which does not glob on Windows).
 - **Status**: in force. **Evidence**: [4a29b21](https://github.com/Vadymk95/template-rn/commit/4a29b21).
 
 ## One entry-point guard for every gate script
@@ -500,34 +500,6 @@ Read before proposing a tool that was already considered.
   flag must exit 1, the configured command must exit 0.
 - **Status**: in force. **Evidence**: `scripts/lint-staged-coverage.test.mjs`, `package.json` `lint-staged`.
 
-## A push leaves out the harness tests that read only the harness
-
-- **Context**: the script tests run at every push, and most of their time goes to files that build real git
-  repositories in temp folders. Measured on master (2026-11-12, `node --test`): 48 s, 32 files, 1,843 tests;
-  without nine of those files 13 s, 23 files, 1,168 tests. Only a change to the harness can change their result,
-  so a fork that only writes app code paid 35 s per push for nothing.
-- **Decision**: `selfTests.files` in `scripts/gate-tiers.json` names the test files that read no repository
-  file outside `scripts/` (checked file by file with a read trace; temp folders, the tools in `node_modules` and a
-  check that a system tool exists do not count; the runner's own test qualified, 14 s alone).
-  The pre-push hook sets `GATE_PUSH=1`; `scripts/test-scripts.mjs`, the script-tests stage, then leaves those files
-  out of a push whose commits change no path of `scripts/gate-files.json`, none under `scripts/`, no `package.json`
-  and no lockfile, and prints how many it left out. Without the marker, or under CI, it starts exactly
-  `node --test "scripts/**/*.test.mjs"`. `GATE_PUSH=1` set by hand acts as a push.
-- **Everything runs when**: `CI` is set, `GATE_SELF_TESTS=all` is set, the list is empty, the manifest cannot be
-  read, no merge base with `origin/master` or `origin/main` exists, git cannot list the paths, or the package sits
-  below the repository root. The push prints its reason. Any other non-empty `GATE_SELF_TESTS` stops the push with a
-  message, so a mistyped override never leaves tests out in silence. `npm run test:scripts` without the marker,
-  `npm run verify` and CI never do (`npm test` is jest and runs no script test).
-- **How a file gets on the list**: a pull request that adds it, with the `gate-change` label (the list is under
-  `scripts/`). `scripts/gate-tiers.self-tests.test.mjs` fails a name that is missing, duplicated or not a test file
-  under `scripts/`. It does not know the name `scripts/fork-init.test.mjs`: `fork:init` deletes that file in every
-  fork, so a case in `scripts/fork-init.test.mjs` itself fails a list that names it.
-- **Consequences**: coverage counts `src/**` only, and the jest step is untouched, so no number moves. Reads of
-  `node_modules` by the two tests that run the linter and the formatter on temp files are allowed: a change to
-  either tool is a `package.json` or lockfile change, which runs everything.
-- **Status**: in force. Revisit if a master run goes red from a left-out test that a push would have caught.
-  **Evidence**: `scripts/test-scripts.test.mjs`, `scripts/gate-tiers.self-tests.test.mjs`.
-
 ## The report lists the last pushes; a guard keeps the moments map whole
 
 - **Decision**: `trace:report` ends with the push ledger: the last 20 rows under the push moment's `expected` label,
@@ -542,7 +514,7 @@ Read before proposing a tool that was already considered.
   The map from traced label to moment is kept by hand and a label no moment names is never judged, so the guard reads
   the hook's label as well as the scripts'.
 - **Status**: in force. **Evidence**: `scripts/trace-report.mjs`, `scripts/docs-check.mjs`, `.husky/pre-push`,
-  `scripts/gate-tiers.json`, `scripts/gate-tiers.self-tests.test.mjs` and the tests of each.
+  `scripts/gate-tiers.json`, `scripts/gate-tiers.repo.test.mjs` and the tests of each.
 
 ## A trace row names its commit and the red step
 
@@ -558,8 +530,8 @@ Read before proposing a tool that was already considered.
 
 ## The push runs its steps through one runner that names the red one
 
-- **Decision**: `.husky/pre-push` runs `node scripts/bench-verify.mjs --run verify:ci` under the tracer (label `verify:push`,
-  `GATE_PUSH=1`). `expandSteps` lists the leaf steps of the script and `runSteps` runs them in order, output inherited.
+- **Decision**: `.husky/pre-push` runs `node scripts/bench-verify.mjs --run verify:ci` under the tracer (label `verify:push`).
+  `expandSteps` lists the leaf steps of the script and `runSteps` runs them in order, output inherited.
   `npm run` hops and the tracer wrapper are followed, every argument is kept, a segment npm hands to its shell (an env
   prefix, quotes) runs through `sh -c`, and a cycle, a missing script or a `pre`/`post` script throws, so no step is
   dropped. One line names each step before it starts; the run ends with one verdict line,
@@ -571,8 +543,8 @@ Read before proposing a tool that was already considered.
   variables are not set (no gate script reads one); `node_modules/.bin` leads PATH. A push writes one trace row,
   `verify:push`: the row of the wrapped script it used to nest is gone, and nothing read it (`trace:report` skipped a
   nested row).
-- **Status**: in force. **Evidence**: `scripts/bench-verify.mjs`, `scripts/bench-verify.test.mjs`,
-  `scripts/gate-tiers.self-tests.test.mjs`, `scripts/audit-gate.test.mjs`.
+- **Status**: in force. **Evidence**: `scripts/bench-verify.mjs`, `scripts/bench-verify.repo.test.mjs`,
+  `scripts/gate-tiers.repo.test.mjs` and, in gatelaw, `scripts/audit-gate.test.mjs`.
 
 ## A log keeps four coverage totals and a command's first and last lines
 
@@ -584,3 +556,29 @@ Read before proposing a tool that was already considered.
   (`scripts/check-coverage.mjs` reads only the dropout lines). A lane that printed the tail of a log lost the line that
   says what the run selected, and a command piped into `tail` hid its exit code.
 - **Status**: in force. **Evidence**: `package.json`, `scripts/check-coverage.test.mjs`, `.cursor/templates/LANE.md`.
+
+## The harness and its tests live in gatelaw, and a sync copies them
+
+- **Context**: this template carried its own copy of the gate scripts, 37 script test files, the four rule files, the
+  lane template and the shared block of `AGENTS.md`. The copies drifted from the sibling templates, and a fix made in
+  one had to be repeated in each.
+- **Decision**: gatelaw holds the one copy. `gatelaw sync --to <repo>` (profile `expo`: the core group, no web
+  scripts) writes the listed files at the same paths, rewrites the block between the `shared-harness` markers of
+  `AGENTS.md`, deletes the test files that moved and records each copy (sha256 and mode), the block and the removed
+  tests in `.gatelaw.json`. A test file moves whole when it reads nothing of this repository, stays when it reads only
+  this repository and splits when it does both: gatelaw keeps the half that reads its own files, this repository keeps
+  the other as `scripts/*.repo.test.mjs`, which a sync never writes or deletes. Of the 37 files here 15 moved whole,
+  6 split (each half here is a `*.repo.test.mjs`), 1 keeps its one repository case (the push label, in
+  `gate-tiers.repo.test.mjs`), 3 are synced copies (a scan of every file under `scripts/` guards the repository it
+  runs in), `lint-config` stays whole as `lint-config.repo.test.mjs` and 11 stay here.
+- **A hand edit is caught**: `docs:check` compares each listed file and the block with the manifest. It is red on a
+  changed file or exec bit, a missing file, a manifest that records a `dirty` gatelaw tree and a missing manifest; the
+  remedy is to edit the file in gatelaw and sync again. A fork (it has `.template-origin.json`) detaches by deleting
+  `.gatelaw.json`; `docs:check` then prints `gatelaw: detached (no .gatelaw.json)` on every run.
+- **Consequences**: every push runs every script test: `scripts/gate-tiers.json` lists no `selfTests`, the pre-push
+  hook sets no marker, and the leave-out of harness-only tests is gone. `scripts/test-scripts.mjs` stays a thin runner
+  of `node --test "scripts/**/*.test.mjs"` so that `NODE_TEST_CONCURRENCY=<n>` can cap the spec files run at once.
+  Rule routing moved from `global.mdc` to `.cursor/brain/READING_INDEX.md`, and the RNTL, jest-mock and Maestro
+  conventions the shared TDD rule leaves out to `.cursor/brain/VERIFICATION.md`.
+- **Status**: in force. **Evidence**: `.gatelaw.json`, `scripts/docs-check.mjs` and its tests in gatelaw,
+  `scripts/test-scripts.test.mjs`.
