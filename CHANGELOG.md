@@ -1,5 +1,50 @@
 # Changelog
 
+## [0.4.0](https://github.com/Vadymk95/template-rn/compare/v0.3.7...v0.4.0) (2026-11-21)
+
+
+### Features
+
+* **deps:** move to Expo SDK 58, closing the decode-uri-component and zod advisories ([#86](https://github.com/Vadymk95/template-rn/issues/86)) ([fa5b75f](https://github.com/Vadymk95/template-rn/commit/fa5b75fea278c585be393e4f9381bb09097276ed))
+* **gate:** a push that changes no harness file leaves out the pure harness tests ([#82](https://github.com/Vadymk95/template-rn/issues/82)) ([e20c2b5](https://github.com/Vadymk95/template-rn/commit/e20c2b5a8cfa61bc20699f9cc503d24f79c91f00))
+* **gate:** iterate runs the commit hook's checks ([#76](https://github.com/Vadymk95/template-rn/issues/76)) ([8f0798a](https://github.com/Vadymk95/template-rn/commit/8f0798ac25a0faf59f328f8a1292372fcaa70c40))
+* **gate:** list the last pushes in trace:report, guard the moments map ([#95](https://github.com/Vadymk95/template-rn/issues/95)) ([5b1b949](https://github.com/Vadymk95/template-rn/commit/5b1b9494aa06ff8791823ac8f13c77cb770dc657))
+* **gate:** log the commit and the red step in every gate trace row ([#94](https://github.com/Vadymk95/template-rn/issues/94)) ([766ab2a](https://github.com/Vadymk95/template-rn/commit/766ab2abf1e432bd4572a2d27b4e31c569842c47))
+* **gate:** run the push through a step runner, ACT lines, text-summary coverage ([#93](https://github.com/Vadymk95/template-rn/issues/93)) ([26518ff](https://github.com/Vadymk95/template-rn/commit/26518ff716d53850b228c9a16b5e38f5c2d8fb56))
+* **gate:** take the harness from gatelaw and keep the repository halves of split tests ([#96](https://github.com/Vadymk95/template-rn/issues/96)) ([0792434](https://github.com/Vadymk95/template-rn/commit/0792434e9357069d267cb67ff32c43fc38842959))
+* **lint:** fail on timers leaked by effects, and format .mjs, .cjs and .css files at commit ([#73](https://github.com/Vadymk95/template-rn/issues/73)) ([bb19754](https://github.com/Vadymk95/template-rn/commit/bb197542223e277f4e21a2595eb598fc5cd68dab))
+* **scripts:** add fork:init, the local part of fork day in one command ([#79](https://github.com/Vadymk95/template-rn/issues/79)) ([2576a8d](https://github.com/Vadymk95/template-rn/commit/2576a8db8fabc2e6f971b9376b10b4af9331c9d7))
+
+
+### Bug fixes
+
+* **deps:** drop the picomatch allowance, GitHub withdrew the advisory ([#90](https://github.com/Vadymk95/template-rn/issues/90)) ([a52c7ff](https://github.com/Vadymk95/template-rn/commit/a52c7ffadbbccb7083101352e31f9cbf60a15099))
+* **gate:** read a child's whole output and run the push lint without its cache ([#91](https://github.com/Vadymk95/template-rn/issues/91)) ([2a71b33](https://github.com/Vadymk95/template-rn/commit/2a71b338bb46eec264f869195308b4940ecf1525))
+* **hooks,ci:** pass commits of linter-ignored files; read gate labels when the job runs ([#75](https://github.com/Vadymk95/template-rn/issues/75)) ([7a0110b](https://github.com/Vadymk95/template-rn/commit/7a0110be9ca994b4b78fe65e9196fd95787aa572))
+* **hooks:** the hooks check refuses when a hook file is missing or not executable ([#83](https://github.com/Vadymk95/template-rn/issues/83)) ([64e1ad5](https://github.com/Vadymk95/template-rn/commit/64e1ad5e5d8609d945fa3ba2cecec76892e66745))
+
+
+### Maintenance
+
+* **review:** run /review in a fresh subagent context ([#89](https://github.com/Vadymk95/template-rn/issues/89)) ([00fba27](https://github.com/Vadymk95/template-rn/commit/00fba2713baba4ef53d0de85b3ae26c4e66f8361))
+
+
+### Documentation
+
+* **agents:** spec and plan from two slices; one slice carries its criteria in the PR ([#77](https://github.com/Vadymk95/template-rn/issues/77)) ([cf0e6d8](https://github.com/Vadymk95/template-rn/commit/cf0e6d83daf865f01d613782be48b6865de488b4))
+* **rules:** point resilience at the Phase 1 example, not the seed path ([#81](https://github.com/Vadymk95/template-rn/issues/81)) ([5ead65e](https://github.com/Vadymk95/template-rn/commit/5ead65e16106a44349719eaf5a541dde48702f6e))
+* **rules:** record the Expo SDK 58 re-measures behind the toSorted ban and the React pin ([#88](https://github.com/Vadymk95/template-rn/issues/88)) ([ed57040](https://github.com/Vadymk95/template-rn/commit/ed57040b2859775a674b36a904a81e086d5882a6))
+
+
+### Tests
+
+* **scripts:** give the lock-age command-line cases their own time budget ([#80](https://github.com/Vadymk95/template-rn/issues/80)) ([c57c60e](https://github.com/Vadymk95/template-rn/commit/c57c60ebbda9455d4ce8f314b50d72ecb18d55be))
+
+
+### CI
+
+* **deps:** auto-merge Dependabot patch and minor updates after the required checks ([#78](https://github.com/Vadymk95/template-rn/issues/78)) ([8b2356e](https://github.com/Vadymk95/template-rn/commit/8b2356e58806dfb971b0473e145d0a054411d00a))
+
 ## [0.3.7](https://github.com/Vadymk95/template-rn/compare/v0.3.6...v0.3.7) (2026-11-07)
 
 
