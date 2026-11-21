@@ -79,6 +79,17 @@ sibling project two of five dispatched lanes returned "already done" after ~430k
 and both were answerable by five minutes of grep. **This entry is first in cost order even though it
 is last in the list.**
 
+## Rule routing
+
+`.cursor/rules/global.mdc` points here. Glob-scoped rules (`alwaysApply: false`) are not always auto-attached, so before
+planning or editing in an area, read the matching rule:
+
+- React / UI / screens / components → `react-patterns`, `engineering-standards`, `constants`
+- New or changed behaviour, tests, mocks, Zustand stores → `test-driven-development`
+- New `src/` folders or rewired imports → `fsd-layers` (boundaries are CI law)
+- Data fetching, async, error handling, logging, stores → `resilience`, `engineering-standards`
+- `app.config.ts`, `babel.config.js`, `metro.config.js`, `package.json`, `tsconfig.json` → `project-config`
+
 ## What this repo cannot give you, and the honest substitute
 
 The web siblings ship a `probe` script, which renders a route at several widths and saves a PNG, so an

@@ -8,6 +8,7 @@
         ".cursor/rules/**",
         "AGENTS.md",
         "CLAUDE.md",
+        ".gatelaw.json",
         "eslint.config.mjs",
         ".oxlintrc.json",
         "tooling/eslint-plugin-template/**",

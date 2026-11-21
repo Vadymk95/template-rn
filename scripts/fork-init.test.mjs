@@ -171,9 +171,15 @@ describe('fork-init', () => {
         let dir = null;
         let result = null;
         let changed = null;
+        let pointerRules = null;
 
         before(() => {
             dir = makeCopy();
+            // The rule files that point into the template's decisions before the run: the only rule
+            // files the run may rewrite. Shared rules synced from gatelaw hold no such pointer.
+            pointerRules = git(dir, 'ls-files', '*.mdc')
+                .split('\n')
+                .filter((file) => file !== '' && /DECISIONS\.md`?\s*§/.test(read(dir, file)));
             result = run(dir, ['--name', NEW_NAME, '--title', NEW_TITLE, '--holder', NEW_HOLDER]);
             changed = status(dir)
                 .split('\n')
@@ -342,8 +348,8 @@ describe('fork-init', () => {
             );
             assert.deepEqual(outside, []);
             assert.deepEqual(
-                changed.filter((file) => file.endsWith('.mdc')),
-                ['.cursor/rules/test-driven-development.mdc']
+                changed.filter((file) => file.endsWith('.mdc')).sort(),
+                [...pointerRules].sort()
             );
         });
 

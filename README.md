@@ -183,8 +183,11 @@ run; the checks that need the registry live there, not in `verify`. The moments 
 superset rule are defined ONCE in `AGENTS.md` § Commands / the gate; stage timings
 live in `.cursor/brain/VERIFICATION.md`.
 
-A push that changes no harness file also leaves out the harness tests listed under `selfTests` in
-`scripts/gate-tiers.json` and prints that it did; CI always runs them, and `GATE_SELF_TESTS=all git push` runs them here.
+The harness's own tests live in gatelaw and run there; this repository keeps the tests that read it (the files named
+`*.repo.test.mjs` and the guards over its configs) and byte-identical copies of the three that scan every file under
+`scripts/` (`output-limits`, `self-test-capture`, `is-entry-point`), so they still guard what is added here. Nothing is
+left out of a push: `npm run test:scripts` runs every spec file left in `scripts/`, and `NODE_TEST_CONCURRENCY=<n>` caps
+how many run at once.
 
 `npm run test:mutation` (StrykerJS) measures test strength — whether the suite
 would catch a wrong implementation, not just execute the code. It runs as a weekly

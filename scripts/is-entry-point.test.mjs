@@ -1,5 +1,8 @@
+// Runner-agnostic on purpose: this file is byte-identical in every template, and the templates run their
+// script tests under different runners (vitest with globals, or `node --test`).
 import assert from 'node:assert/strict';
 import {
+    existsSync,
     mkdirSync,
     mkdtempSync,
     readFileSync,
@@ -11,14 +14,16 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { afterEach, describe, it } from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { isEntryPoint } from './is-entry-point.mjs';
 
-// Runner: `node:test`, not Jest (`jest.testMatch` in `package.json` keeps `.mjs` gate scripts
-// out of Jest). Run via `npm run test:scripts`.
+const { afterEach, describe, it } = globalThis.describe ? globalThis : await import('node:test');
+
 const HERE = path.dirname(fileURLToPath(import.meta.url));
+// Where a repository keeps its own code: scripts/ in every one, lib/ and bin/ where it has them (the kit).
+const foldersOf = (root) =>
+    ['scripts', 'lib', 'bin'].filter((folder) => existsSync(path.join(root, folder)));
 
 describe('isEntryPoint', () => {
     const roots = [];
@@ -122,15 +127,39 @@ describe('isEntryPoint', () => {
     });
 });
 
+describe('foldersOf', () => {
+    it('is scripts alone for a repository with no lib or bin, and adds each folder that exists', () => {
+        const root = mkdtempSync(path.join(tmpdir(), 'entry-point-folders-'));
+        try {
+            mkdirSync(path.join(root, 'scripts'));
+            assert.deepEqual(foldersOf(root), ['scripts']);
+            mkdirSync(path.join(root, 'bin'));
+            assert.deepEqual(foldersOf(root), ['scripts', 'bin']);
+            mkdirSync(path.join(root, 'lib'));
+            assert.deepEqual(foldersOf(root), ['scripts', 'lib', 'bin']);
+        } finally {
+            rmSync(root, { recursive: true, force: true });
+        }
+    });
+});
+
 /* A hand-written guard (`import.meta.url === new URL('file://' + process.argv[1]).href`) was copied
    into every script, and it does nothing, with exit code 0, whenever the path has a `#`, `%` or `?` in
    it or goes through a symlink. For a gate check that is a pass that checked nothing. These cases keep
    the class closed: a script asks the helper, and a new script cannot bring the old guard back. */
 describe('the scripts', () => {
-    const scripts = readdirSync(HERE)
-        .filter((name) => /\.m?js$/.test(name) && !name.includes('.test.'))
-        .filter((name) => name !== 'is-entry-point.mjs')
-        .map((name) => [name, readFileSync(path.join(HERE, name), 'utf8')]);
+    const ROOT = path.dirname(HERE);
+    // [path, source, the import the helper is asked through]: lib/ and bin/ reach it across the folder.
+    const scripts = foldersOf(ROOT).flatMap((folder) =>
+        readdirSync(path.join(ROOT, folder))
+            .filter((name) => /\.m?js$/.test(name) && !name.includes('.test.'))
+            .filter((name) => `${folder}/${name}` !== 'scripts/is-entry-point.mjs')
+            .map((name) => [
+                `${folder}/${name}`,
+                readFileSync(path.join(ROOT, folder, name), 'utf8'),
+                folder === 'scripts' ? './is-entry-point.mjs' : '../scripts/is-entry-point.mjs'
+            ])
+    );
 
     it('never decide by hand whether they are the entry point', () => {
         const byHand = scripts
@@ -144,9 +173,9 @@ describe('the scripts', () => {
         const asking = scripts.filter(([, source]) => source.includes('isEntryPoint'));
 
         assert.ok(asking.length > 0, 'no script asks the helper');
-        for (const [name, source] of asking) {
+        for (const [name, source, from] of asking) {
             assert.ok(
-                source.includes("import { isEntryPoint } from './is-entry-point.mjs';"),
+                source.includes(`import { isEntryPoint } from '${from}';`),
                 `${name} does not import the helper in the shared shape`
             );
             assert.ok(

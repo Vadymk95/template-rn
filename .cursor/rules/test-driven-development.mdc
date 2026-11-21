@@ -1,62 +1,77 @@
 ---
-description: 'TDD and testing standards — Jest + Testing Library (React Native)'
-globs: ['**/*.{test,spec}.{ts,tsx}', '**/store/**/*.ts', '**/hooks/**/*.ts', '**/lib/**/*.ts']
+description: 'TDD protocol and testing standards: tests before implementation, and tests worth having'
+globs: ['**/*.{test,spec}.*']
 alwaysApply: false
 priority: 85
 ---
 
-# TDD protocol (Jest)
+# TDD Protocol
+
+This file is the order of work and the standard a test must meet. The runner, its mock API, its configuration and the test utilities are the repo's own (`AGENTS.md` and the command table; the single-test command runs one file).
 
 ## 0. The hook enforces existence; you are responsible for worth
 
-`.husky/pre-commit` runs `scripts/check-test-siblings.mjs`: every **staged** file under
-`src/**` that is not on the exempt list must have a co-located `*.test.ts(x)` sibling that
-is in the git **index** with content (in HEAD, or staged), or the commit is refused — a test
-left untracked on disk, or only marked with `git add -N`, does not count. `verify` (so pre-push and CI) runs `check-test-siblings.mjs --range`, the same
-rule over everything the branch changed against the HEAD tree, so a commit made with the
-hook skipped is caught there. Both only look at changed files, so it ratchets — nothing in
-the tree breaks retroactively, but the next edit to an untested file demands a test.
+The pre-commit hook runs the sibling gate: every **staged** logic file under the source tree that is not on the exemption list needs a co-located test sibling that is in the git **index** with content (in HEAD, or staged), or the commit is refused. A test left untracked on disk, or only marked with `git add -N`, does not count. The gate (so the push and CI) repeats the same rule over every file the branch changed (`--range`), so a commit made with the hook skipped is caught there. Both look at changed files only, so it ratchets: nothing in the tree breaks retroactively, but the next edit to an untested file demands a test. A missing test is a blocked commit, not a follow-up TODO; skipping the hook (`--no-verify`) is forbidden.
 
 What the hook cannot check, and what actually matters:
 
-- **Mutation check.** Revert the behaviour the test guards and confirm the test goes
-  red. A test that still passes with the fix reverted is characterisation, not coverage,
-  and it is worse than no test because it reads as protection.
-- **Assertions that cannot fail** — `expect(x).toBeTruthy()` on a value the test just
-  built, a `waitFor` whose body cannot throw, asserting empty text where an emptiness
-  matcher was meant.
-- Exempt paths are listed with their reason in `scripts/check-test-siblings.mjs`. Do not
-  extend that list to move a commit along; `src/shared/lib/theme/**` in particular is
-  deliberately NOT exempt.
+- **Mutation check.** Revert the behaviour the test guards and confirm the test goes red. A test that still passes with the fix reverted is characterisation, not coverage, and it is worse than no test because it reads as protection.
+- **Assertions that cannot fail**: a truthiness check on a value the test just built, a wait whose body cannot throw, asserting empty text where an emptiness matcher was meant.
+- The exemption list sits with its reasons in the sibling gate's configuration. Do not extend it to move a commit along.
 
-## 1. When to write tests first (strict TDD)
+## 1. Mandatory test-first (strict TDD)
 
-- Zustand stores (`src/store/**`)
-- Hooks with non-trivial orchestration (`src/hooks/**`)
-- Pure utilities under `src/lib/` (including Zod schemas and parsers)
+Write the failing test **before** the implementation, **always**, for:
 
-A fix whose only residual is a lint finding has no behaviour to assert: the red is the lint run on the unfixed copy (the rule name in the output). Say so in the report instead of inventing a test.
+- global and domain state (stores, selectors, reducers) and their actions
+- hooks or runtime units with logic over 10 lines, or with non-trivial orchestration
+- utilities and transforms, including schemas and parsers (validate a schema before using it)
+- API operations, data transformations and form validation
+- server entry points (route handlers, server actions)
 
-## 2. UI (React Native)
+**Vertical slices, NOT horizontal (mandatory):** one test, then its implementation, then repeat. NEVER write all tests and then all code, and NEVER write the implementation first and backfill tests. Test behaviour through the public interface, not implementation details, so tests survive refactors.
 
-- Prefer **integration-style** tests with `@testing-library/react-native` after the screen API stabilizes.
-- Test behavior and accessibility roles/labels users depend on — not private implementation details.
-- UI refactors that move copy, routing, or validation boundaries must leave at least one behavior-level integration test proving the visible contract still holds.
+A fix whose only residual is a lint finding has no behaviour to assert: the red is the lint run on the unfixed copy (the rule name in the output). Say so in the report instead of inventing a test. For any other fix the regression test is written first and must fail without the fix.
 
-## 3. Cycle
+## 2. Hybrid UI approach
 
-1. Name cases in chat (`describe` / `it`).
-2. **Red** → **Green** → **Refactor** under green tests.
+- **Runtime orchestration → runtime unit** (strict TDD for it).
+- **Pure computation → utility** (strict TDD for it).
+- **UI → component**: an integration test after the component is built, or once the screen's API stabilises; it drives user-visible behaviour (interactions, roles and labels users depend on), not implementation details.
+- **Rule**: if component logic exceeds 10 lines, extract it to a runtime unit and apply strict TDD to that unit. Components stay presentational.
+- A UI refactor that moves copy, routing or validation boundaries leaves at least one behaviour-level integration test proving the visible contract still holds.
 
-## 4. Tooling conventions
+## 3. Implementation cycle
 
-- **RNTL 14 is async**: `render`, `renderHook`, `fireEvent`, `act`, `unmount` all return promises — **always `await` them**. An un-awaited `unmount()` poisons the next test's render.
-- Queries skip accessibility-hidden elements by default — pass **`{ includeHiddenElements: true }`** to reach intentionally a11y-hidden nodes (e.g. a dialog backdrop).
-- Mock native modules with **`jest.mock('module', factory)`** — there is no `vi` (Vitest is not used here).
-- **Jest does not reset mocks between tests here**, so a test that sets a return value, a spy or a `...Once` value on a shared mock resets it itself. Why, and what was measured: `DECISIONS.md` § Jest does not reset mocks between tests.
-- Keep network and native I/O out of unit tests; inject dependencies or mock at module boundaries.
-- Use the **`@/`** alias in test imports (`moduleNameMapper` is configured in `package.json` for Jest).
+1. **Requirements**: list the test cases explicitly before coding (in chat).
+2. **Red**: a failing test, BDD style (`describe` / `it`), Arrange-Act-Assert.
+3. **Green**: minimal code to pass.
+4. **Refactor**: clean up while staying green.
 
-## 5. E2E (Maestro flows ship in-repo)
+## 4. Quality standards
 
-- The template already ships **Maestro** flows under `.maestro/` (`smoke.yaml`, `create-task.yaml`); run them with **`npm run maestro`**. Extend these for new native journeys (permissions, deep links, biometrics), or add **Detox** if you need a JS-driven gray-box runner. Jest + Testing Library unit/integration tests remain the default in-repo gate.
+- **Isolation**: mock external APIs and modules; a test never hits the real network or native I/O (inject dependencies or mock at module boundaries). Whether the runner resets mocks between tests is its configuration; never rely on state set outside the test: a mock keeps only the implementation it was created with, so set a return value, a spy or a once-value inside the test or its setup hook, never once at module level, and reset what the test changed.
+- **Edge cases**: always cover error paths, empty state, boundaries (empty, one, many, full, partial), async transitions (loading to loaded), entity switches (A to B) and network failure.
+- **Behaviour over internals**: test the public API and user behaviour, not implementation details.
+- **Async is awaited**: a runner or library whose calls return promises is always awaited; an un-awaited call poisons the next test.
+- **BDD naming**: `describe('UserStore')` → `it('sets username and marks as logged in on setUser()')`.
+- **Return types**: helpers and fixtures in test files may be exempt from the linter's return-type rule where the repo's lint config says so.
+
+## 5. Test file location
+
+- Co-locate tests with the file: `userStore.ts` → `userStore.test.ts`; a component test sits next to the component.
+- No separate `__tests__` directories.
+- Import through the repo's alias in test files, as in source.
+
+## 6. Exceptions (TDD can be skipped for)
+
+- Type-only files (interfaces, declaration files), configuration and static constants.
+- Simple presentational components with no logic; very simple functions (under 10 lines, one responsibility).
+- Dev-only utilities (for example hot-reload hooks).
+- Server Components or entry points with simple data fetching (test the fetching separately).
+
+Add tests anyway when the function has complex logic, is critical to the business logic or is reused in several places.
+
+## 7. Commands
+
+The commands are in the command table of `AGENTS.md`: the single-test command for one file, the iterate command per change. A watch mode and a coverage report are the runner's own scripts, listed there.

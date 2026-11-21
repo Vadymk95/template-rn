@@ -1,11 +1,10 @@
 #!/usr/bin/env sh
 # The CI gate, so a green push predicts a green pipeline. `verify:ci` is the CI gate; its stages are
-# in scripts/gate-tiers.json. GATE_PUSH=1 says this is a push: the test:scripts stage then leaves out
-# the harness tests listed under selfTests when the push changes no harness file, prints that it did,
-# and CI runs them. GATE_SELF_TESTS=all git push runs them here. The steps run through the step runner
+# in scripts/gate-tiers.json. The harness tests live in gatelaw, so scripts/ holds only the specs that read
+# this repository, and every push runs all of them. The steps run through the step runner
 # (scripts/bench-verify.mjs), traced as verify:push, the label the push moment expects in
 # scripts/gate-tiers.json (a hand-run verify:ci is a row of its own): a red push names the step that failed.
-if ! GATE_PUSH=1 node scripts/gate-trace.mjs verify:push -- node scripts/bench-verify.mjs --run verify:ci; then
+if ! node scripts/gate-trace.mjs verify:push -- node scripts/bench-verify.mjs --run verify:ci; then
     echo ''
     echo '✖ pre-push: verify:ci failed — the pipeline would fail the same way.'
     echo '  Formatting or lint findings:  npm run fix && git add -u'

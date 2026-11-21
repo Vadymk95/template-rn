@@ -4,11 +4,13 @@
 // reads `src` only.
 //
 // Runner: `node:test`, not Jest (`jest.testMatch` in `package.json` keeps `.mjs` gate scripts
-// out of Jest). Run via `npm run test:scripts`.
+// out of Jest). Run via `npm run test:scripts`. The file reads this repository's real ESLint
+// configuration, so it stays here when the harness tests move to gatelaw.
 import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
 
 import { ESLint } from 'eslint';
+
+const { describe, it } = globalThis.describe ? globalThis : await import('node:test');
 
 // Loading the whole repository config is the cost; the suite runs this next to dozens of other
 // files, so the default limit would measure machine load, not the code.
